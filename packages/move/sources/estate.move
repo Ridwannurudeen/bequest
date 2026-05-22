@@ -25,6 +25,7 @@ use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::dynamic_field as df;
+use sui::event;
 use sui::object_bag::{Self, ObjectBag};
 use sui::table::{Self, Table};
 
@@ -66,6 +67,11 @@ public struct Estate has key {
 /// Dynamic-field key for the escrowed `Balance<T>` of each coin type.
 public struct CoinKey<phantom T> has copy, drop, store {}
 
+// Events — let the off-chain keeper discover estates and observe trigger transitions.
+public struct EstateCreated has copy, drop { estate: ID, owner: address }
+public struct Armed has copy, drop { estate: ID }
+public struct Triggered has copy, drop { estate: ID }
+
 /// Create and share an Estate (ACTIVE). `heir_addrs[i]` gets `heir_bps[i]` basis points of every
 /// coin; the bps must sum to 10000. `executor` is optional.
 public fun create_estate(
@@ -104,6 +110,7 @@ public fun create_estate(
         object_heir: table::new(ctx),
     };
     let eid = object::id(&estate);
+    event::emit(EstateCreated { estate: eid, owner: estate.owner });
     transfer::share_object(estate);
     eid
 }
@@ -180,6 +187,7 @@ public fun arm(estate: &mut Estate, clock: &Clock) {
     assert!(clock::timestamp_ms(clock) >= estate.last_active_ms + estate.inactivity_ms, ETooEarly);
     estate.status = STATUS_PENDING;
     estate.pending_since_ms = clock::timestamp_ms(clock);
+    event::emit(Armed { estate: object::id(estate) });
 }
 
 /// Permissionless: PENDING -> TRIGGERED once `grace_ms` has elapsed since arming.
@@ -187,6 +195,7 @@ public fun finalize(estate: &mut Estate, clock: &Clock) {
     assert!(estate.status == STATUS_PENDING, ENotPending);
     assert!(clock::timestamp_ms(clock) >= estate.pending_since_ms + estate.grace_ms, ETooEarly);
     estate.status = STATUS_TRIGGERED;
+    event::emit(Triggered { estate: object::id(estate) });
 }
 
 public fun cancel_pending(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {

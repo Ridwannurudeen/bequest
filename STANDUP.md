@@ -38,6 +38,11 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     ratio `distribute_coin<T>` (last heir gets remainder, u128 overflow-guarded), per-object
     assignment + `distribute_object(s)<T>`. Scale test: 5 heirs + 100 NFTs distributed cleanly.
     **All A de-risk spikes (#2/#3/#4/#5) now GREEN.** Move suite 8/8.
-  - Next: off-chain keeper (cron arm/finalize) + Walrus last-wishes upload; redeploy estate to testnet.
+  - **Keeper service DONE + estate redeployed.** New testnet package id (prepend 0x):
+    `e5916dd8d64d2fcd938a10abfe4cee7746a22b16e830c82191c73d251aa871cc` (modules estate+gate; now
+    emits EstateCreated/Armed/Triggered). `packages/keeper` (TS) discovers estates via events, reads
+    timers, drives `arm`/`finalize`. **Live test PASSED**: seed → armed (ACTIVE→PENDING) →
+    finalized (→TRIGGERED) → idempotent no-op. Run `npm run keeper` or `npm run keeper:watch`.
+  - Next (A): Walrus last-wishes upload (pairs with the proven Seal gate). (B): zkLogin/Enoki claim flow + frontend.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.

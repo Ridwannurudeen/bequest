@@ -1,0 +1,22 @@
+{
+  "name": "bequest-keeper",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Off-chain keeper: discovers estates via events and drives arm/finalize on the dead-man's switch.",
+  "scripts": {
+    "keeper": "tsx src/keeper.ts",
+    "keeper:watch": "tsx src/keeper.ts --watch",
+    "seed": "tsx src/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mysten/sui": "2.17.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
