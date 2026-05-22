@@ -19,9 +19,12 @@ SUCCEEDS after `TRIGGERED`, plaintext recovered intact.
 The Sui CLI is **not** installed on this machine yet. Install it, then publish the package.
 
 ```powershell
-# 1. Install Sui CLI (pick one):
-#    - winget:        winget install MystenLabs.Sui
-#    - or download a release binary: https://github.com/MystenLabs/sui/releases
+# 1. Install the Sui CLI (pick one — verified 2026-05-22):
+#    - suiup (official, recommended; also installs walrus/seal/mvr):
+#        https://github.com/MystenLabs/suiup   (Windows: binaries land in %LOCALAPPDATA%\bin — add to PATH)
+#    - Chocolatey:  choco install sui
+#    - or a prebuilt binary: https://github.com/MystenLabs/sui/releases
+#    Docs: https://docs.sui.io/guides/developer/getting-started/sui-install
 sui --version
 
 # 2. Point at testnet + create/select an address, then fund it:

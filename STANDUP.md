@@ -13,8 +13,13 @@ Spike owners — A: #2 dead-man's-switch, #3 PTB gas, #4 Seal conditional decryp
 B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
 
 ### 2026-05-22
-- **A:** Repo scaffolded (`bequest/`). Spike #4 (Seal conditional decrypt) written: `gate.move`
-  (status-gated `seal_approve`, verified against Seal's whitelist pattern) + `seal-spike/spike.ts`
-  (verified @mysten/seal@1.1.3 API). Next: install Sui CLI, publish to testnet, run the spike.
-- **B:** _(fill in)_
-- **Blockers:** Sui CLI not yet installed on A's machine — needed to compile/publish Move.
+- **A:** Repo scaffolded + pushed PRIVATE (github.com/Ridwannurudeen/bequest).
+  - Spike #4 (Seal conditional decrypt): `gate.move` (status-gated `seal_approve`, verified vs
+    Seal whitelist pattern) + `seal-spike/spike.ts` (typechecks green vs @mysten/seal@1.1.3).
+  - Spike #5 (custody/escrow): `estate.move` — escrow into shared `Estate` (Coin<T> via dynamic
+    field + objects via ObjectBag), owner withdraw while ACTIVE, heir claim after TRIGGERED with
+    no owner key. 1 lifecycle test + 2 expected-failure tests. Framework sigs verified vs
+    framework/testnet. NOT yet compiled — needs `sui move test`.
+  - Next: install Sui CLI (suiup / `choco install sui`), `sui move test`, publish to testnet, run #4.
+- **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
+- **Blockers:** Sui CLI not installed on A's machine — needed to compile/test/publish Move.
