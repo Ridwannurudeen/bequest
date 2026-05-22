@@ -23,6 +23,10 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
   - **Move tests 4/4 GREEN** on sui 1.72.2. Framework-clone failure (flaky net) solved by
     pre-seeding the `~/.move` cache — see `packages/move/README.md`. Move.toml kept clean/portable.
     Fixed `df::exists_`→`df::exists`.
-  - Next: publish to testnet + run seal spike #4 on-chain (needs a funded testnet address).
+  - **DEPLOYED to testnet** — package id (prepend 0x): `09cc2da78fb91b933a7660a65e8506255f711502e3369abc9f1050c157fb2e4c`
+    (publish digest `9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw`).
+  - **Live spike #4 PASSED** vs real Seal testnet key servers: decrypt DENIED while ACTIVE →
+    flip TRIGGERED → decrypt SUCCEEDED + plaintext recovered. Seal conditional decryption PROVEN.
+  - Next: spike #2 (dead-man's-switch: inactivity + Sui Clock) → wire `estate.move` trigger to a keeper.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
-- **Blockers:** none for Move build/test. On-chain run needs a funded testnet address.
+- **Blockers:** none.
