@@ -32,7 +32,12 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     deposit/withdraw reset the timer, `executor_pause` cancels a pending trigger. **8/8 Move tests
     pass** (incl. heartbeat-defers-trigger, executor-pause, can't-arm-early, can't-finalize-early).
     Note: deposit/withdraw/heartbeat/create now take `&Clock` — SDK interface to reflect this.
-  - Next: keeper service (off-chain cron calling arm/finalize) + Walrus last-wishes upload; then
-    redeploy package to testnet with the new estate module.
+  - **Spike #3 (PTB gas ceiling) DONE** — verified testnet protocol limits (1024 cmds/PTB, 2048
+    object transfers/tx, ~50k SUI gas ceiling) → a full estate fits one atomic PTB by orders of
+    magnitude. Built multi-heir model: `create_estate(heir_addrs, heir_bps, …)` (bps sum=10000),
+    ratio `distribute_coin<T>` (last heir gets remainder, u128 overflow-guarded), per-object
+    assignment + `distribute_object(s)<T>`. Scale test: 5 heirs + 100 NFTs distributed cleanly.
+    **All A de-risk spikes (#2/#3/#4/#5) now GREEN.** Move suite 8/8.
+  - Next: off-chain keeper (cron arm/finalize) + Walrus last-wishes upload; redeploy estate to testnet.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.

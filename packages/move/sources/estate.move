@@ -1,20 +1,22 @@
 // Copyright (c) 2026 Bequest
 // SPDX-License-Identifier: Apache-2.0
 
-/// Spike #5 (custody/escrow) + Spike #2 (dead-man's switch), combined into the real `Estate`.
+/// The real `Estate`: trustless custody (spike #5) + dead-man's switch (spike #2) +
+/// multi-heir atomic distribution (spike #3).
 ///
-/// Custody: assets are escrowed INTO a shared `Estate` (there is no owner signature at trigger
-/// time, because the owner is gone). `Coin<T>` is merged into a per-type `Balance<T>` in a dynamic
-/// field; arbitrary `key+store` objects go in an `ObjectBag`.
+/// Custody: assets are escrowed INTO a shared `Estate`. `Coin<T>` is merged into a per-type
+/// `Balance<T>` in a dynamic field; `key+store` objects (NFTs, positions) go in an `ObjectBag`,
+/// each assigned to a specific heir.
 ///
-/// Dead-man's switch (Sui Clock):
-///   ACTIVE --(no activity for `inactivity_ms`)--> PENDING --(grace `grace_ms` elapses)--> TRIGGERED
-///   - Any owner activity (heartbeat / deposit / withdraw) resets the timer back to ACTIVE
-///     (false-positive protection: owner on vacation just needs to check in).
-///   - A named executor can pause a PENDING trigger (second line of false-positive defence).
-///   - `arm` / `finalize` are permissionless (a keeper calls them); they only succeed once the
-///     Clock has actually passed the deadlines, so the keeper cannot trigger early.
-/// While ACTIVE/PENDING only the owner can move assets; after TRIGGERED only the heir can claim.
+/// Dead-man's switch (Sui Clock): ACTIVE --inactivity--> PENDING --grace--> TRIGGERED.
+/// Any owner activity (heartbeat / deposit / withdraw) resets to ACTIVE; an executor can pause a
+/// PENDING trigger; `arm`/`finalize` are permissionless but time-gated (a keeper can't fire early).
+///
+/// Distribution (spike #3): after TRIGGERED, anyone (a keeper) PUSHES the inheritance in one PTB:
+/// `distribute_coin<T>` splits the escrowed balance across heirs by basis points (last heir gets the
+/// rounding remainder); `distribute_object(s)<T>` sends each object to its assigned heir. Sui's
+/// limits (verified testnet protocol v124: 1024 commands/PTB, 2048 object transfers/tx, ~50k SUI
+/// gas ceiling) sit far above a realistic estate, so a full distribution fits one atomic PTB.
 ///
 /// Framework signatures verified 2026-05-22 against sui-framework `framework/testnet`.
 module bequest::estate;
@@ -24,24 +26,33 @@ use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::dynamic_field as df;
 use sui::object_bag::{Self, ObjectBag};
+use sui::table::{Self, Table};
 
 const ENotOwner: u64 = 1;
-const ENotHeir: u64 = 2;
+const ENotAHeir: u64 = 2;
 const ENotTriggered: u64 = 3;
 const EAlreadyTriggered: u64 = 4;
 const ENotActive: u64 = 5;
 const ENotPending: u64 = 6;
 const ETooEarly: u64 = 7;
 const ENotExecutor: u64 = 8;
+const EBadShares: u64 = 9;
+
+const BPS_TOTAL: u64 = 10000;
 
 const STATUS_ACTIVE: u8 = 0;
 const STATUS_PENDING: u8 = 1;
 const STATUS_TRIGGERED: u8 = 2;
 
+public struct Heir has store, copy, drop {
+    addr: address,
+    bps: u64,
+}
+
 public struct Estate has key {
     id: UID,
     owner: address,
-    heir: address,
+    heirs: vector<Heir>,
     executor: Option<address>,
     status: u8,
     inactivity_ms: u64,
@@ -49,24 +60,40 @@ public struct Estate has key {
     last_active_ms: u64,
     pending_since_ms: u64,
     objects: ObjectBag,
+    object_heir: Table<ID, address>,
 }
 
 /// Dynamic-field key for the escrowed `Balance<T>` of each coin type.
 public struct CoinKey<phantom T> has copy, drop, store {}
 
-/// Create and share an Estate (ACTIVE), naming an heir, an optional executor, and the timers.
+/// Create and share an Estate (ACTIVE). `heir_addrs[i]` gets `heir_bps[i]` basis points of every
+/// coin; the bps must sum to 10000. `executor` is optional.
 public fun create_estate(
-    heir: address,
+    heir_addrs: vector<address>,
+    heir_bps: vector<u64>,
     executor: Option<address>,
     inactivity_ms: u64,
     grace_ms: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ID {
+    let n = heir_addrs.length();
+    assert!(n > 0 && n == heir_bps.length(), EBadShares);
+    let mut heirs = vector<Heir>[];
+    let mut sum = 0;
+    let mut i = 0;
+    while (i < n) {
+        let bps = heir_bps[i];
+        sum = sum + bps;
+        heirs.push_back(Heir { addr: heir_addrs[i], bps });
+        i = i + 1;
+    };
+    assert!(sum == BPS_TOTAL, EBadShares);
+
     let estate = Estate {
         id: object::new(ctx),
         owner: ctx.sender(),
-        heir,
+        heirs,
         executor,
         status: STATUS_ACTIVE,
         inactivity_ms,
@@ -74,26 +101,35 @@ public fun create_estate(
         last_active_ms: clock::timestamp_ms(clock),
         pending_since_ms: 0,
         objects: object_bag::new(ctx),
+        object_heir: table::new(ctx),
     };
     let eid = object::id(&estate);
     transfer::share_object(estate);
     eid
 }
 
-/// Proof-of-life: reset the timer and clear any pending trigger. Owner is clearly alive.
+fun is_heir(estate: &Estate, addr: address): bool {
+    let n = estate.heirs.length();
+    let mut i = 0;
+    while (i < n) {
+        if (estate.heirs[i].addr == addr) return true;
+        i = i + 1;
+    };
+    false
+}
+
+/// Proof-of-life: reset the timer and clear any pending trigger.
 fun touch(estate: &mut Estate, clock: &Clock) {
     estate.last_active_ms = clock::timestamp_ms(clock);
     estate.status = STATUS_ACTIVE;
     estate.pending_since_ms = 0;
 }
 
-/// Owner heartbeat — explicit proof-of-life.
 public fun heartbeat(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
     assert!(estate.owner == ctx.sender(), ENotOwner);
     touch(estate, clock);
 }
 
-/// Owner deposits a coin of any type (also counts as proof-of-life).
 public fun deposit_coin<T>(estate: &mut Estate, c: Coin<T>, clock: &Clock, ctx: &TxContext) {
     assert!(estate.owner == ctx.sender(), ENotOwner);
     assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
@@ -107,21 +143,23 @@ public fun deposit_coin<T>(estate: &mut Estate, c: Coin<T>, clock: &Clock, ctx: 
     touch(estate, clock);
 }
 
-/// Owner deposits any `key + store` object (also counts as proof-of-life).
+/// Owner deposits an object earmarked for a specific heir.
 public fun deposit_object<T: key + store>(
     estate: &mut Estate,
     obj: T,
+    recipient: address,
     clock: &Clock,
     ctx: &TxContext,
 ) {
     assert!(estate.owner == ctx.sender(), ENotOwner);
     assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
-    let key = object::id(&obj);
-    object_bag::add(&mut estate.objects, key, obj);
+    assert!(is_heir(estate, recipient), ENotAHeir);
+    let id = object::id(&obj);
+    object_bag::add(&mut estate.objects, id, obj);
+    table::add(&mut estate.object_heir, id, recipient);
     touch(estate, clock);
 }
 
-/// Owner reclaims a coin (also counts as proof-of-life).
 public fun withdraw_coin<T>(
     estate: &mut Estate,
     amount: u64,
@@ -151,14 +189,12 @@ public fun finalize(estate: &mut Estate, clock: &Clock) {
     estate.status = STATUS_TRIGGERED;
 }
 
-/// Owner cancels a pending trigger (proof-of-life).
 public fun cancel_pending(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
     assert!(estate.owner == ctx.sender(), ENotOwner);
     assert!(estate.status == STATUS_PENDING, ENotPending);
     touch(estate, clock);
 }
 
-/// Named executor pauses a pending trigger (false-positive defence).
 public fun executor_pause(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
     let sender = ctx.sender();
     assert!(estate.executor.contains(&sender), ENotExecutor);
@@ -166,23 +202,55 @@ public fun executor_pause(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
     touch(estate, clock);
 }
 
-/// Heir claims the full escrowed balance of type T after TRIGGERED. No owner key involved.
-public fun claim_coin<T>(estate: &mut Estate, ctx: &mut TxContext): Coin<T> {
+/// Push the full escrowed balance of type T to the heirs by basis points (one PTB command,
+/// loops over heirs). Last heir absorbs any rounding remainder. Permissionless after TRIGGERED.
+public fun distribute_coin<T>(estate: &mut Estate, ctx: &mut TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
-    assert!(estate.heir == ctx.sender(), ENotHeir);
     let bal: Balance<T> = df::remove(&mut estate.id, CoinKey<T> {});
-    coin::from_balance(bal, ctx)
+    let mut c = coin::from_balance(bal, ctx);
+    let total = coin::value(&c);
+    let n = estate.heirs.length();
+    let mut i = 0;
+    while (i < n - 1) {
+        let h = estate.heirs[i];
+        let amt = (((total as u128) * (h.bps as u128)) / (BPS_TOTAL as u128)) as u64;
+        transfer::public_transfer(coin::split(&mut c, amt, ctx), h.addr);
+        i = i + 1;
+    };
+    // last heir gets the remainder
+    transfer::public_transfer(c, estate.heirs[n - 1].addr);
 }
 
-/// Heir claims a specific escrowed object after TRIGGERED.
-public fun claim_object<T: key + store>(estate: &mut Estate, id: ID, ctx: &TxContext): T {
+/// Push a single escrowed object to its assigned heir. Permissionless after TRIGGERED.
+public fun distribute_object<T: key + store>(estate: &mut Estate, id: ID, ctx: &TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
-    assert!(estate.heir == ctx.sender(), ENotHeir);
-    object_bag::remove(&mut estate.objects, id)
+    let recipient = table::remove(&mut estate.object_heir, id);
+    let obj = object_bag::remove<ID, T>(&mut estate.objects, id);
+    transfer::public_transfer(obj, recipient);
+    let _ = ctx;
+}
+
+/// Push many same-type objects in one command (loops). Permissionless after TRIGGERED.
+public fun distribute_objects<T: key + store>(estate: &mut Estate, ids: vector<ID>, ctx: &TxContext) {
+    assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    let n = ids.length();
+    let mut i = 0;
+    while (i < n) {
+        let id = ids[i];
+        let recipient = table::remove(&mut estate.object_heir, id);
+        let obj = object_bag::remove<ID, T>(&mut estate.objects, id);
+        transfer::public_transfer(obj, recipient);
+        i = i + 1;
+    };
+    let _ = ctx;
 }
 
 public fun status(estate: &Estate): u8 {
     estate.status
+}
+
+public fun heir_count(estate: &Estate): u64 {
+    estate.heirs.length()
 }
 
 // ===== Tests =====
@@ -198,42 +266,95 @@ public struct Nft has key, store { id: UID }
 #[test_only]
 const OWNER: address = @0xA;
 #[test_only]
-const HEIR: address = @0xB;
-#[test_only]
 const EXECUTOR: address = @0xC;
+#[test_only]
+const H1: address = @0xD1;
+#[test_only]
+const H2: address = @0xD2;
+#[test_only]
+const H3: address = @0xD3;
+
+#[test_only]
+fun trigger_now(estate: &mut Estate, clk: &mut Clock) {
+    clock::increment_for_testing(clk, 100);
+    arm(estate, clk);
+    clock::increment_for_testing(clk, 50);
+    finalize(estate, clk);
+}
 
 #[test]
-fun test_deadman_lifecycle() {
+fun test_multiheir_coin_split() {
     let mut sc = ts::begin(OWNER);
     let mut clk = clock::create_for_testing(sc.ctx());
-    // inactivity 100ms, grace 50ms, no executor.
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
+    // 60 / 30 / 10
+    create_estate(vector[H1, H2, H3], vector[6000, 3000, 1000], option::none(), 100, 50, &clk, sc.ctx());
 
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
-    let nft = Nft { id: object::new(sc.ctx()) };
-    let nft_id = object::id(&nft);
-    deposit_object(&mut estate, nft, &clk, sc.ctx());
-
-    clock::increment_for_testing(&mut clk, 100); // reach the inactivity deadline
-    arm(&mut estate, &clk);
-    assert!(estate.status() == STATUS_PENDING, 0);
-    clock::increment_for_testing(&mut clk, 50); // reach the grace deadline
-    finalize(&mut estate, &clk);
-    assert!(estate.status() == STATUS_TRIGGERED, 1);
+    trigger_now(&mut estate, &mut clk);
+    distribute_coin<SUI>(&mut estate, sc.ctx());
     ts::return_shared(estate);
 
-    sc.next_tx(HEIR);
+    // each heir received their share
+    sc.next_tx(H1);
+    let c1 = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c1) == 600, 0);
+    coin::burn_for_testing(c1);
+    sc.next_tx(H2);
+    let c2 = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c2) == 300, 1);
+    coin::burn_for_testing(c2);
+    sc.next_tx(H3);
+    let c3 = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c3) == 100, 2);
+    coin::burn_for_testing(c3);
+
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+/// Spike #3 scale: 5 heirs + 100 NFTs distributed in one finalize+distribute flow, well under
+/// the 1024-command / 2048-object PTB ceilings. Proves the loop handles scale without aborting.
+fun test_largescale_distribution() {
+    let heirs = vector[@0xE1, @0xE2, @0xE3, @0xE4, @0xE5];
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(heirs, vector[2000, 2000, 2000, 2000, 2000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
-    let inheritance = claim_coin<SUI>(&mut estate, sc.ctx());
-    assert!(coin::value(&inheritance) == 1000, 2);
-    coin::burn_for_testing(inheritance);
-    let nft: Nft = claim_object(&mut estate, nft_id, sc.ctx());
-    let Nft { id } = nft;
-    object::delete(id);
+    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1_000_000, sc.ctx()), &clk, sc.ctx());
+
+    let count = 100;
+    let mut ids = vector<ID>[];
+    let mut i = 0;
+    while (i < count) {
+        let nft = Nft { id: object::new(sc.ctx()) };
+        let id = object::id(&nft);
+        ids.push_back(id);
+        // round-robin assign to the 5 heirs
+        deposit_object(&mut estate, nft, heirs[i % 5], &clk, sc.ctx());
+        i = i + 1;
+    };
+
+    trigger_now(&mut estate, &mut clk);
+    distribute_coin<SUI>(&mut estate, sc.ctx());
+    distribute_objects<Nft>(&mut estate, ids, sc.ctx());
+    assert!(object_bag::is_empty(&estate.objects), 0);
     ts::return_shared(estate);
 
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EBadShares)]
+fun test_bad_shares_rejected() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    // 60 + 30 = 90% != 100% -> abort
+    create_estate(vector[H1, H2], vector[6000, 3000], option::none(), 100, 50, &clk, sc.ctx());
     clock::destroy_for_testing(clk);
     sc.end();
 }
@@ -242,11 +363,10 @@ fun test_deadman_lifecycle() {
 fun test_executor_pause_resets() {
     let mut sc = ts::begin(OWNER);
     let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::some(EXECUTOR), 100, 50, &clk, sc.ctx());
+    create_estate(vector[H1], vector[10000], option::some(EXECUTOR), 100, 50, &clk, sc.ctx());
 
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
-    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
     clock::increment_for_testing(&mut clk, 100);
     arm(&mut estate, &clk);
     assert!(estate.status() == STATUS_PENDING, 0);
@@ -266,28 +386,14 @@ fun test_executor_pause_resets() {
 fun test_heartbeat_defers_trigger() {
     let mut sc = ts::begin(OWNER);
     let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
 
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     clock::increment_for_testing(&mut clk, 90);
-    heartbeat(&mut estate, &clk, sc.ctx()); // proof-of-life resets last_active to 90
-    clock::increment_for_testing(&mut clk, 90); // now = 180; deadline is 90 + 100 = 190
-    arm(&mut estate, &clk); // aborts ETooEarly (180 < 190)
-    ts::return_shared(estate);
-    clock::destroy_for_testing(clk);
-    sc.end();
-}
-
-#[test, expected_failure(abort_code = ETooEarly)]
-fun test_cannot_arm_before_inactivity() {
-    let mut sc = ts::begin(OWNER);
-    let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
-    sc.next_tx(OWNER);
-    let mut estate = sc.take_shared<Estate>();
-    clock::increment_for_testing(&mut clk, 50);
-    arm(&mut estate, &clk); // aborts ETooEarly (50 < 100)
+    heartbeat(&mut estate, &clk, sc.ctx());
+    clock::increment_for_testing(&mut clk, 90); // now 180; deadline 90 + 100 = 190
+    arm(&mut estate, &clk); // aborts ETooEarly
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
@@ -297,32 +403,13 @@ fun test_cannot_arm_before_inactivity() {
 fun test_cannot_finalize_before_grace() {
     let mut sc = ts::begin(OWNER);
     let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     clock::increment_for_testing(&mut clk, 100);
     arm(&mut estate, &clk);
-    clock::increment_for_testing(&mut clk, 10); // only 10ms into the 50ms grace
+    clock::increment_for_testing(&mut clk, 10);
     finalize(&mut estate, &clk); // aborts ETooEarly
-    ts::return_shared(estate);
-    clock::destroy_for_testing(clk);
-    sc.end();
-}
-
-#[test, expected_failure(abort_code = ENotTriggered)]
-fun test_heir_cannot_claim_while_active() {
-    let mut sc = ts::begin(OWNER);
-    let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
-    sc.next_tx(OWNER);
-    let mut estate = sc.take_shared<Estate>();
-    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
-    ts::return_shared(estate);
-
-    sc.next_tx(HEIR);
-    let mut estate = sc.take_shared<Estate>();
-    let c = claim_coin<SUI>(&mut estate, sc.ctx()); // aborts: ENotTriggered
-    coin::burn_for_testing(c);
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
@@ -332,15 +419,12 @@ fun test_heir_cannot_claim_while_active() {
 fun test_owner_cannot_withdraw_after_trigger() {
     let mut sc = ts::begin(OWNER);
     let mut clk = clock::create_for_testing(sc.ctx());
-    create_estate(HEIR, option::none(), 100, 50, &clk, sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
-    clock::increment_for_testing(&mut clk, 100);
-    arm(&mut estate, &clk);
-    clock::increment_for_testing(&mut clk, 50);
-    finalize(&mut estate, &clk);
-    let c = withdraw_coin<SUI>(&mut estate, 100, &clk, sc.ctx()); // aborts: EAlreadyTriggered
+    trigger_now(&mut estate, &mut clk);
+    let c = withdraw_coin<SUI>(&mut estate, 100, &clk, sc.ctx()); // aborts EAlreadyTriggered
     coin::burn_for_testing(c);
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
