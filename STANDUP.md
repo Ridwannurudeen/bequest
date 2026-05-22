@@ -27,6 +27,12 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     (publish digest `9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw`).
   - **Live spike #4 PASSED** vs real Seal testnet key servers: decrypt DENIED while ACTIVE →
     flip TRIGGERED → decrypt SUCCEEDED + plaintext recovered. Seal conditional decryption PROVEN.
-  - Next: spike #2 (dead-man's-switch: inactivity + Sui Clock) → wire `estate.move` trigger to a keeper.
+  - **Spike #2 (dead-man's switch) DONE** — `estate.move` now has the Clock-based state machine
+    ACTIVE→PENDING→TRIGGERED: `arm`/`finalize` (permissionless keeper, time-gated), heartbeat +
+    deposit/withdraw reset the timer, `executor_pause` cancels a pending trigger. **8/8 Move tests
+    pass** (incl. heartbeat-defers-trigger, executor-pause, can't-arm-early, can't-finalize-early).
+    Note: deposit/withdraw/heartbeat/create now take `&Clock` — SDK interface to reflect this.
+  - Next: keeper service (off-chain cron calling arm/finalize) + Walrus last-wishes upload; then
+    redeploy package to testnet with the new estate module.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.
