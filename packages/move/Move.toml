@@ -2,8 +2,10 @@
 name = "bequest"
 edition = "2024.beta"
 
+# Sui framework + MoveStdlib resolve as implicit system dependencies, pinned to the rev baked
+# into the Sui CLI — so we keep this clean and portable (no git pin, no local path).
+# Offline / flaky-network build bootstrap: see packages/move/README.md.
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 
 [addresses]
 bequest = "0x0"

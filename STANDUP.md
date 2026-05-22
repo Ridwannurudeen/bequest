@@ -20,6 +20,9 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     field + objects via ObjectBag), owner withdraw while ACTIVE, heir claim after TRIGGERED with
     no owner key. 1 lifecycle test + 2 expected-failure tests. Framework sigs verified vs
     framework/testnet. NOT yet compiled — needs `sui move test`.
-  - Next: install Sui CLI (suiup / `choco install sui`), `sui move test`, publish to testnet, run #4.
+  - **Move tests 4/4 GREEN** on sui 1.72.2. Framework-clone failure (flaky net) solved by
+    pre-seeding the `~/.move` cache — see `packages/move/README.md`. Move.toml kept clean/portable.
+    Fixed `df::exists_`→`df::exists`.
+  - Next: publish to testnet + run seal spike #4 on-chain (needs a funded testnet address).
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
-- **Blockers:** Sui CLI not installed on A's machine — needed to compile/test/publish Move.
+- **Blockers:** none for Move build/test. On-chain run needs a funded testnet address.

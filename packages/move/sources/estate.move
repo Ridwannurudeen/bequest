@@ -64,7 +64,7 @@ public fun deposit_coin<T>(estate: &mut Estate, c: Coin<T>, ctx: &TxContext) {
     assert!(estate.owner == ctx.sender(), ENotOwner);
     assert!(estate.status == STATUS_ACTIVE, ENotActive);
     let key = CoinKey<T> {};
-    if (df::exists_(&estate.id, key)) {
+    if (df::exists(&estate.id, key)) {
         let bal: &mut Balance<T> = df::borrow_mut(&mut estate.id, key);
         balance::join(bal, coin::into_balance(c));
     } else {
