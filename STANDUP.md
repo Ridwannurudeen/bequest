@@ -43,6 +43,13 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     emits EstateCreated/Armed/Triggered). `packages/keeper` (TS) discovers estates via events, reads
     timers, drives `arm`/`finalize`. **Live test PASSED**: seed → armed (ACTIVE→PENDING) →
     finalized (→TRIGGERED) → idempotent no-op. Run `npm run keeper` or `npm run keeper:watch`.
-  - Next (A): Walrus last-wishes upload (pairs with the proven Seal gate). (B): zkLogin/Enoki claim flow + frontend.
+  - **Last-wishes (Seal + Walrus) DONE.** Added `estate::seal_approve` (status-gated), redeployed —
+    new package id (prepend 0x): `696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`.
+    `packages/wishes`: Seal-encrypt letter → store on Walrus (HTTP publisher) → decrypt DENIED while
+    ACTIVE → arm+finalize → fetch from Walrus + decrypt SUCCEEDS. **Live testnet run PASSED.**
+    (Walrus SDK direct-write was flaky from this network — switched to the official publisher/
+    aggregator HTTP API; public testnet publisher subsidises storage, no WAL needed.)
+  - **All Sui-stack primitives integrated + proven on testnet: object model, PTBs, Clock, Seal, Walrus.**
+  - Next (A): wire distribution into the post-trigger flow / redeploy convenience; (B): zkLogin/Enoki claim flow + frontend.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.

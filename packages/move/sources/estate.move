@@ -38,6 +38,7 @@ const ENotPending: u64 = 6;
 const ETooEarly: u64 = 7;
 const ENotExecutor: u64 = 8;
 const EBadShares: u64 = 9;
+const ENoAccess: u64 = 10;
 
 const BPS_TOTAL: u64 = 10000;
 
@@ -260,6 +261,28 @@ public fun status(estate: &Estate): u8 {
 
 public fun heir_count(estate: &Estate): u64 {
     estate.heirs.length()
+}
+
+/// Seal access policy for the encrypted last-wishes: the key servers release the decryption key
+/// ONLY when (1) the requested key-id is in this estate's namespace ([pkg id][estate id][nonce])
+/// and (2) the estate has been TRIGGERED. Called read-only by Seal key servers via dry-run.
+entry fun seal_approve(id: vector<u8>, estate: &Estate) {
+    assert!(is_prefix(estate.id.to_bytes(), id), ENoAccess);
+    assert!(estate.status == STATUS_TRIGGERED, ENoAccess);
+}
+
+fun is_prefix(prefix: vector<u8>, word: vector<u8>): bool {
+    if (prefix.length() > word.length()) {
+        return false
+    };
+    let mut i = 0;
+    while (i < prefix.length()) {
+        if (prefix[i] != word[i]) {
+            return false
+        };
+        i = i + 1;
+    };
+    true
 }
 
 // ===== Tests =====

@@ -1,0 +1,21 @@
+{
+  "name": "bequest-wishes",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Encrypted last-wishes: Seal-encrypt to an estate, store on Walrus, decrypt only after TRIGGERED.",
+  "scripts": {
+    "wishes": "tsx src/wishes.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mysten/seal": "1.1.3",
+    "@mysten/sui": "2.17.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
