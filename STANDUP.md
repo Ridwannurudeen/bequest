@@ -50,6 +50,9 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
     (Walrus SDK direct-write was flaky from this network — switched to the official publisher/
     aggregator HTTP API; public testnet publisher subsidises storage, no WAL needed.)
   - **All Sui-stack primitives integrated + proven on testnet: object model, PTBs, Clock, Seal, Walrus.**
-  - Next (A): wire distribution into the post-trigger flow / redeploy convenience; (B): zkLogin/Enoki claim flow + frontend.
+  - **Distribution live DONE.** `packages/keeper/src/distribute.ts`: create 2-heir estate (70/30) →
+    deposit 0.1 SUI → **arm+finalize+distribute_coin in ONE atomic PTB** → verified heir1=70%, heir2=30%
+    on-chain. **Full lifecycle proven live: create → deposit → trigger → distribute.**
+  - **Lane A backend COMPLETE + proven on testnet.** Next: hand to B for zkLogin/Enoki claim flow + frontend.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.
