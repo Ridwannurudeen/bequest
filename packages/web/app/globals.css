@@ -315,6 +315,132 @@ h3 {
   color: rgba(251, 244, 223, 0.66);
 }
 
+.simulator {
+  align-items: start;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+  margin: 110px auto 0;
+  max-width: 1200px;
+}
+
+.simulator-copy p:not(.kicker) {
+  color: rgba(28, 23, 17, 0.7);
+  font-size: 1.18rem;
+  line-height: 1.55;
+  max-width: 600px;
+}
+
+.simulator-panel {
+  background: rgba(255, 250, 235, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 34px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.flow-tabs {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 14px;
+}
+
+.flow-tabs button {
+  background: rgba(28, 23, 17, 0.08);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  color: rgba(28, 23, 17, 0.72);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  padding: 12px;
+}
+
+.flow-tabs button.active,
+.flow-tabs button:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  outline: none;
+}
+
+.mock-screen {
+  background:
+    radial-gradient(circle at 84% 8%, rgba(213, 164, 71, 0.28), transparent 15rem),
+    rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(28, 23, 17, 0.12);
+  border-radius: 28px;
+  padding: 24px;
+}
+
+.mock-label {
+  color: var(--clay);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.mock-screen h3 {
+  margin-top: 18px;
+}
+
+.mock-screen ol {
+  counter-reset: flow;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+}
+
+.mock-screen li {
+  align-items: center;
+  background: rgba(28, 23, 17, 0.06);
+  border-radius: 18px;
+  display: flex;
+  gap: 12px;
+  padding: 13px;
+}
+
+.mock-screen li::before {
+  align-items: center;
+  background: var(--gold);
+  border-radius: 50%;
+  color: var(--ink);
+  content: counter(flow);
+  counter-increment: flow;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.mock-result {
+  background: rgba(24, 63, 53, 0.1);
+  border: 1px solid rgba(24, 63, 53, 0.14);
+  border-radius: 18px;
+  color: var(--cypress);
+  font-weight: 900;
+  line-height: 1.35;
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.call-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.call-stack code {
+  font-size: 0.76rem;
+}
+
 .section,
 .estate-section {
   margin: 110px auto 0;
@@ -562,6 +688,7 @@ footer {
   }
 
   .hero,
+  .simulator,
   .estate-section,
   .flow-grid {
     grid-template-columns: 1fr;
@@ -629,6 +756,10 @@ footer {
 
   .flow-card {
     min-height: 0;
+  }
+
+  .flow-tabs {
+    grid-template-columns: 1fr;
   }
 
   .spike-row {
