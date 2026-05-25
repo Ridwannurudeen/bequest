@@ -480,6 +480,36 @@ dd {
   gap: 12px;
 }
 
+.readiness-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0 0 20px;
+}
+
+.readiness-grid div {
+  background: rgba(28, 23, 17, 0.88);
+  border-radius: 24px;
+  color: var(--paper);
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.readiness-grid span {
+  color: rgba(251, 244, 223, 0.64);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.readiness-grid strong {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+
 .spike-row {
   align-items: center;
   display: grid;
@@ -542,7 +572,8 @@ footer {
   }
 
   .proof-strip,
-  .sdk-list {
+  .sdk-list,
+  .readiness-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -591,7 +622,8 @@ footer {
   }
 
   .proof-strip,
-  .sdk-list {
+  .sdk-list,
+  .readiness-grid {
     grid-template-columns: 1fr;
   }
 
