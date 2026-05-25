@@ -16,6 +16,7 @@ primitive. Run it to prove the headline feature before building.
 ```
 bequest/
 ├── packages/
+│   ├── web/                  # Lane B product frontend (Next.js, mocked SDK contract)
 │   ├── move/                 # Move package `bequest`
 │   │   ├── Move.toml         #   edition 2024.beta, Sui framework/testnet
 │   │   └── sources/gate.move #   Gate + status-gated seal_approve (spike #4)
@@ -23,6 +24,20 @@ bequest/
 │       ├── src/spike.ts
 │       └── README.md         #   full setup + run instructions
 ```
+
+## Lane B frontend
+The first product surface lives in `packages/web`. It is intentionally mocked against the frozen
+`bequest-sdk` signatures so the owner setup, heir claim, and executor dashboard can progress before
+Lane A's testnet SDK is fully wired.
+
+```
+cd packages/web
+npm install
+npm run check
+```
+
+The current UI is not the final Enoki integration. It is the product skeleton and launch surface:
+clear flows, metadata, SVG logo/favicon, OG image, and a typed mock SDK replacement point.
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are

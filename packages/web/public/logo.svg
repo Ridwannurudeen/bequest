@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-labelledby="title">
+  <title id="title">Bequest logo</title>
+  <rect x="6" y="6" width="108" height="108" rx="34" fill="#1c1711"/>
+  <path d="M33 84V31h25c13 0 21 6 21 16 0 6-3 10-8 13 8 2 13 8 13 16 0 11-9 18-23 18H33Zm16-31h8c4 0 6-2 6-6s-3-6-7-6h-7v12Zm0 30h10c5 0 8-3 8-7s-3-7-8-7H49v14Z" fill="#fbf4df"/>
+  <path d="M83 84c-8 0-14-6-14-15s6-15 14-15 14 6 14 15-6 15-14 15Zm0-10c3 0 5-2 5-5s-2-5-5-5-5 2-5 5 2 5 5 5Z" fill="#d5a447"/>
+  <text x="140" y="76" fill="#1c1711" font-family="Georgia, serif" font-size="54" font-weight="700" letter-spacing="-3">Bequest</text>
+</svg>
