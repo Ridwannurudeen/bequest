@@ -1,5 +1,6 @@
 import { bequestSdkMock, formatDuration, ratioLabel, sdkContract } from "../lib/bequest-sdk";
 import { getPublicConfig, isConfigured } from "../lib/config";
+import { FlowSimulator } from "../components/flow-simulator";
 
 const flowSteps = [
   {
@@ -130,6 +131,8 @@ export default async function Home() {
           <span>Assets escrowed on Sui</span>
         </div>
       </section>
+
+      <FlowSimulator />
 
       <section className="section" id="flows">
         <div className="section-heading">
