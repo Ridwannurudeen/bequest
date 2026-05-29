@@ -1,4 +1,5 @@
 import { bequestSdkMock, formatDuration, ratioLabel, sdkContract } from "../lib/bequest-sdk";
+import { getPublicConfig, isConfigured } from "../lib/config";
 
 const flowSteps = [
   {
@@ -47,6 +48,7 @@ const spikeRows = [
 
 export default async function Home() {
   const estate = await bequestSdkMock.readEstate("demo");
+  const config = getPublicConfig();
 
   return (
     <main>
@@ -208,6 +210,24 @@ export default async function Home() {
         <div className="section-heading narrow">
           <p className="kicker">Phase 0 gates</p>
           <h2>What must be proven before the beautiful demo matters.</h2>
+        </div>
+        <div className="readiness-grid" aria-label="Lane B integration readiness">
+          <div>
+            <span>Sui network</span>
+            <strong>{config.network}</strong>
+          </div>
+          <div>
+            <span>Package ID</span>
+            <strong>{isConfigured(config.packageId)}</strong>
+          </div>
+          <div>
+            <span>Enoki public key</span>
+            <strong>{isConfigured(config.enokiPublicApiKey)}</strong>
+          </div>
+          <div>
+            <span>Backend routes</span>
+            <strong>Ready</strong>
+          </div>
         </div>
         <div className="spike-board">
           {spikeRows.map((spike) => (

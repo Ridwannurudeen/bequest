@@ -26,9 +26,17 @@ npm run check
 - Executor dashboard narrative
 - SVG favicon/logo/OG image
 - Launch metadata for app previews
+- Enoki backend route scaffolding for nonce, ZKP, address lookup, sponsorship, and execution
 
 Not included yet:
 
 - Real Enoki zkLogin
 - Sponsored transaction wiring
 - Testnet estate reads/writes
+
+## Enoki prep
+
+Copy `.env.example` to `.env.local`, then fill the public and server-only Enoki keys.
+
+The server routes live under `/api/enoki/*`. Keep `ENOKI_PRIVATE_API_KEY` server-side only.
+See `../../docs/spikes/enoki-integration-plan.md` for the exact spike acceptance criteria.

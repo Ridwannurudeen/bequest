@@ -38,6 +38,7 @@ npm run check
 
 The current UI is not the final Enoki integration. It is the product skeleton and launch surface:
 clear flows, metadata, SVG logo/favicon, OG image, and a typed mock SDK replacement point.
+Enoki integration prep lives in `docs/spikes/enoki-integration-plan.md`.
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
