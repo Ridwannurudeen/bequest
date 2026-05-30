@@ -21,6 +21,7 @@ npm run dev
 
 ```
 npm run check
+npm run verify:claim-kind
 ```
 
 ## Scope
@@ -51,6 +52,9 @@ See `../../docs/spikes/enoki-integration-plan.md` for the exact spike acceptance
 The claim bytes route lives at `/api/claim/transaction-kind`. It accepts `{ "estateId": "0x..." }`
 and returns `transactionBlockKindBytes` for the configured claim target. Pipe those bytes into
 `/api/enoki/sponsor` once Enoki keys are configured.
+
+`npm run verify:claim-kind` does the same proof without running the web server: it finds a live
+`EstateCreated` object for the current package and builds sponsor-ready transaction-kind bytes.
 
 By default, Lane B targets the deployed SUI distribution call:
 

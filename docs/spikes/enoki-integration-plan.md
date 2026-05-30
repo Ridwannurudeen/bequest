@@ -104,3 +104,13 @@ Claim tx digest: ...
 Gas sponsor: Enoki
 Failure mode if sponsorship is disabled: ...
 ```
+
+Pre-Enoki sanity check:
+
+```
+cd packages/web
+npm run verify:claim-kind
+```
+
+This proves the configured claim/distribution target can be encoded into Sui transaction-kind bytes
+before sponsorship is attempted.
