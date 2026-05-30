@@ -31,6 +31,7 @@ npm run check
 - SVG favicon/logo/OG image
 - Launch metadata for app previews
 - Enoki backend route scaffolding for nonce, ZKP, address lookup, sponsorship, and execution
+- Claim transaction-kind builder for the default Enoki-sponsored distribution call
 - Public claim receipt page for the eventual gasless heir claim proof
 - Default sponsored claim target: `estate::distribute_coin<0x2::sui::SUI>`
 
@@ -46,6 +47,10 @@ Copy `.env.example` to `.env.local`, then fill the public and server-only Enoki 
 
 The server routes live under `/api/enoki/*`. Keep `ENOKI_PRIVATE_API_KEY` server-side only.
 See `../../docs/spikes/enoki-integration-plan.md` for the exact spike acceptance criteria.
+
+The claim bytes route lives at `/api/claim/transaction-kind`. It accepts `{ "estateId": "0x..." }`
+and returns `transactionBlockKindBytes` for the configured claim target. Pipe those bytes into
+`/api/enoki/sponsor` once Enoki keys are configured.
 
 By default, Lane B targets the deployed SUI distribution call:
 

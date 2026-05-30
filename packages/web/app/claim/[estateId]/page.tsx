@@ -30,7 +30,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
   const config = getPublicConfig();
   const packageId = resolvedPackageId(config);
   const target = claimTarget(config);
-  const typeArguments = claimTypeArguments();
+  const typeArguments = claimTypeArguments(config);
   const steps = claimReadiness(config);
 
   return (
@@ -108,7 +108,9 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
         <div className="claim-target-card">
           <p className="kicker">Target contract call</p>
           <h3>{target}</h3>
-          <p className="mono-line">typeArguments: {typeArguments.join(", ")}</p>
+          <p className="mono-line">
+            typeArguments: {typeArguments.length > 0 ? typeArguments.join(", ") : "none"}
+          </p>
           <p>
             The first gasless claim proof should sponsor this existing deployed Sui
             distribution call. It does not need a new contract: after the estate is

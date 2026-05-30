@@ -50,12 +50,15 @@ export function claimTarget(config: PublicBequestConfig) {
   );
 }
 
-export function claimTypeArguments() {
-  return [suiCoinType];
+export function claimTypeArguments(config: PublicBequestConfig) {
+  return config.claimTarget ? [] : [suiCoinType];
 }
 
 export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] {
   const target = claimTarget(config);
+  const typeArguments = claimTypeArguments(config);
+  const typeArgumentLabel =
+    typeArguments.length > 0 ? `<${typeArguments.join(", ")}>` : "";
   return [
     {
       label: "Sui package",
@@ -70,7 +73,7 @@ export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] 
     {
       label: "Heir claim target",
       state: "done",
-      detail: `${target}<${suiCoinType}> is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`
+      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`
     },
     {
       label: "Enoki sponsor",

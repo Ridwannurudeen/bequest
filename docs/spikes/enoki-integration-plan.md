@@ -56,9 +56,11 @@ that distributes the SUI balance to all named heirs. If Lane A later ships a ded
 - `POST /api/enoki/address`
 - `POST /api/enoki/sponsor`
 - `POST /api/enoki/execute`
+- `POST /api/claim/transaction-kind`
 
 These routes are intentionally thin wrappers around Enoki. They validate request shape, keep the
-private key server-side, and centralize allowlists.
+private key server-side, and centralize allowlists. The claim transaction-kind route is not an
+Enoki call; it builds the Sui transaction-kind bytes that `/api/enoki/sponsor` expects.
 
 ## Spike #1 acceptance
 
@@ -86,7 +88,7 @@ To mark sponsored claim as proven:
 1. Use a clean heir account with no SUI.
 2. Use the default `estate::distribute_coin<0x2::sui::SUI>` target, or set
    `NEXT_PUBLIC_BEQUEST_CLAIM_TARGET` if Lane A ships a dedicated claim function.
-3. Build a claim/distribution transaction kind in the frontend.
+3. Call `/api/claim/transaction-kind` with the triggered estate object id.
 4. Call `/api/enoki/sponsor`.
 5. Sign returned bytes through the Enoki/zkLogin account.
 6. Call `/api/enoki/execute`.
