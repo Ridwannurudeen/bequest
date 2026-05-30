@@ -90,6 +90,9 @@ export default async function Home() {
             <a href="#flows" className="button primary">
               View product flows
             </a>
+            <a href="/claim/demo" className="button secondary">
+              Open claim receipt
+            </a>
             <a href="#spikes" className="button secondary">
               Phase 0 gates
             </a>
@@ -170,6 +173,9 @@ export default async function Home() {
           <div>
             <p className="kicker">What Lane B proves next</p>
             <h3>Turn the family story into a gasless heir receipt.</h3>
+            <a className="text-link" href="/claim/demo">
+              Open the receipt surface
+            </a>
           </div>
           <div className="gate-list">
             {openGates.map((gate) => (

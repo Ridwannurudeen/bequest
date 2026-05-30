@@ -54,7 +54,8 @@ export const openGates = [
   },
   {
     label: "Public claim receipt",
-    state: "Next proof",
-    detail: "Add a single receipt page that shows estate status, claim tx, and letter unlock proof."
+    state: "Scaffolded",
+    detail:
+      "A receipt page now shows the estate, heir, package, claim target boundary, and Enoki readiness."
   }
 ] as const;

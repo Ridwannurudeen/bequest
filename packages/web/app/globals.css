@@ -201,6 +201,16 @@ h3 {
   background: rgba(255, 255, 255, 0.32);
 }
 
+.text-link {
+  color: var(--cypress);
+  display: inline-flex;
+  font-weight: 900;
+  margin-top: 20px;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
 .claim-card {
   background:
     linear-gradient(160deg, rgba(255, 251, 237, 0.95), rgba(226, 198, 142, 0.84)),
@@ -828,6 +838,125 @@ dd {
   white-space: nowrap;
 }
 
+.receipt-hero {
+  align-items: start;
+  display: grid;
+  gap: 34px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.58fr);
+  margin: 74px auto 0;
+  max-width: 1200px;
+}
+
+.receipt-card,
+.claim-target-card,
+.receipt-step {
+  background: rgba(255, 250, 235, 0.66);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 45px rgba(28, 23, 17, 0.08);
+}
+
+.receipt-card {
+  border-radius: 34px;
+  padding: 26px;
+}
+
+.receipt-card-top {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 34px;
+}
+
+.receipt-card-top span,
+.receipt-step span {
+  color: var(--clay);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.receipt-card-top strong {
+  background: rgba(24, 63, 53, 0.1);
+  border: 1px solid rgba(24, 63, 53, 0.14);
+  border-radius: 999px;
+  color: var(--cypress);
+  font-size: 0.84rem;
+  padding: 9px 12px;
+}
+
+.receipt-card h2 {
+  font-size: clamp(4rem, 8vw, 7rem);
+}
+
+.receipt-section {
+  margin: 90px auto 0;
+  max-width: 1200px;
+}
+
+.receipt-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.receipt-step {
+  border-radius: 26px;
+  display: grid;
+  gap: 14px;
+  min-height: 245px;
+  padding: 20px;
+}
+
+.receipt-step h3 {
+  font-size: clamp(1.55rem, 2.1vw, 2.15rem);
+}
+
+.receipt-step p,
+.claim-target-card p {
+  color: rgba(28, 23, 17, 0.66);
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.receipt-step.done {
+  background: rgba(24, 63, 53, 0.1);
+}
+
+.receipt-step.waiting {
+  background: rgba(213, 164, 71, 0.14);
+}
+
+.receipt-step.next {
+  background: rgba(47, 93, 124, 0.11);
+}
+
+.claim-target-card {
+  border-radius: 34px;
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 28px;
+}
+
+.claim-target-card h3 {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.claim-target-card a {
+  color: var(--cypress);
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
 footer {
   color: rgba(28, 23, 17, 0.62);
   display: flex;
@@ -843,10 +972,12 @@ footer {
   }
 
   .hero,
+  .receipt-hero,
   .simulator,
   .proof-header,
   .proof-card-grid,
   .next-proof-panel,
+  .receipt-grid,
   .estate-section,
   .flow-grid {
     grid-template-columns: 1fr;
@@ -858,6 +989,7 @@ footer {
 
   .proof-strip,
   .proof-card-grid,
+  .receipt-grid,
   .sdk-list,
   .readiness-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -909,6 +1041,7 @@ footer {
 
   .proof-strip,
   .proof-card-grid,
+  .receipt-grid,
   .sdk-list,
   .readiness-grid {
     grid-template-columns: 1fr;

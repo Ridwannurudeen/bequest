@@ -36,6 +36,7 @@ Required for real integration:
 ```
 NEXT_PUBLIC_SUI_NETWORK=testnet
 NEXT_PUBLIC_BEQUEST_PACKAGE_ID=0x...
+NEXT_PUBLIC_BEQUEST_CLAIM_TARGET=0xPACKAGE::estate::claim
 NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY=...
 ENOKI_PRIVATE_API_KEY=...
 ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::claim
@@ -78,11 +79,13 @@ Attack note: what happens if the Google account is compromised?
 To mark sponsored claim as proven:
 
 1. Use a clean heir account with no SUI.
-2. Build a claim transaction kind in the frontend.
-3. Call `/api/enoki/sponsor`.
-4. Sign returned bytes through the Enoki/zkLogin account.
-5. Call `/api/enoki/execute`.
-6. Verify the claim transaction lands on Sui testnet and the heir paid no gas.
+2. Confirm the Lane A heir-claim Move target and set `NEXT_PUBLIC_BEQUEST_CLAIM_TARGET`.
+3. Build a claim transaction kind in the frontend.
+4. Call `/api/enoki/sponsor`.
+5. Sign returned bytes through the Enoki/zkLogin account.
+6. Call `/api/enoki/execute`.
+7. Verify the claim transaction lands on Sui testnet and the heir paid no gas.
+8. Pin the digest on `/claim/demo` so the receipt shows estate, identity binding, sponsor, and tx.
 
 Verdict format:
 
