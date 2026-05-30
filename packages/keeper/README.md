@@ -24,6 +24,20 @@ npm install
 npm run typecheck
 ```
 
+## Verify the live package
+This check needs no private key. It reads the published package from Sui RPC and confirms the
+`estate` and `gate` modules still expose the Move surface claimed by the web app.
+
+```
+npm run verify:proof
+```
+
+Override `NETWORK` or `PACKAGE_ID` if you want to verify a different deployment:
+
+```
+NETWORK=testnet PACKAGE_ID=0x... npm run verify:proof
+```
+
 ## Run
 ```
 npm run keeper          # single pass — for cron / systemd timer

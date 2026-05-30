@@ -40,6 +40,17 @@ The current UI is not the final Enoki integration. It is the product skeleton an
 clear flows, metadata, SVG logo/favicon, OG image, and a typed mock SDK replacement point.
 Enoki integration prep lives in `docs/spikes/enoki-integration-plan.md`.
 
+## Live testnet proof
+The current Sui testnet package is published at
+`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. Judges can verify the
+package surface without private keys:
+
+```
+cd packages/keeper
+npm install
+npm run verify:proof
+```
+
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
 a contract; bump the version if a spike forces a change.
