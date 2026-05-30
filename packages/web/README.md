@@ -7,8 +7,8 @@ contract. Replace `bequestSdkMock` with the real SDK adapter once the testnet pa
 configuration are ready.
 
 The public claim receipt surface lives at `/claim/demo`. It is intentionally honest: it shows the
-current testnet package and Enoki readiness boundary, but does not claim a sponsored tx exists until
-the Enoki keys and Lane A heir-claim Move target are configured.
+current testnet package, the default claim target, and the Enoki readiness boundary, but does not
+claim a sponsored tx exists until the Enoki keys are configured and a live sponsored digest lands.
 
 ## Run
 
@@ -32,12 +32,13 @@ npm run check
 - Launch metadata for app previews
 - Enoki backend route scaffolding for nonce, ZKP, address lookup, sponsorship, and execution
 - Public claim receipt page for the eventual gasless heir claim proof
+- Default sponsored claim target: `estate::distribute_coin<0x2::sui::SUI>`
 
 Not included yet:
 
 - Real Enoki zkLogin
 - Sponsored transaction wiring
-- A confirmed heir-claim Move entrypoint
+- A live Enoki-sponsored claim/distribution digest
 
 ## Enoki prep
 
@@ -46,7 +47,13 @@ Copy `.env.example` to `.env.local`, then fill the public and server-only Enoki 
 The server routes live under `/api/enoki/*`. Keep `ENOKI_PRIVATE_API_KEY` server-side only.
 See `../../docs/spikes/enoki-integration-plan.md` for the exact spike acceptance criteria.
 
-Once Lane A confirms the target, set:
+By default, Lane B targets the deployed SUI distribution call:
+
+```
+ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::distribute_coin
+```
+
+If Lane A later adds a dedicated heir claim entrypoint, override the public target too:
 
 ```
 NEXT_PUBLIC_BEQUEST_CLAIM_TARGET=0xPACKAGE::estate::claim

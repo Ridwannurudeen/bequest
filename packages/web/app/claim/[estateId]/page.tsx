@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   claimReadiness,
   claimTarget,
+  claimTypeArguments,
   demoClaimReceipt,
   explorerObjectUrl,
   resolvedPackageId
@@ -29,6 +30,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
   const config = getPublicConfig();
   const packageId = resolvedPackageId(config);
   const target = claimTarget(config);
+  const typeArguments = claimTypeArguments();
   const steps = claimReadiness(config);
 
   return (
@@ -105,11 +107,14 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
 
         <div className="claim-target-card">
           <p className="kicker">Target contract call</p>
-          <h3>{target ?? "Waiting for confirmed heir claim entrypoint"}</h3>
+          <h3>{target}</h3>
+          <p className="mono-line">typeArguments: {typeArguments.join(", ")}</p>
           <p>
-            The app will only route Enoki sponsorship to the confirmed claim target and
-            the allowlisted package. Until then, the UI stays honest: no fake claim
-            transaction, no fake sponsor digest.
+            The first gasless claim proof should sponsor this existing deployed Sui
+            distribution call. It does not need a new contract: after the estate is
+            Triggered, the heir can trigger the SUI split for every named heir. Until
+            sponsorship lands, the UI stays honest: no fake claim transaction, no fake
+            sponsor digest.
           </p>
           <a href={explorerObjectUrl(packageId)}>Open current package on SuiScan</a>
         </div>

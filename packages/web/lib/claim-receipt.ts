@@ -19,6 +19,8 @@ export type ClaimReceiptStep = {
   detail: string;
 };
 
+export const suiCoinType = "0x2::sui::SUI";
+
 export const demoClaimReceipt: ClaimReceipt = {
   estateId: "demo",
   heirLabel: "Maya",
@@ -42,10 +44,18 @@ export function resolvedPackageId(config: PublicBequestConfig) {
 }
 
 export function claimTarget(config: PublicBequestConfig) {
-  return config.claimTarget;
+  return (
+    config.claimTarget ??
+    `${resolvedPackageId(config)}::${config.estateModule}::distribute_coin`
+  );
+}
+
+export function claimTypeArguments() {
+  return [suiCoinType];
 }
 
 export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] {
+  const target = claimTarget(config);
   return [
     {
       label: "Sui package",
@@ -59,10 +69,8 @@ export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] 
     },
     {
       label: "Heir claim target",
-      state: config.claimTarget ? "done" : "waiting",
-      detail:
-        config.claimTarget ??
-        "Waiting for Lane A to confirm the exact heir claim Move entrypoint."
+      state: "done",
+      detail: `${target}<${suiCoinType}> is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`
     },
     {
       label: "Enoki sponsor",

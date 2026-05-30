@@ -921,6 +921,14 @@ dd {
   overflow-wrap: anywhere;
 }
 
+.claim-target-card .mono-line {
+  color: var(--blue);
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
 .receipt-step.done {
   background: rgba(24, 63, 53, 0.1);
 }

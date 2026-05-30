@@ -48,14 +48,15 @@ export const openGates = [
     detail: "Resolve a Google identity to the same heir binding the owner pre-named."
   },
   {
-    label: "Enoki sponsored claim",
+    label: "Enoki sponsored distribution",
     state: "Next proof",
-    detail: "Have the heir claim without wallet funding or SUI gas."
+    detail:
+      "Sponsor estate::distribute_coin<SUI> so the heir can trigger distribution without wallet funding or SUI gas."
   },
   {
     label: "Public claim receipt",
     state: "Scaffolded",
     detail:
-      "A receipt page now shows the estate, heir, package, claim target boundary, and Enoki readiness."
+      "A receipt page now shows the estate, heir, package, default distribution target, and Enoki readiness."
   }
 ] as const;

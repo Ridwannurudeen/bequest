@@ -16,8 +16,9 @@ Live testnet proof surface in progress.
   distribution.
 - Lane B web surface shows the current package/proof boundary and a public `/claim/demo` receipt.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
-- Remaining dependency: Lane A must confirm the heir-claim Move target, then Lane B can wire Enoki
-  sponsorship and generate the first real gasless claim digest.
+- Remaining dependency: Enoki credentials and a live sponsored transaction. Lane B can use the
+  existing `estate::distribute_coin<0x2::sui::SUI>` path first; a later dedicated Lane A `claim`
+  entrypoint can override it if needed.
 
 ## Repo layout
 ```

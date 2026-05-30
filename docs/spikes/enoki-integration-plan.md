@@ -22,7 +22,7 @@ This is the implementation checklist for the two Lane B proof gates:
 4. Create a private API key enabled for sponsored transactions on Sui testnet.
 5. Configure sponsored transaction allowlists:
    - allowed addresses: Bequest package, estate objects, Sui clock if needed
-   - allowed Move targets: only Bequest estate claim/setup calls that the UI uses
+   - allowed Move targets: only Bequest estate claim/distribution calls that the UI uses
 6. Add local and deployed origins:
    - `http://localhost:3000`
    - production preview URL when known
@@ -36,13 +36,18 @@ Required for real integration:
 ```
 NEXT_PUBLIC_SUI_NETWORK=testnet
 NEXT_PUBLIC_BEQUEST_PACKAGE_ID=0x...
-NEXT_PUBLIC_BEQUEST_CLAIM_TARGET=0xPACKAGE::estate::claim
 NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY=...
 ENOKI_PRIVATE_API_KEY=...
-ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::claim
+ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::distribute_coin
 ```
 
 Keep `ENOKI_PRIVATE_API_KEY` server-only. Never import it into a client component.
+
+`NEXT_PUBLIC_BEQUEST_CLAIM_TARGET` is optional. If unset, Lane B uses the deployed
+`0xPACKAGE::estate::distribute_coin<0x2::sui::SUI>` path as the first gasless claim proof. This is
+not a new contract dependency: after an estate is `TRIGGERED`, the heir can sponsor a transaction
+that distributes the SUI balance to all named heirs. If Lane A later ships a dedicated
+`estate::claim` entrypoint, set `NEXT_PUBLIC_BEQUEST_CLAIM_TARGET` and update the Enoki allowlist.
 
 ## Backend routes added
 
@@ -79,8 +84,9 @@ Attack note: what happens if the Google account is compromised?
 To mark sponsored claim as proven:
 
 1. Use a clean heir account with no SUI.
-2. Confirm the Lane A heir-claim Move target and set `NEXT_PUBLIC_BEQUEST_CLAIM_TARGET`.
-3. Build a claim transaction kind in the frontend.
+2. Use the default `estate::distribute_coin<0x2::sui::SUI>` target, or set
+   `NEXT_PUBLIC_BEQUEST_CLAIM_TARGET` if Lane A ships a dedicated claim function.
+3. Build a claim/distribution transaction kind in the frontend.
 4. Call `/api/enoki/sponsor`.
 5. Sign returned bytes through the Enoki/zkLogin account.
 6. Call `/api/enoki/execute`.
