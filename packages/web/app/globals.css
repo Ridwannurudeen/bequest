@@ -315,6 +315,161 @@ h3 {
   color: rgba(251, 244, 223, 0.66);
 }
 
+.proof-section {
+  margin: 84px auto 0;
+  max-width: 1200px;
+}
+
+.proof-header {
+  align-items: stretch;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.46fr);
+  margin-bottom: 18px;
+}
+
+.proof-header h2 {
+  max-width: 880px;
+}
+
+.package-card {
+  background:
+    radial-gradient(circle at 82% 12%, rgba(213, 164, 71, 0.26), transparent 12rem),
+    rgba(28, 23, 17, 0.9);
+  border: 1px solid rgba(251, 244, 223, 0.16);
+  border-radius: 30px;
+  box-shadow: 0 20px 55px rgba(28, 23, 17, 0.14);
+  color: var(--paper);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 24px;
+}
+
+.package-card span,
+.proof-card span,
+.gate-list span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.package-card span {
+  color: rgba(251, 244, 223, 0.64);
+}
+
+.package-card strong {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.package-card small {
+  color: rgba(251, 244, 223, 0.62);
+  overflow-wrap: anywhere;
+}
+
+.proof-card-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.proof-card {
+  background: rgba(255, 250, 235, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: 0 18px 45px rgba(28, 23, 17, 0.08);
+  display: grid;
+  gap: 18px;
+  min-height: 340px;
+  padding: 22px;
+}
+
+.proof-card div {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.proof-card span {
+  color: var(--clay);
+}
+
+.proof-card b {
+  background: rgba(24, 63, 53, 0.1);
+  border: 1px solid rgba(24, 63, 53, 0.14);
+  border-radius: 999px;
+  color: var(--cypress);
+  font-size: 0.76rem;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.proof-card h3 {
+  font-size: clamp(1.75rem, 2.3vw, 2.5rem);
+}
+
+.proof-card p {
+  color: rgba(28, 23, 17, 0.68);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.proof-card code {
+  align-self: end;
+  overflow-wrap: anywhere;
+}
+
+.next-proof-panel {
+  align-items: start;
+  background: rgba(24, 63, 53, 0.1);
+  border: 1px solid rgba(24, 63, 53, 0.16);
+  border-radius: 34px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 0.5fr) minmax(0, 1fr);
+  margin-top: 18px;
+  padding: 26px;
+}
+
+.next-proof-panel h3 {
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
+}
+
+.gate-list {
+  display: grid;
+  gap: 12px;
+}
+
+.gate-list article {
+  background: rgba(255, 250, 235, 0.62);
+  border: 1px solid rgba(24, 63, 53, 0.12);
+  border-radius: 22px;
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+}
+
+.gate-list span {
+  color: var(--clay);
+}
+
+.gate-list strong {
+  font-family: "Fraunces", "Iowan Old Style", "Georgia", serif;
+  font-size: 1.6rem;
+  letter-spacing: -0.05em;
+}
+
+.gate-list p {
+  color: rgba(28, 23, 17, 0.66);
+  line-height: 1.45;
+  margin: 0;
+}
+
 .simulator {
   align-items: start;
   display: grid;
@@ -689,6 +844,9 @@ footer {
 
   .hero,
   .simulator,
+  .proof-header,
+  .proof-card-grid,
+  .next-proof-panel,
   .estate-section,
   .flow-grid {
     grid-template-columns: 1fr;
@@ -699,6 +857,7 @@ footer {
   }
 
   .proof-strip,
+  .proof-card-grid,
   .sdk-list,
   .readiness-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -749,6 +908,7 @@ footer {
   }
 
   .proof-strip,
+  .proof-card-grid,
   .sdk-list,
   .readiness-grid {
     grid-template-columns: 1fr;

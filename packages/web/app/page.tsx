@@ -1,6 +1,7 @@
 import { bequestSdkMock, formatDuration, ratioLabel, sdkContract } from "../lib/bequest-sdk";
-import { getPublicConfig, isConfigured } from "../lib/config";
+import { getPublicConfig } from "../lib/config";
 import { FlowSimulator } from "../components/flow-simulator";
+import { currentPackage, openGates, proofCards } from "../lib/live-proof";
 
 const flowSteps = [
   {
@@ -47,9 +48,14 @@ const spikeRows = [
   }
 ];
 
+function shortObjectId(value: string) {
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+}
+
 export default async function Home() {
   const estate = await bequestSdkMock.readEstate("demo");
   const config = getPublicConfig();
+  const visiblePackageId = config.packageId ?? currentPackage.packageId;
 
   return (
     <main>
@@ -60,6 +66,7 @@ export default async function Home() {
         </a>
         <div className="nav-links">
           <a href="#flows">Flows</a>
+          <a href="#proof">Proof</a>
           <a href="#estate">Estate</a>
           <a href="#spikes">Spikes</a>
         </div>
@@ -129,6 +136,50 @@ export default async function Home() {
         <div>
           <strong>Shared Estate</strong>
           <span>Assets escrowed on Sui</span>
+        </div>
+      </section>
+
+      <section className="proof-section" id="proof">
+        <div className="proof-header">
+          <div>
+            <p className="kicker">Already live on Sui testnet</p>
+            <h2>Not just a mock: the hard inheritance primitives are proven.</h2>
+          </div>
+          <a className="package-card" href={currentPackage.explorerUrl}>
+            <span>{currentPackage.label}</span>
+            <strong>{currentPackage.packageId}</strong>
+            <small>Publish digest {currentPackage.publishDigest}</small>
+          </a>
+        </div>
+
+        <div className="proof-card-grid">
+          {proofCards.map((proof) => (
+            <article className="proof-card" key={proof.label}>
+              <div>
+                <span>{proof.label}</span>
+                <b>{proof.status}</b>
+              </div>
+              <h3>{proof.title}</h3>
+              <p>{proof.detail}</p>
+              <code>{proof.evidence}</code>
+            </article>
+          ))}
+        </div>
+
+        <div className="next-proof-panel">
+          <div>
+            <p className="kicker">What Lane B proves next</p>
+            <h3>Turn the family story into a gasless heir receipt.</h3>
+          </div>
+          <div className="gate-list">
+            {openGates.map((gate) => (
+              <article key={gate.label}>
+                <span>{gate.state}</span>
+                <strong>{gate.label}</strong>
+                <p>{gate.detail}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -211,8 +262,8 @@ export default async function Home() {
 
       <section className="section" id="spikes">
         <div className="section-heading narrow">
-          <p className="kicker">Phase 0 gates</p>
-          <h2>What must be proven before the beautiful demo matters.</h2>
+          <p className="kicker">Next integration gates</p>
+          <h2>What remains is explicit, scoped, and testable.</h2>
         </div>
         <div className="readiness-grid" aria-label="Lane B integration readiness">
           <div>
@@ -220,12 +271,12 @@ export default async function Home() {
             <strong>{config.network}</strong>
           </div>
           <div>
-            <span>Package ID</span>
-            <strong>{isConfigured(config.packageId)}</strong>
+            <span>Testnet package</span>
+            <strong>{shortObjectId(visiblePackageId)}</strong>
           </div>
           <div>
-            <span>Enoki public key</span>
-            <strong>{isConfigured(config.enokiPublicApiKey)}</strong>
+            <span>Enoki sponsor key</span>
+            <strong>{config.enokiPublicApiKey ? "Configured" : "Pending"}</strong>
           </div>
           <div>
             <span>Backend routes</span>
