@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+
+  keeper:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/keeper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/keeper/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+
+  move:
+    runs-on: ubuntu-latest
+    env:
+      SUI_VERSION: testnet-v1.72.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Move framework
+        uses: actions/cache@v4
+        with:
+          path: ~/.move
+          key: move-framework-${{ env.SUI_VERSION }}
+      - name: Install Sui CLI
+        run: |
+          curl -fsSL -o sui.tgz \
+            "https://github.com/MystenLabs/sui/releases/download/${SUI_VERSION}/sui-${SUI_VERSION}-ubuntu-x86_64.tgz"
+          mkdir -p "$HOME/.sui-bin"
+          tar -xzf sui.tgz -C "$HOME/.sui-bin"
+          echo "$HOME/.sui-bin" >> "$GITHUB_PATH"
+      - name: Sui version
+        run: sui --version
+      - name: Move tests
+        working-directory: packages/move
+        run: sui move test
