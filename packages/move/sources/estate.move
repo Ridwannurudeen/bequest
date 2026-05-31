@@ -462,3 +462,78 @@ fun test_owner_cannot_withdraw_after_trigger() {
     clock::destroy_for_testing(clk);
     sc.end();
 }
+
+#[test]
+fun test_distribute_object_to_assigned_heir() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1, H2], vector[5000, 5000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    let nft = Nft { id: object::new(sc.ctx()) };
+    let id = object::id(&nft);
+    deposit_object(&mut estate, nft, H2, &clk, sc.ctx()); // earmarked for H2
+    trigger_now(&mut estate, &mut clk);
+    distribute_object<Nft>(&mut estate, id, sc.ctx());
+    assert!(object_bag::is_empty(&estate.objects), 0);
+    ts::return_shared(estate);
+
+    sc.next_tx(H2);
+    let got = sc.take_from_sender<Nft>();
+    assert!(object::id(&got) == id, 1);
+    let Nft { id: uid } = got;
+    object::delete(uid);
+
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ENoAccess)]
+fun test_seal_denied_while_active() {
+    let mut sc = ts::begin(OWNER);
+    let clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let estate = sc.take_shared<Estate>();
+    let mut key = estate.id.to_bytes(); // valid namespace: [estate id][nonce]
+    key.push_back(0u8);
+    seal_approve(key, &estate); // ACTIVE -> aborts ENoAccess
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_seal_allowed_after_trigger() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    trigger_now(&mut estate, &mut clk);
+    let mut key = estate.id.to_bytes();
+    key.push_back(7u8);
+    seal_approve(key, &estate); // TRIGGERED + valid namespace -> succeeds
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ENoAccess)]
+fun test_seal_denied_wrong_namespace() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    trigger_now(&mut estate, &mut clk);
+    // key-id NOT in the estate namespace -> denied even though TRIGGERED
+    seal_approve(vector[0u8, 1u8, 2u8, 3u8], &estate);
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
