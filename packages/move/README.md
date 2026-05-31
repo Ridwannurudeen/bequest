@@ -2,19 +2,20 @@
 
 Sui Move contracts for Bequest.
 
-- `sources/gate.move` — **spike #4**: status-gated Seal `seal_approve` (key released only after the
-  estate flips to `TRIGGERED`); key namespace `[pkg id][gate id][nonce]`.
-- `sources/estate.move` — **spike #5**: trustless custody/escrow. `Coin<T>` is merged into a
-  per-type `Balance<T>` in a dynamic field; arbitrary `key+store` objects go in an `ObjectBag`.
-  Owner can deposit/withdraw only while `ACTIVE`; the heir claims after `TRIGGERED` with **no owner
-  key** — authorized purely by on-chain state.
+- `sources/estate.move` — shared `Estate` custody, Clock-based dead-man switch, multi-heir coin
+  distribution, per-object heir assignment, and estate-scoped Seal `seal_approve`.
+- `sources/gate.move` — focused Seal policy spike: a minimal `Gate` object with status-gated
+  `seal_approve` for conditional decryption testing.
 
 ## Build & test
 ```
 sui move test
 sui move build
 ```
-Status: **4/4 tests passing** on Sui CLI 1.72.2 (testnet).
+Status: **8/8 tests passing** on Sui CLI 1.72.2 (testnet).
+
+Current testnet package:
+`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
 
 ## Move.toml — keep it clean
 No dependencies are pinned. The Sui framework + MoveStdlib are **implicit system dependencies**

@@ -4,6 +4,7 @@ export type PublicBequestConfig = {
   network: SuiNetwork;
   packageId?: string;
   estateModule: string;
+  claimTarget?: string;
   enokiPublicApiKey?: string;
   enokiConnectAppSlug?: string;
 };
@@ -36,6 +37,7 @@ export function getPublicConfig(): PublicBequestConfig {
     network: network(process.env.NEXT_PUBLIC_SUI_NETWORK),
     packageId: optional(process.env.NEXT_PUBLIC_BEQUEST_PACKAGE_ID),
     estateModule: process.env.NEXT_PUBLIC_BEQUEST_ESTATE_MODULE?.trim() || "estate",
+    claimTarget: optional(process.env.NEXT_PUBLIC_BEQUEST_CLAIM_TARGET),
     enokiPublicApiKey: optional(process.env.NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY),
     enokiConnectAppSlug: optional(process.env.NEXT_PUBLIC_ENOKI_CONNECT_APP_SLUG)
   };

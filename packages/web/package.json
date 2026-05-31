@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "typecheck": "tsc --noEmit",
+    "verify:claim-kind": "node scripts/verify-claim-kind.mjs",
     "check": "npm run typecheck && npm run build"
   },
   "dependencies": {
+    "@mysten/sui": "^2.17.0",
     "next": "^15.3.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

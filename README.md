@@ -9,20 +9,28 @@ only after the inheritance trigger fires.
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
 
 ## Status
-Phase 0 (de-risk). First spike scaffolded: **#4 Seal conditional decryption** — the make-or-break
-primitive. Run it to prove the headline feature before building.
+Live testnet proof surface in progress.
+
+- Move package published on Sui testnet with `estate` and `gate` modules.
+- Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
+  distribution.
+- Lane B web surface shows the current package/proof boundary and a public `/claim/demo` receipt.
+- Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
+- Remaining dependency: Enoki credentials and a live sponsored transaction. Lane B can use the
+  existing `estate::distribute_coin<0x2::sui::SUI>` path first; a later dedicated Lane A `claim`
+  entrypoint can override it if needed.
 
 ## Repo layout
 ```
 bequest/
 ├── packages/
-│   ├── web/                  # Lane B product frontend (Next.js, mocked SDK contract)
-│   ├── move/                 # Move package `bequest`
-│   │   ├── Move.toml         #   edition 2024.beta, Sui framework/testnet
-│   │   └── sources/gate.move #   Gate + status-gated seal_approve (spike #4)
-│   └── seal-spike/           # TS spike for #4 (encrypt → deny while ACTIVE → trigger → decrypt)
-│       ├── src/spike.ts
-│       └── README.md         #   full setup + run instructions
+│   ├── move/                 # Sui Move package: Estate custody + dead-man switch + Seal policy
+│   ├── web/                  # Lane B frontend, proof surface, Enoki route scaffolding
+│   ├── keeper/               # Event-driven keeper + live package verifier
+│   ├── wishes/               # Seal + Walrus last-wishes proof
+│   └── seal-spike/           # Earlier focused Seal conditional-decryption spike
+├── docs/spikes/              # Enoki, legal, product-flow, and Lane B planning notes
+└── STANDUP.md                # Build log and deployed-package history
 ```
 
 ## Lane B frontend
@@ -39,6 +47,17 @@ npm run check
 The current UI is not the final Enoki integration. It is the product skeleton and launch surface:
 clear flows, metadata, SVG logo/favicon, OG image, and a typed mock SDK replacement point.
 Enoki integration prep lives in `docs/spikes/enoki-integration-plan.md`.
+
+## Live testnet proof
+The current Sui testnet package is published at
+`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. Judges can verify the
+package surface without private keys:
+
+```
+cd packages/keeper
+npm install
+npm run verify:proof
+```
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
@@ -66,12 +85,12 @@ decryptWishes(estateId)            // only resolves after status == Triggered
 - **Seal policy:** `seal_approve(id, gate/estate)` releases the key only when status is
   `Triggered` and the key-id is in the object's namespace `[pkg id][object id][nonce]`.
 
-## Run the first spike
-See `packages/seal-spike/README.md`. Short version (needs the Sui CLI installed + a funded
-testnet address):
-```powershell
-cd packages/move && sui move build && sui move test && sui client publish --gas-budget 200000000
-cd ../seal-spike && npm install && npm run spike
+## Core checks
+
+```
+cd packages/move && sui move test
+cd ../web && npm install && npm run check
+cd ../keeper && npm install && npm run typecheck && npm run verify:proof
 ```
 
 ## Verified toolchain (2026-05-22)
