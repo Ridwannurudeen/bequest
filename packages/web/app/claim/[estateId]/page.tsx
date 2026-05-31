@@ -11,6 +11,7 @@ import {
 import { getPublicConfig } from "../../../lib/config";
 import { readEstateOnChain } from "../../../lib/estate-onchain";
 import { ratioLabel } from "../../../lib/bequest-sdk";
+import { ClaimAction } from "../../../components/claim-action";
 
 const OBJECT_ID = /^0x[0-9a-fA-F]{64}$/;
 
@@ -114,6 +115,10 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
                 <dd>Seal-gated; unlocks after Triggered</dd>
               </div>
             </dl>
+            <ClaimAction
+              estateId={estateId}
+              claimable={live.status === "Triggered"}
+            />
           </aside>
         ) : (
           <aside className="receipt-card" aria-label="Claim receipt summary">
