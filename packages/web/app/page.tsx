@@ -112,8 +112,8 @@ export default async function Home() {
             executor can stop false triggers before assets move.
           </p>
           <div className="hero-actions">
-            <a href="#flows" className="button primary">
-              View product flows
+            <a href="/create" className="button primary">
+              Create an estate
             </a>
             <a href="/claim/demo" className="button secondary">
               Open claim receipt
