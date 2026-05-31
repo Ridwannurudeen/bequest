@@ -50,19 +50,19 @@ function enokiHeaders(apiKey: string, zkLoginJwt?: string) {
   return {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
-    ...(zkLoginJwt ? { "zklogin-jwt": zkLoginJwt } : {})
+    ...(zkLoginJwt ? { "zklogin-jwt": zkLoginJwt } : {}),
   };
 }
 
 export async function enokiRequest<T>(
   path: string,
-  { method = "POST", body, zkLoginJwt }: EnokiRequestOptions = {}
+  { method = "POST", body, zkLoginJwt }: EnokiRequestOptions = {},
 ) {
   const response = await fetch(`${ENOKI_API_BASE}${path}`, {
     method,
     headers: enokiHeaders(requiredPrivateApiKey(), zkLoginJwt),
     body: body === undefined ? undefined : JSON.stringify(body),
-    cache: "no-store"
+    cache: "no-store",
   });
 
   const payload = await response.json().catch(() => null);
@@ -83,8 +83,8 @@ export async function createNonce(input: {
     body: {
       network,
       ephemeralPublicKey: input.ephemeralPublicKey,
-      additionalEpochs: input.additionalEpochs
-    }
+      additionalEpochs: input.additionalEpochs,
+    },
   });
 }
 
@@ -101,15 +101,15 @@ export async function createZkLoginProof(input: {
       network,
       ephemeralPublicKey: input.ephemeralPublicKey,
       maxEpoch: input.maxEpoch,
-      randomness: input.randomness
-    }
+      randomness: input.randomness,
+    },
   });
 }
 
 export async function getZkLoginAddress(zkLoginJwt: string) {
   return enokiRequest<ZkLoginAddressResponse>("/zklogin", {
     method: "GET",
-    zkLoginJwt
+    zkLoginJwt,
   });
 }
 
@@ -121,18 +121,27 @@ export async function createSponsoredTransaction(input: {
   const { network } = getPublicConfig();
   const { allowedAddresses, allowedMoveCallTargets } = getServerEnokiConfig();
 
-  return enokiRequest<SponsoredTransactionResponse>("/transaction-blocks/sponsor", {
-    zkLoginJwt: input.zkLoginJwt,
-    body: {
-      network,
-      transactionBlockKindBytes: input.transactionBlockKindBytes,
-      sender: input.sender,
-      allowedAddresses: allowedAddresses.length ? allowedAddresses : undefined,
-      allowedMoveCallTargets: allowedMoveCallTargets.length
-        ? allowedMoveCallTargets
-        : undefined
-    }
-  });
+  if (allowedMoveCallTargets.length === 0) {
+    throw new Error(
+      "Sponsorship refused: ENOKI_ALLOWED_MOVE_TARGETS is empty. Set a non-empty allow-list of Move targets (e.g. 0xPACKAGE::estate::distribute_coin) before sponsoring transactions.",
+    );
+  }
+
+  return enokiRequest<SponsoredTransactionResponse>(
+    "/transaction-blocks/sponsor",
+    {
+      zkLoginJwt: input.zkLoginJwt,
+      body: {
+        network,
+        transactionBlockKindBytes: input.transactionBlockKindBytes,
+        sender: input.sender,
+        allowedAddresses: allowedAddresses.length
+          ? allowedAddresses
+          : undefined,
+        allowedMoveCallTargets,
+      },
+    },
+  );
 }
 
 export async function executeSponsoredTransaction(input: {
@@ -143,8 +152,8 @@ export async function executeSponsoredTransaction(input: {
     `/transaction-blocks/sponsor/${input.digest}`,
     {
       body: {
-        signature: input.signature
-      }
-    }
+        signature: input.signature,
+      },
+    },
   );
 }
