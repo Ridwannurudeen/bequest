@@ -1,4 +1,8 @@
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import {
+  SuiJsonRpcClient,
+  getJsonRpcFullnodeUrl,
+  type EventId,
+} from "@mysten/sui/jsonRpc";
 import { getPublicConfig, type PublicBequestConfig } from "./config";
 import { resolvedPackageId } from "./claim-receipt";
 import type {
@@ -136,6 +140,30 @@ export async function findLatestEstate(
   });
   const parsed = page.data[0]?.parsedJson as { estate?: string } | undefined;
   return parsed?.estate ?? null;
+}
+
+/** All estate ids from the package's EstateCreated events, newest first. */
+export async function listEstates(
+  config: PublicBequestConfig = getPublicConfig(),
+): Promise<string[]> {
+  const client = rpc(config);
+  const pkg = resolvedPackageId(config);
+  const ids: string[] = [];
+  let cursor: EventId | null | undefined = null;
+  do {
+    const page = await client.queryEvents({
+      query: { MoveEventType: `${pkg}::estate::EstateCreated` },
+      cursor,
+      order: "descending",
+      limit: 50,
+    });
+    for (const ev of page.data) {
+      const id = (ev.parsedJson as { estate?: string }).estate;
+      if (id) ids.push(id);
+    }
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+  return ids;
 }
 
 /**

@@ -90,7 +90,7 @@ export default async function Home() {
         <div className="nav-links">
           <a href="#flows">Flows</a>
           <a href="#proof">Proof</a>
-          <a href="#estate">Estate</a>
+          <a href="/estates">Estates</a>
           <a href="#spikes">Spikes</a>
         </div>
       </nav>
