@@ -5,9 +5,11 @@ discovers every `Estate` (via `EstateCreated` events), reads each one's status +
 
 - `ACTIVE` and `now ≥ last_active + inactivity` → `arm()` (→ PENDING)
 - `PENDING` and `now ≥ pending_since + grace` → `finalize()` (→ TRIGGERED)
+- `TRIGGERED` → distribute every escrowed coin type and object to the heirs in one PTB
 
-`arm`/`finalize` are permissionless and re-check the Clock on-chain, so the keeper can never trigger
-an estate before its real deadline — a buggy or malicious keeper cannot steal time.
+`arm`/`finalize`/`distribute_*` are permissionless and re-check state on-chain, so the keeper can
+never trigger an estate before its real deadline — a buggy or malicious keeper cannot steal time —
+and distribution is a safety net that delivers the inheritance even if no heir submits a claim.
 
 ## Setup
 Create `packages/keeper/.env` (git-ignored — never commit it):
@@ -60,11 +62,13 @@ EnvironmentFile=/opt/bequest/packages/keeper/.env
 
 ## Test it
 `npm run seed` creates an estate with `inactivity=grace=0` (immediately eligible). Then run the
-keeper twice: tick 1 arms it (ACTIVE→PENDING), tick 2 finalizes it (→TRIGGERED), and further ticks
-are no-ops. Override the seed timers with `SEED_INACTIVITY_MS` / `SEED_GRACE_MS`.
+keeper twice: tick 1 arms it (ACTIVE→PENDING), tick 2 finalizes it (→TRIGGERED) and distributes any
+escrowed assets; further ticks are no-ops. Override the seed timers with `SEED_INACTIVITY_MS` /
+`SEED_GRACE_MS`. (`seed` creates an empty estate; deposit a coin/object first to see distribution.)
 
 ## Notes
-- The keeper only **arms/finalizes**. Pushing the inheritance (`distribute_coin`/`distribute_object`)
-  is a separate step a keeper or heir can run after TRIGGERED.
+- On `TRIGGERED` the keeper pushes the inheritance automatically — it enumerates every escrowed
+  `CoinKey<T>` balance and ObjectBag object and distributes each in one PTB. A heir's own (sponsored)
+  claim can still push distribution sooner; the keeper is the safety net.
 - Warning emails/SMS during the grace window are not implemented here — that's a notification layer
   to add on top (the on-chain grace period is what makes warnings safe).

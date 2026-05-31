@@ -5,8 +5,11 @@
  * status + timers, and (3) drives the dead-man's switch:
  *     ACTIVE  and now >= last_active + inactivity  -> arm()      (ACTIVE -> PENDING)
  *     PENDING and now >= pending_since + grace      -> finalize() (PENDING -> TRIGGERED)
- * `arm`/`finalize` are permissionless and re-check the Clock on-chain, so the keeper only needs to
- * be roughly right — it can never trigger an estate before its real deadline.
+ *     TRIGGERED                                     -> distribute every escrowed coin type and
+ *                                                      object to the heirs (one PTB)
+ * `arm`/`finalize`/`distribute_*` are permissionless and re-check state on-chain, so the keeper
+ * only needs to be roughly right — it can never trigger early, and distribution is a safety net
+ * that delivers the inheritance even if no heir ever submits a claim.
  *
  * Run once (cron/systemd-friendly) or with `--watch` to loop every KEEPER_INTERVAL_MS.
  * Verified against @mysten/sui@2.17.0.
@@ -26,6 +29,7 @@ const SUI_SECRET_KEY = process.env.SUI_SECRET_KEY;
 
 const STATUS_ACTIVE = 0;
 const STATUS_PENDING = 1;
+const STATUS_TRIGGERED = 2;
 
 interface EstateFields {
   status: number | string;
@@ -99,6 +103,100 @@ async function call(
   return res.digest;
 }
 
+// Escrowed coin types: each is a `CoinKey<T>` dynamic field on the Estate. Returns each T.
+async function escrowedCoinTypes(
+  client: SuiJsonRpcClient,
+  estateId: string,
+): Promise<string[]> {
+  const types: string[] = [];
+  let cursor: string | null | undefined = null;
+  do {
+    const page = await client.getDynamicFields({ parentId: estateId, cursor });
+    for (const df of page.data) {
+      const name = typeof df.name?.type === "string" ? df.name.type : "";
+      const m = name.match(/::estate::CoinKey<(.+)>$/);
+      if (m) types.push(m[1]);
+    }
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+  return types;
+}
+
+// Escrowed objects in the Estate's ObjectBag, grouped by their Move type (one
+// `distribute_objects<T>` call per type).
+async function escrowedObjectsByType(
+  client: SuiJsonRpcClient,
+  bagId: string,
+): Promise<Map<string, string[]>> {
+  const byType = new Map<string, string[]>();
+  let cursor: string | null | undefined = null;
+  do {
+    const page = await client.getDynamicFields({ parentId: bagId, cursor });
+    for (const df of page.data) {
+      if (!df.objectType || !df.objectId) continue;
+      const ids = byType.get(df.objectType) ?? [];
+      ids.push(df.objectId);
+      byType.set(df.objectType, ids);
+    }
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+  return byType;
+}
+
+async function objectBagId(
+  client: SuiJsonRpcClient,
+  estateId: string,
+): Promise<string | null> {
+  const res = await client.getObject({
+    id: estateId,
+    options: { showContent: true },
+  });
+  const content = res.data?.content;
+  if (!content || content.dataType !== "moveObject") return null;
+  const fields = content.fields as unknown as {
+    objects?: { fields?: { id?: { id?: string } } };
+  };
+  return fields.objects?.fields?.id?.id ?? null;
+}
+
+// Push every escrowed asset (all coin types + all objects) to the heirs in one PTB. Permissionless
+// after TRIGGERED. Returns the tx digest, or null when the estate holds nothing to distribute.
+async function distributeAll(
+  client: SuiJsonRpcClient,
+  keypair: Ed25519Keypair,
+  pkg: string,
+  estateId: string,
+): Promise<string | null> {
+  const coinTypes = await escrowedCoinTypes(client, estateId);
+  const bagId = await objectBagId(client, estateId);
+  const objectsByType = bagId
+    ? await escrowedObjectsByType(client, bagId)
+    : new Map<string, string[]>();
+  if (coinTypes.length === 0 && objectsByType.size === 0) return null;
+
+  const tx = new Transaction();
+  for (const coinType of coinTypes) {
+    tx.moveCall({
+      target: `${pkg}::estate::distribute_coin`,
+      typeArguments: [coinType],
+      arguments: [tx.object(estateId)],
+    });
+  }
+  for (const [objType, ids] of objectsByType) {
+    tx.moveCall({
+      target: `${pkg}::estate::distribute_objects`,
+      typeArguments: [objType],
+      arguments: [tx.object(estateId), tx.pure.vector("id", ids)],
+    });
+  }
+  const res = await client.signAndExecuteTransaction({
+    signer: keypair,
+    transaction: tx,
+  });
+  await client.waitForTransaction({ digest: res.digest });
+  return res.digest;
+}
+
 async function tick(
   client: SuiJsonRpcClient,
   keypair: Ed25519Keypair,
@@ -123,6 +221,17 @@ async function tick(
       console.log(`  ${tag} grace elapsed → finalizing`);
       console.log(
         `    TRIGGERED (${await call(client, keypair, pkg, "finalize", id)})`,
+      );
+      const digest = await distributeAll(client, keypair, pkg, id);
+      console.log(
+        digest ? `    distributed (${digest})` : "    nothing to distribute",
+      );
+    } else if (status === STATUS_TRIGGERED) {
+      const digest = await distributeAll(client, keypair, pkg, id);
+      console.log(
+        digest
+          ? `  ${tag} TRIGGERED → distributed (${digest})`
+          : `  ${tag} TRIGGERED — nothing to distribute`,
       );
     } else {
       console.log(`  ${tag} status=${status} — no action`);
