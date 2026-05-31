@@ -1,30 +1,53 @@
-import { bequestSdkMock, formatDuration, ratioLabel, sdkContract } from "../lib/bequest-sdk";
-import { getPublicConfig } from "../lib/config";
+import {
+  bequestSdkMock,
+  formatDuration,
+  ratioLabel,
+  sdkContract,
+} from "../lib/bequest-sdk";
+import type { EstateView } from "../lib/bequest-sdk";
+import { getPublicConfig, type PublicBequestConfig } from "../lib/config";
+import { findLatestEstate, readEstateOnChain } from "../lib/estate-onchain";
 import { FlowSimulator } from "../components/flow-simulator";
 import { currentPackage, openGates, proofCards } from "../lib/live-proof";
+
+// Read a real estate per request (testnet RPC); fall back to the demo when none exists or the
+// network is unreachable, so the page always renders.
+export const dynamic = "force-dynamic";
+
+async function loadEstate(config: PublicBequestConfig): Promise<EstateView> {
+  try {
+    const estateId = await findLatestEstate(config);
+    if (estateId) return await readEstateOnChain(estateId, config);
+  } catch (error) {
+    console.warn("Live estate read failed; using demo fallback:", error);
+  }
+  return bequestSdkMock.readEstate("demo");
+}
 
 const flowSteps = [
   {
     eyebrow: "Owner setup",
     title: "Sarah locks assets while she is still in control.",
-    body:
-      "Google sign-in through zkLogin, heir bindings, split ratios, inactivity window, SUI/NFT deposits, and an encrypted letter stored behind a Seal policy.",
-    checks: ["Google identity", "Heir ratios", "Estate escrow", "Seal letter"]
+    body: "Google sign-in through zkLogin, heir bindings, split ratios, inactivity window, SUI/NFT deposits, and an encrypted letter stored behind a Seal policy.",
+    checks: ["Google identity", "Heir ratios", "Estate escrow", "Seal letter"],
   },
   {
     eyebrow: "Heir claim",
     title: "Maya never touches a seed phrase.",
-    body:
-      "After the trigger, Maya sees an inheritance banner, signs in with Google, clicks Claim, receives assets gaslessly, then decrypts the letter.",
-    checks: ["Inheritance banner", "Sponsored claim", "Asset arrival", "Letter decrypt"]
+    body: "After the trigger, Maya sees an inheritance banner, signs in with Google, clicks Claim, receives assets gaslessly, then decrypts the letter.",
+    checks: [
+      "Inheritance banner",
+      "Sponsored claim",
+      "Asset arrival",
+      "Letter decrypt",
+    ],
   },
   {
     eyebrow: "Executor dashboard",
     title: "A trusted party can pause a false alarm.",
-    body:
-      "During the grace period, the executor sees the pending trigger and can pause or cancel before the estate becomes claimable.",
-    checks: ["Pending estate", "Grace timer", "Pause/cancel", "Audit trail"]
-  }
+    body: "During the grace period, the executor sees the pending trigger and can pause or cancel before the estate becomes claimable.",
+    checks: ["Pending estate", "Grace timer", "Pause/cancel", "Audit trail"],
+  },
 ];
 
 const spikeRows = [
@@ -32,20 +55,20 @@ const spikeRows = [
     id: "#1",
     name: "zkLogin heir binding",
     status: "Lane B spike",
-    detail: "Can the owner pre-name a Google heir before they onboard?"
+    detail: "Can the owner pre-name a Google heir before they onboard?",
   },
   {
     id: "#6",
     name: "Enoki sponsored claim",
     status: "Lane B spike",
-    detail: "Can Maya complete the claim with no SUI and no wallet funding?"
+    detail: "Can Maya complete the claim with no SUI and no wallet funding?",
   },
   {
     id: "#7",
     name: "Competition + legal scan",
     status: "Lane B spike",
-    detail: "Position as probate augmentation, not a legal replacement."
-  }
+    detail: "Position as probate augmentation, not a legal replacement.",
+  },
 ];
 
 function shortObjectId(value: string) {
@@ -53,8 +76,8 @@ function shortObjectId(value: string) {
 }
 
 export default async function Home() {
-  const estate = await bequestSdkMock.readEstate("demo");
   const config = getPublicConfig();
+  const estate = await loadEstate(config);
   const visiblePackageId = config.packageId ?? currentPackage.packageId;
 
   return (
@@ -82,9 +105,9 @@ export default async function Home() {
             <span>cannot sign.</span>
           </h1>
           <p className="lede">
-            Bequest turns crypto succession into three humane flows: an owner creates a
-            protected estate, an heir claims with Google, and an executor can stop false
-            triggers before assets move.
+            Bequest turns crypto succession into three humane flows: an owner
+            creates a protected estate, an heir claims with Google, and an
+            executor can stop false triggers before assets move.
           </p>
           <div className="hero-actions">
             <a href="#flows" className="button primary">
@@ -106,8 +129,8 @@ export default async function Home() {
           </div>
           <h2>You have inherited assets from {estate.ownerLabel}.</h2>
           <p>
-            Sign in with Google to claim your share. Gas is sponsored. The letter unlocks
-            only after the on-chain trigger.
+            Sign in with Google to claim your share. Gas is sponsored. The
+            letter unlocks only after the on-chain trigger.
           </p>
           <div className="claim-assets">
             {estate.assets.map((asset) => (
@@ -146,7 +169,9 @@ export default async function Home() {
         <div className="proof-header">
           <div>
             <p className="kicker">Already live on Sui testnet</p>
-            <h2>Not just a mock: the hard inheritance primitives are proven.</h2>
+            <h2>
+              Not just a mock: the hard inheritance primitives are proven.
+            </h2>
           </div>
           <a className="package-card" href={currentPackage.explorerUrl}>
             <span>{currentPackage.label}</span>
@@ -194,7 +219,9 @@ export default async function Home() {
       <section className="section" id="flows">
         <div className="section-heading">
           <p className="kicker">The three flows Lane B owns</p>
-          <h2>Make inheritance understandable before making it programmable.</h2>
+          <h2>
+            Make inheritance understandable before making it programmable.
+          </h2>
         </div>
         <div className="flow-grid">
           {flowSteps.map((flow) => (
@@ -214,12 +241,12 @@ export default async function Home() {
 
       <section className="estate-section" id="estate">
         <div className="estate-copy">
-          <p className="kicker">Mocked against the frozen SDK</p>
-          <h2>Frontend work can move before protocol wiring is final.</h2>
+          <p className="kicker">Live, against the frozen SDK</p>
+          <h2>Frontend work moved before protocol wiring was final.</h2>
           <p>
-            This page consumes the Lane A/Lane B contract as typed data. When the real
-            package ships, the mock implementation is replaced without redesigning the
-            product flows.
+            This card reads a real Estate from the testnet package through the
+            frozen SDK contract, falling back to the demo when no estate exists
+            yet — the product flows never had to be redesigned.
           </p>
           <div className="sdk-list" aria-label="Frozen SDK signatures">
             {sdkContract.map((signature) => (
@@ -271,7 +298,10 @@ export default async function Home() {
           <p className="kicker">Next integration gates</p>
           <h2>What remains is explicit, scoped, and testable.</h2>
         </div>
-        <div className="readiness-grid" aria-label="Lane B integration readiness">
+        <div
+          className="readiness-grid"
+          aria-label="Lane B integration readiness"
+        >
           <div>
             <span>Sui network</span>
             <strong>{config.network}</strong>
@@ -282,7 +312,9 @@ export default async function Home() {
           </div>
           <div>
             <span>Enoki sponsor key</span>
-            <strong>{config.enokiPublicApiKey ? "Configured" : "Pending"}</strong>
+            <strong>
+              {config.enokiPublicApiKey ? "Configured" : "Pending"}
+            </strong>
           </div>
           <div>
             <span>Backend routes</span>
