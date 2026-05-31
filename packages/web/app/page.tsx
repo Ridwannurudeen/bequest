@@ -4,6 +4,7 @@ import {
   ratioLabel,
   sdkContract,
 } from "../lib/bequest-sdk";
+import { AuthButton } from "../components/auth-button";
 import type { EstateView } from "../lib/bequest-sdk";
 import { getPublicConfig, type PublicBequestConfig } from "../lib/config";
 import { findLatestEstate, readEstateOnChain } from "../lib/estate-onchain";
@@ -92,6 +93,7 @@ export default async function Home() {
           <a href="#proof">Proof</a>
           <a href="/estates">Estates</a>
           <a href="#spikes">Spikes</a>
+          <AuthButton />
         </div>
       </nav>
 
