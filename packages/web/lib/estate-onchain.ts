@@ -1,7 +1,12 @@
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { getPublicConfig, type PublicBequestConfig } from "./config";
 import { resolvedPackageId } from "./claim-receipt";
-import type { EstateStatus, EstateView, HeirBinding } from "./bequest-sdk";
+import type {
+  Asset,
+  EstateStatus,
+  EstateView,
+  HeirBinding,
+} from "./bequest-sdk";
 
 // On-chain estate::Estate fields as returned by getObject(showContent). Numeric Move fields
 // (u64 timers, heir bps) come back as decimal strings; status is a u8 number; executor is the
@@ -17,7 +22,33 @@ type RawEstateFields = {
   last_active_ms: string;
   pending_since_ms: string;
   heirs: RawHeir[];
+  objects: { fields: { id: { id: string }; size: string } };
 };
+
+// A `Balance<T>` stored as a dynamic field surfaces as a Field whose `value` is the u64 as a
+// decimal string. Verified against the live testnet package on 2026-05-31.
+type RawBalanceField = { value: string };
+
+const SUI_DECIMALS = 9;
+
+function isSuiType(coinType: string): boolean {
+  const parts = coinType.split("::");
+  if (parts.length !== 3) return false;
+  const [addr, mod, name] = parts;
+  // SUI's package address is 0x2; it can appear short (`0x2`) or zero-padded (`0x00…02`).
+  return mod === "sui" && name === "SUI" && addr.replace(/^0x0*/, "") === "2";
+}
+
+// `module::Struct` from a fully-qualified type, dropping address + generics.
+function shortType(t: string): string {
+  return t.split("<")[0].split("::").slice(-2).join("::");
+}
+
+// Coin type T out of `<pkg>::estate::CoinKey<T>`, or null if the field is not a CoinKey.
+function coinTypeFromCoinKey(nameType: string): string | null {
+  const m = nameType.match(/::estate::CoinKey<(.+)>$/);
+  return m ? m[1] : null;
+}
 
 const STATUS_BY_CODE: Record<number, EstateStatus> = {
   0: "Active",
@@ -36,6 +67,62 @@ function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+type Rpc = ReturnType<typeof rpc>;
+
+// Escrowed coin balances: each is a `CoinKey<T>` dynamic field on the Estate whose value is a
+// `Balance<T>`. We page through all dynamic fields and read each balance amount.
+async function readCoinAssets(client: Rpc, estateId: string): Promise<Asset[]> {
+  const assets: Asset[] = [];
+  let cursor: string | null | undefined = null;
+  do {
+    const page = await client.getDynamicFields({ parentId: estateId, cursor });
+    for (const df of page.data) {
+      const coinType =
+        typeof df.name?.type === "string"
+          ? coinTypeFromCoinKey(df.name.type)
+          : null;
+      if (!coinType) continue;
+      const field = await client.getDynamicFieldObject({
+        parentId: estateId,
+        name: df.name,
+      });
+      const content = field.data?.content;
+      const value =
+        content?.dataType === "moveObject"
+          ? (content.fields as unknown as RawBalanceField).value
+          : "0";
+      const sui = isSuiType(coinType);
+      assets.push({
+        type: sui ? "SUI" : "COIN",
+        label: sui ? "SUI balance" : `${shortType(coinType)} balance`,
+        value: sui ? `${Number(value) / 10 ** SUI_DECIMALS} SUI` : value,
+        state: "escrowed",
+      });
+    }
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+  return assets;
+}
+
+// Escrowed objects (NFTs / positions) live in the Estate's ObjectBag, keyed by object id.
+async function readObjectAssets(client: Rpc, bagId: string): Promise<Asset[]> {
+  const assets: Asset[] = [];
+  let cursor: string | null | undefined = null;
+  do {
+    const page = await client.getDynamicFields({ parentId: bagId, cursor });
+    for (const df of page.data) {
+      assets.push({
+        type: "NFT",
+        label: shortType(df.objectType ?? "object"),
+        value: "1 object",
+        state: "escrowed",
+      });
+    }
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+  return assets;
+}
+
 /** Newest estate id from the package's EstateCreated events, or null if none exist. */
 export async function findLatestEstate(
   config: PublicBequestConfig = getPublicConfig(),
@@ -52,15 +139,16 @@ export async function findLatestEstate(
 }
 
 /**
- * Read an on-chain Estate into the EstateView the UI consumes. Maps the verified core fields
- * (owner, status, timers, heirs); asset enumeration (escrowed coin balances + ObjectBag objects)
- * is a follow-up, so `assets` is empty and `wishesBlobId` (off-chain on Walrus) is left blank.
+ * Read an on-chain Estate into the EstateView the UI consumes: core fields (owner, status, timers,
+ * heirs) plus escrowed assets (coin balances via `CoinKey<T>` dynamic fields + ObjectBag objects).
+ * `wishesBlobId` (off-chain on Walrus) is left blank — there is no on-chain source for it.
  */
 export async function readEstateOnChain(
   estateId: string,
   config: PublicBequestConfig = getPublicConfig(),
 ): Promise<EstateView> {
-  const res = await rpc(config).getObject({
+  const client = rpc(config);
+  const res = await client.getObject({
     id: estateId,
     options: { showContent: true, showType: true },
   });
@@ -81,6 +169,11 @@ export async function readEstateOnChain(
 
   const pendingSinceMs = Number(fields.pending_since_ms);
 
+  const [coinAssets, objectAssets] = await Promise.all([
+    readCoinAssets(client, estateId),
+    readObjectAssets(client, fields.objects.fields.id.id),
+  ]);
+
   return {
     estateId,
     owner: fields.owner,
@@ -90,7 +183,7 @@ export async function readEstateOnChain(
     gracePeriodMs: Number(fields.grace_ms),
     executor: fields.executor ? shortAddress(fields.executor) : "None",
     heirs,
-    assets: [],
+    assets: [...coinAssets, ...objectAssets],
     lastActive: new Date(Number(fields.last_active_ms)).toISOString(),
     pendingSince:
       pendingSinceMs > 0 ? new Date(pendingSinceMs).toISOString() : undefined,
