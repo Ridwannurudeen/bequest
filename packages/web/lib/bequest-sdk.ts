@@ -7,7 +7,7 @@ export type HeirBinding = {
 };
 
 export type Asset = {
-  type: "SUI" | "NFT" | "LETTER";
+  type: "SUI" | "COIN" | "NFT" | "LETTER";
   label: string;
   value: string;
   state: "escrowed" | "encrypted" | "claimable";
@@ -69,37 +69,37 @@ const demoEstate: EstateView = {
     {
       label: "Maya",
       binding: "google:maya@example.com",
-      ratioBps: 7000
+      ratioBps: 7000,
     },
     {
       label: "Noah",
       binding: "google:noah@example.com",
-      ratioBps: 3000
-    }
+      ratioBps: 3000,
+    },
   ],
   assets: [
     {
       type: "SUI",
       label: "SUI balance",
       value: "5,000 SUI",
-      state: "escrowed"
+      state: "escrowed",
     },
     {
       type: "NFT",
       label: "Family archive NFT",
       value: "1 object",
-      state: "escrowed"
+      state: "escrowed",
     },
     {
       type: "LETTER",
       label: "Last-wishes letter",
       value: "Walrus blob + Seal policy",
-      state: "encrypted"
-    }
+      state: "encrypted",
+    },
   ],
   lastActive: "2026-02-24T09:30:00.000Z",
   pendingSince: "2026-05-24T09:30:00.000Z",
-  wishesBlobId: "walrus://grandma-sarah-letter"
+  wishesBlobId: "walrus://grandma-sarah-letter",
 };
 
 export const bequestSdkMock: BequestSdk = {
@@ -132,7 +132,7 @@ export const bequestSdkMock: BequestSdk = {
   },
   async decryptWishes() {
     return "My dearest Maya — if you are reading this, the house keys are in the blue tin.";
-  }
+  },
 };
 
 export function formatDuration(ms: number) {
@@ -154,5 +154,5 @@ export const sdkContract = [
   "executorOverride(estateId, action)",
   "readEstate(estateId) -> EstateView",
   "uploadWishes(estateId, blob)",
-  "decryptWishes(estateId)"
+  "decryptWishes(estateId)",
 ] as const;
