@@ -19,7 +19,13 @@ async function postJson(url: string, body: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  return (await res.json()) as Record<string, string | undefined>;
+  return (await res.json()) as Record<string, unknown>;
+}
+
+// Enoki routes wrap their result as { data: {...} }; surface a thrown error message if present.
+function unwrap<T>(res: Record<string, unknown>): T {
+  if (typeof res.error === "string") throw new Error(res.error);
+  return res.data as T;
 }
 
 function ClaimActionInner({
@@ -42,21 +48,25 @@ function ClaimActionInner({
     setState("working");
     setMessage("");
     try {
-      // 1. build the distribute_coin transaction kind for this estate
+      // 1. build the distribute_coin transaction kind for this estate (flat response)
       const kind = await postJson("/api/claim/transaction-kind", {
         estateId,
         sender: address,
       });
-      if (kind.error) throw new Error(kind.error);
+      if (typeof kind.error === "string") throw new Error(kind.error);
+      const transactionBlockKindBytes =
+        kind.transactionBlockKindBytes as string;
 
-      // 2. ask Enoki to sponsor it (gas paid by the app)
-      const sponsored = await postJson("/api/enoki/sponsor", {
-        sender: address,
-        zkLoginJwt: session?.jwt,
-        transactionBlockKindBytes: kind.transactionBlockKindBytes,
-      });
-      if (sponsored.error || !sponsored.bytes || !sponsored.digest) {
-        throw new Error(sponsored.error ?? "Sponsor failed");
+      // 2. ask Enoki to sponsor it (gas paid by the app) — response is { data: { bytes, digest } }
+      const sponsored = unwrap<{ bytes: string; digest: string }>(
+        await postJson("/api/enoki/sponsor", {
+          sender: address,
+          zkLoginJwt: session?.jwt,
+          transactionBlockKindBytes,
+        }),
+      );
+      if (!sponsored?.bytes || !sponsored?.digest) {
+        throw new Error("Sponsor failed");
       }
 
       // 3. sign the sponsored bytes with the heir's zkLogin keypair
@@ -65,15 +75,16 @@ function ClaimActionInner({
         fromBase64(sponsored.bytes),
       );
 
-      // 4. execute
-      const executed = await postJson("/api/enoki/execute", {
-        digest: sponsored.digest,
-        signature,
-      });
-      if (executed.error) throw new Error(executed.error);
+      // 4. execute — response is { data: { digest } }
+      const executed = unwrap<{ digest: string }>(
+        await postJson("/api/enoki/execute", {
+          digest: sponsored.digest,
+          signature,
+        }),
+      );
 
       setState("done");
-      setMessage(executed.digest ?? "");
+      setMessage(executed?.digest ?? sponsored.digest);
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Claim failed");
