@@ -12,7 +12,7 @@ Sui Move contracts for Bequest.
 sui move test
 sui move build
 ```
-Status: **8/8 tests passing** on Sui CLI 1.72.2 (testnet).
+Status: **12/12 tests passing** on Sui CLI 1.72.2 (testnet).
 
 Current testnet package:
 `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
