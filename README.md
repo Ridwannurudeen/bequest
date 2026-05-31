@@ -14,7 +14,10 @@ Live testnet proof surface in progress.
 - Move package published on Sui testnet with `estate` and `gate` modules.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
   distribution.
-- Lane B web surface shows the current package/proof boundary and a public `/claim/demo` receipt.
+- The web app reads a live on-chain estate on the homepage (newest via `EstateCreated` events),
+  falling back to a demo when none exists, plus a public `/claim/demo` receipt.
+- CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
+  `sui move test` on every push and PR.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
 - Remaining dependency: Enoki credentials and a live sponsored transaction. Lane B can use the
   existing `estate::distribute_coin<0x2::sui::SUI>` path first; a later dedicated Lane A `claim`
@@ -34,9 +37,10 @@ bequest/
 ```
 
 ## Lane B frontend
-The first product surface lives in `packages/web`. It is intentionally mocked against the frozen
-`bequest-sdk` signatures so the owner setup, heir claim, and executor dashboard can progress before
-Lane A's testnet SDK is fully wired.
+The first product surface lives in `packages/web`. The read path is wired to the live testnet
+package (the homepage reads a real `Estate`); the remaining write methods stay mocked against the
+frozen `bequest-sdk` signatures until the signing layer lands, so owner setup, heir claim, and the
+executor dashboard can keep progressing.
 
 ```
 cd packages/web
