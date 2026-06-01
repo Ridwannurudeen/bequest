@@ -6,6 +6,7 @@ import { getPublicConfig } from "../../lib/config";
 import { explorerObjectUrl } from "../../lib/claim-receipt";
 import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
 import { ExecutorAction } from "../../components/executor-action";
+import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
 export const dynamic = "force-dynamic";
@@ -71,6 +72,7 @@ export default async function EstatesPage() {
         <div className="nav-links">
           <Link href="/#proof">Proof</Link>
           <Link href="/#estate">Estate</Link>
+          <AuthButton />
         </div>
       </nav>
 
