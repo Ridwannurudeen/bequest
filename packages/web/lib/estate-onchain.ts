@@ -210,6 +210,7 @@ export async function readEstateOnChain(
     inactivityMs: Number(fields.inactivity_ms),
     gracePeriodMs: Number(fields.grace_ms),
     executor: fields.executor ? shortAddress(fields.executor) : "None",
+    executorAddress: fields.executor ?? undefined,
     heirs,
     assets: [...coinAssets, ...objectAssets],
     lastActive: new Date(Number(fields.last_active_ms)).toISOString(),

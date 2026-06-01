@@ -142,9 +142,9 @@ export default async function Home() {
               </div>
             ))}
           </div>
-          <button className="claim-button" type="button">
+          <a className="claim-button" href="/claim/demo">
             Claim with Google
-          </button>
+          </a>
         </div>
       </section>
 

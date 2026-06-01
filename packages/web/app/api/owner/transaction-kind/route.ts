@@ -15,11 +15,13 @@ export async function POST(request: Request) {
       bps?: number[];
       inactivityMs?: number;
       graceMs?: number;
+      executor?: string;
       sender?: string;
     };
 
     const heirs = body.heirs ?? [];
     const bps = body.bps ?? [];
+    const executor = body.executor?.trim() || null;
 
     if (heirs.length === 0 || heirs.length !== bps.length) {
       return NextResponse.json(
@@ -47,6 +49,12 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (executor && !ADDRESS.test(executor)) {
+      return NextResponse.json(
+        { error: "Executor must be a 32-byte Sui address (0x…)." },
+        { status: 400 },
+      );
+    }
 
     const config = getPublicConfig();
     const pkg = resolvedPackageId(config);
@@ -64,7 +72,7 @@ export async function POST(request: Request) {
       arguments: [
         tx.pure.vector("address", heirs),
         tx.pure.vector("u64", bps),
-        tx.pure.option("address", null),
+        tx.pure.option("address", executor),
         tx.pure.u64(Math.max(0, Math.floor(body.inactivityMs ?? 0))),
         tx.pure.u64(Math.max(0, Math.floor(body.graceMs ?? 0))),
         tx.object.clock(),

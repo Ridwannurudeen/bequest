@@ -5,6 +5,7 @@ import { ratioLabel } from "../../lib/bequest-sdk";
 import { getPublicConfig } from "../../lib/config";
 import { explorerObjectUrl } from "../../lib/claim-receipt";
 import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
+import { ExecutorAction } from "../../components/executor-action";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
 export const dynamic = "force-dynamic";
@@ -139,6 +140,11 @@ export default async function EstatesPage() {
                   <Link href={`/claim/${id}`}>Claim receipt</Link>
                   <a href={explorerObjectUrl(id)}>SuiScan</a>
                 </div>
+                <ExecutorAction
+                  estateId={id}
+                  status={view.status}
+                  executorAddress={view.executorAddress}
+                />
               </aside>
             ))}
           </div>
