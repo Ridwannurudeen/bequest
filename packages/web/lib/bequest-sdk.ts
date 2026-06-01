@@ -21,6 +21,7 @@ export type EstateView = {
   inactivityMs: number;
   gracePeriodMs: number;
   executor: string;
+  executorAddress?: string;
   heirs: HeirBinding[];
   assets: Asset[];
   lastActive: string;

@@ -41,6 +41,7 @@ function OwnerSetupInner() {
   ]);
   const [inactivityDays, setInactivityDays] = useState("180");
   const [graceDays, setGraceDays] = useState("14");
+  const [executor, setExecutor] = useState("");
   const [state, setState] = useState<"idle" | "working" | "done" | "error">(
     "idle",
   );
@@ -64,6 +65,7 @@ function OwnerSetupInner() {
         bps,
         inactivityMs: Math.round(Number(inactivityDays) * DAY_MS),
         graceMs: Math.round(Number(graceDays) * DAY_MS),
+        executor: executor.trim() || undefined,
       });
       if (typeof kind.error === "string") throw new Error(kind.error);
 
@@ -162,6 +164,16 @@ function OwnerSetupInner() {
             style={{ width: "6rem" }}
           />
         </label>
+      </div>
+      <div className="nav-links">
+        <input
+          type="text"
+          placeholder="Executor Sui address (optional, 0x…)"
+          value={executor}
+          onChange={(e) => setExecutor(e.target.value)}
+          style={{ minWidth: "22rem" }}
+        />
+        <span>can pause a false trigger</span>
       </div>
       <button
         type="button"
