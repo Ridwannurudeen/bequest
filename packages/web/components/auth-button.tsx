@@ -1,6 +1,7 @@
 "use client";
 
 import { useEnokiFlow, useZkLogin } from "@mysten/enoki/react";
+import { useState } from "react";
 import type { SuiNetwork } from "../lib/config";
 
 const NETWORK =
@@ -14,6 +15,7 @@ function shortAddress(addr: string) {
 function AuthButtonInner({ clientId }: { clientId: string }) {
   const flow = useEnokiFlow();
   const { address } = useZkLogin();
+  const [copied, setCopied] = useState(false);
 
   async function signIn() {
     const url = await flow.createAuthorizationURL({
@@ -28,9 +30,18 @@ function AuthButtonInner({ clientId }: { clientId: string }) {
   if (address) {
     return (
       <span className="nav-links">
-        <span className="status-pill" title={address}>
-          {shortAddress(address)}
-        </span>
+        <button
+          type="button"
+          className="status-pill"
+          title={copied ? "Copied!" : "Click to copy address"}
+          onClick={async () => {
+            await navigator.clipboard.writeText(address);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? "Copied!" : shortAddress(address)}
+        </button>
         <button
           type="button"
           className="button secondary"
