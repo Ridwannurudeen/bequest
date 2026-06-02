@@ -1,4 +1,4 @@
-import type { PublicBequestConfig } from "./config";
+import { getPublicConfig, type PublicBequestConfig } from "./config";
 import { currentPackage } from "./live-proof";
 
 export type ClaimReceiptStatus = "ready-to-wire" | "sponsored-proof-live";
@@ -28,15 +28,15 @@ export const demoClaimReceipt: ClaimReceipt = {
   heirShare: "70%",
   assetSummary: "SUI + family archive object",
   letterPolicy: "Seal key releases only after Estate status is Triggered",
-  status: "ready-to-wire"
+  status: "ready-to-wire",
 };
 
 export function explorerObjectUrl(objectId: string) {
-  return `https://suiscan.xyz/testnet/object/${objectId}`;
+  return `https://suiscan.xyz/${getPublicConfig().network}/object/${objectId}`;
 }
 
 export function explorerTxUrl(digest: string) {
-  return `https://suiscan.xyz/testnet/tx/${digest}`;
+  return `https://suiscan.xyz/${getPublicConfig().network}/tx/${digest}`;
 }
 
 export function resolvedPackageId(config: PublicBequestConfig) {
@@ -54,7 +54,9 @@ export function claimTypeArguments(config: PublicBequestConfig) {
   return config.claimTarget ? [] : [suiCoinType];
 }
 
-export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] {
+export function claimReadiness(
+  config: PublicBequestConfig,
+): ClaimReceiptStep[] {
   const target = claimTarget(config);
   const typeArguments = claimTypeArguments(config);
   const typeArgumentLabel =
@@ -63,30 +65,31 @@ export function claimReadiness(config: PublicBequestConfig): ClaimReceiptStep[] 
     {
       label: "Sui package",
       state: "done",
-      detail: `Published at ${resolvedPackageId(config)}`
+      detail: `Published at ${resolvedPackageId(config)}`,
     },
     {
       label: "Estate primitives",
       state: "done",
-      detail: "Custody, trigger, distribution, and Seal/Walrus policy are proven on testnet."
+      detail:
+        "Custody, trigger, distribution, and Seal/Walrus policy are proven on testnet.",
     },
     {
       label: "Heir claim target",
       state: "done",
-      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`
+      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`,
     },
     {
       label: "Enoki sponsor",
       state: config.enokiPublicApiKey ? "done" : "waiting",
       detail: config.enokiPublicApiKey
         ? "Public Enoki key configured; server sponsor key remains private."
-        : "Waiting for Enoki portal keys and sponsorship allowlist."
+        : "Waiting for Enoki portal keys and sponsorship allowlist.",
     },
     {
       label: "Claim digest",
       state: "next",
       detail:
-        "When sponsored execution lands, this receipt page will pin the Sui tx digest and gas sponsor proof."
-    }
+        "When sponsored execution lands, this receipt page will pin the Sui tx digest and gas sponsor proof.",
+    },
   ];
 }
