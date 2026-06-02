@@ -6,6 +6,7 @@ import { getPublicConfig } from "../../lib/config";
 import { explorerObjectUrl } from "../../lib/claim-receipt";
 import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
 import { ExecutorAction } from "../../components/executor-action";
+import { DepositAction } from "../../components/deposit-action";
 import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
@@ -146,6 +147,11 @@ export default async function EstatesPage() {
                   estateId={id}
                   status={view.status}
                   executorAddress={view.executorAddress}
+                />
+                <DepositAction
+                  estateId={id}
+                  owner={view.owner}
+                  status={view.status}
                 />
               </aside>
             ))}
