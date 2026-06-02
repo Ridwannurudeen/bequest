@@ -4,15 +4,17 @@ Sui Move contracts for Bequest.
 
 - `sources/estate.move` — shared `Estate` custody, Clock-based dead-man switch, multi-heir coin
   distribution, per-object heir assignment, and estate-scoped Seal `seal_approve`.
-- `sources/gate.move` — focused Seal policy spike: a minimal `Gate` object with status-gated
-  `seal_approve` for conditional decryption testing.
+
+The published package is **`estate.move` only**. The earlier Seal-policy spike (`gate.move`) is
+archived at `docs/spikes/gate.move` — its pattern now lives in `estate.move`'s `seal_approve`, so it
+is excluded from testnet/mainnet builds.
 
 ## Build & test
 ```
 sui move test
 sui move build
 ```
-Status: **12/12 tests passing** on Sui CLI 1.72.2 (testnet).
+Status: **11/11 tests passing** on Sui CLI 1.72.2 (testnet).
 
 Current testnet package:
 `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
