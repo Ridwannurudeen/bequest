@@ -72,6 +72,10 @@ public struct CoinKey<phantom T> has copy, drop, store {}
 public struct EstateCreated has copy, drop { estate: ID, owner: address }
 public struct Armed has copy, drop { estate: ID }
 public struct Triggered has copy, drop { estate: ID }
+/// Canonical SSS events (see docs/sss-v0.md). `Reset` fires on PENDING -> ACTIVE
+/// (reason 0 = owner activity, 1 = executor pause); `Claimed` fires per heir payout.
+public struct Reset has copy, drop { estate: ID, reason: u8 }
+public struct Claimed has copy, drop { estate: ID, recipient: address, amount: u64 }
 
 /// Create and share an Estate (ACTIVE). `heir_addrs[i]` gets `heir_bps[i]` basis points of every
 /// coin; the bps must sum to 10000. `executor` is optional.
@@ -126,11 +130,21 @@ fun is_heir(estate: &Estate, addr: address): bool {
     false
 }
 
-/// Proof-of-life: reset the timer and clear any pending trigger.
+/// Proof-of-life: reset the timer and clear any pending trigger (owner activity).
 fun touch(estate: &mut Estate, clock: &Clock) {
+    touch_reason(estate, clock, 0);
+}
+
+/// Reset to ACTIVE; emit `Reset` only when this actually cleared a PENDING trigger.
+/// reason: 0 = owner activity (heartbeat/deposit/withdraw/cancel), 1 = executor pause.
+fun touch_reason(estate: &mut Estate, clock: &Clock, reason: u8) {
+    let was_pending = estate.status == STATUS_PENDING;
     estate.last_active_ms = clock::timestamp_ms(clock);
     estate.status = STATUS_ACTIVE;
     estate.pending_since_ms = 0;
+    if (was_pending) {
+        event::emit(Reset { estate: object::id(estate), reason });
+    };
 }
 
 public fun heartbeat(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
@@ -209,13 +223,14 @@ public fun executor_pause(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
     let sender = ctx.sender();
     assert!(estate.executor.contains(&sender), ENotExecutor);
     assert!(estate.status == STATUS_PENDING, ENotPending);
-    touch(estate, clock);
+    touch_reason(estate, clock, 1);
 }
 
 /// Push the full escrowed balance of type T to the heirs by basis points (one PTB command,
 /// loops over heirs). Last heir absorbs any rounding remainder. Permissionless after TRIGGERED.
 public fun distribute_coin<T>(estate: &mut Estate, ctx: &mut TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    let eid = object::id(estate);
     let bal: Balance<T> = df::remove(&mut estate.id, CoinKey<T> {});
     let mut c = coin::from_balance(bal, ctx);
     let total = coin::value(&c);
@@ -225,24 +240,31 @@ public fun distribute_coin<T>(estate: &mut Estate, ctx: &mut TxContext) {
         let h = estate.heirs[i];
         let amt = (((total as u128) * (h.bps as u128)) / (BPS_TOTAL as u128)) as u64;
         transfer::public_transfer(coin::split(&mut c, amt, ctx), h.addr);
+        event::emit(Claimed { estate: eid, recipient: h.addr, amount: amt });
         i = i + 1;
     };
     // last heir gets the remainder
-    transfer::public_transfer(c, estate.heirs[n - 1].addr);
+    let last = estate.heirs[n - 1];
+    let last_amt = coin::value(&c);
+    transfer::public_transfer(c, last.addr);
+    event::emit(Claimed { estate: eid, recipient: last.addr, amount: last_amt });
 }
 
 /// Push a single escrowed object to its assigned heir. Permissionless after TRIGGERED.
 public fun distribute_object<T: key + store>(estate: &mut Estate, id: ID, ctx: &TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    let eid = object::id(estate);
     let recipient = table::remove(&mut estate.object_heir, id);
     let obj = object_bag::remove<ID, T>(&mut estate.objects, id);
     transfer::public_transfer(obj, recipient);
+    event::emit(Claimed { estate: eid, recipient, amount: 0 });
     let _ = ctx;
 }
 
 /// Push many same-type objects in one command (loops). Permissionless after TRIGGERED.
 public fun distribute_objects<T: key + store>(estate: &mut Estate, ids: vector<ID>, ctx: &TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    let eid = object::id(estate);
     let n = ids.length();
     let mut i = 0;
     while (i < n) {
@@ -250,6 +272,7 @@ public fun distribute_objects<T: key + store>(estate: &mut Estate, ids: vector<I
         let recipient = table::remove(&mut estate.object_heir, id);
         let obj = object_bag::remove<ID, T>(&mut estate.objects, id);
         transfer::public_transfer(obj, recipient);
+        event::emit(Claimed { estate: eid, recipient, amount: 0 });
         i = i + 1;
     };
     let _ = ctx;
