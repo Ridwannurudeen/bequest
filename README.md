@@ -8,6 +8,11 @@ only after the inheritance trigger fires.
 
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
 
+## Architecture
+
+The system diagram, the dead-man's-switch lifecycle, the component breakdown, the capital flow on
+trigger, and the deployed package IDs are in [`docs/architecture.md`](docs/architecture.md).
+
 ## Status
 Live testnet proof surface in progress.
 
