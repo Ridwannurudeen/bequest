@@ -1,15 +1,10 @@
-import {
-  bequestSdkMock,
-  formatDuration,
-  ratioLabel,
-  sdkContract,
-} from "../lib/bequest-sdk";
+import Link from "next/link";
 import { AuthButton } from "../components/auth-button";
 import type { EstateView } from "../lib/bequest-sdk";
+import { bequestSdkMock, formatDuration, ratioLabel } from "../lib/bequest-sdk";
 import { getPublicConfig, type PublicBequestConfig } from "../lib/config";
 import { findLatestEstate, readEstateOnChain } from "../lib/estate-onchain";
-import { FlowSimulator } from "../components/flow-simulator";
-import { currentPackage, openGates, proofCards } from "../lib/live-proof";
+import { currentPackage, proofCards } from "../lib/live-proof";
 
 // Read a real estate per request (testnet RPC); fall back to the demo when none exists or the
 // network is unreachable, so the page always renders.
@@ -25,61 +20,82 @@ async function loadEstate(config: PublicBequestConfig): Promise<EstateView> {
   return bequestSdkMock.readEstate("demo");
 }
 
-const flowSteps = [
+const trust = [
+  { label: "Gasless", detail: "Heirs claim with Google — no wallet, no gas" },
+  { label: "Encrypted", detail: "Last wishes unlock only after the trigger" },
   {
-    eyebrow: "Owner setup",
-    title: "Sarah locks assets while she is still in control.",
-    body: "Google sign-in through zkLogin, heir bindings, split ratios, inactivity window, SUI/NFT deposits, and an encrypted letter stored behind a Seal policy.",
-    checks: ["Google identity", "Heir ratios", "Estate escrow", "Seal letter"],
+    label: "Non-custodial",
+    detail: "No company can move or freeze your assets",
   },
+  { label: "Live on Sui", detail: "Full lifecycle proven on testnet" },
+];
+
+const steps = [
   {
-    eyebrow: "Heir claim",
-    title: "Maya never touches a seed phrase.",
-    body: "After the trigger, Maya sees an inheritance banner, signs in with Google, clicks Claim, receives assets gaslessly, then decrypts the letter.",
+    eyebrow: "Step 1 · Owner",
+    title: "Lock assets while you're in control.",
+    body: "Sign in with Google, name your heirs and their shares, set an inactivity window, and deposit SUI or NFTs into a shared estate. Withdraw or reset any time.",
     checks: [
-      "Inheritance banner",
-      "Sponsored claim",
-      "Asset arrival",
-      "Letter decrypt",
+      "Google sign-in",
+      "Heir ratios",
+      "Escrow on-chain",
+      "Encrypted letter",
     ],
   },
   {
-    eyebrow: "Executor dashboard",
-    title: "A trusted party can pause a false alarm.",
-    body: "During the grace period, the executor sees the pending trigger and can pause or cancel before the estate becomes claimable.",
-    checks: ["Pending estate", "Grace timer", "Pause/cancel", "Audit trail"],
+    eyebrow: "Step 2 · The switch",
+    title: "A dead-man's switch that can't fire early.",
+    body: "If you go inactive past your window, the estate arms and a grace period begins. Any activity resets it; a trusted executor can pause a false alarm. The trigger is permissionless but time-gated — no one can rush it.",
+    checks: [
+      "Inactivity timer",
+      "Grace window",
+      "Executor pause",
+      "Clock-gated",
+    ],
+  },
+  {
+    eyebrow: "Step 3 · Heir",
+    title: "Inherit without a seed phrase.",
+    body: "After the trigger, your heir sees an inheritance banner, signs in with Google, and claims their share gaslessly. Then the encrypted letter you left decrypts — for them, only now.",
+    checks: [
+      "Inheritance banner",
+      "Gasless claim",
+      "Assets arrive",
+      "Letter unlocks",
+    ],
   },
 ];
 
-const spikeRows = [
+const products = [
   {
-    id: "#1",
-    name: "zkLogin heir binding",
-    status: "Lane B spike",
-    detail: "Can the owner pre-name a Google heir before they onboard?",
+    label: "Inheritance",
+    detail: "Inactivity trigger distributes to named heirs. Live today.",
   },
   {
-    id: "#6",
-    name: "Enoki sponsored claim",
-    status: "Lane B spike",
-    detail: "Can Maya complete the claim with no SUI and no wallet funding?",
+    label: "Social recovery",
+    detail: "Guardians restore access to a locked account.",
   },
   {
-    id: "#7",
-    name: "Competition + legal scan",
-    status: "Lane B spike",
-    detail: "Position as probate augmentation, not a legal replacement.",
+    label: "DAO / treasury succession",
+    detail: "A named successor for multisigs and treasuries.",
+  },
+  {
+    label: "Scheduled transfers",
+    detail: "Age-gated, vesting, or oracle-triggered releases.",
   },
 ];
 
 function shortObjectId(value: string) {
-  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+  return `${value.slice(0, 8)}…${value.slice(-6)}`;
 }
 
 export default async function Home() {
   const config = getPublicConfig();
   const estate = await loadEstate(config);
-  const visiblePackageId = config.packageId ?? currentPackage.packageId;
+  const claimHref =
+    estate.estateId && estate.estateId !== "demo"
+      ? `/claim/${estate.estateId}`
+      : "/claim/demo";
 
   return (
     <main>
@@ -89,81 +105,99 @@ export default async function Home() {
           <span>Bequest</span>
         </a>
         <div className="nav-links">
-          <a href="#flows">Flows</a>
+          <a href="#how">How it works</a>
           <a href="#proof">Proof</a>
-          <a href="/estates">Estates</a>
-          <a href="#spikes">Spikes</a>
+          <Link href="/estates">Estates</Link>
           <AuthButton />
+          <Link href="/create" className="button primary">
+            Launch app
+          </Link>
         </div>
       </nav>
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <p className="kicker">Sui-native inheritance · Lane B frontend</p>
+          <p className="kicker">On-chain succession · Live on Sui</p>
           <h1>
             <span>Inheritance</span>
-            <span>that works</span>
-            <span>when the owner</span>
-            <span>cannot sign.</span>
+            <span>that works when</span>
+            <span className="grad">you no longer can.</span>
           </h1>
           <p className="lede">
-            Bequest turns crypto succession into three humane flows: an owner
-            creates a protected estate, an heir claims with Google, and an
-            executor can stop false triggers before assets move.
+            Bequest is on-chain succession for crypto. Lock your assets behind a
+            dead-man's switch, and your heirs inherit gaslessly with a Google
+            sign-in — no seed phrase, no custodian, no lawyer.
           </p>
           <div className="hero-actions">
-            <a href="/create" className="button primary">
+            <Link href="/create" className="button primary">
               Create an estate
-            </a>
-            <a href="/claim/demo" className="button secondary">
-              Open claim receipt
-            </a>
-            <a href="#spikes" className="button secondary">
-              Phase 0 gates
+            </Link>
+            <a href="#how" className="button secondary">
+              See how it works
             </a>
           </div>
         </div>
 
-        <div className="claim-card" aria-label="Heir claim preview">
+        <aside className="claim-card" aria-label="Heir claim preview">
           <div className="claim-card-top">
             <span>Heir notification</span>
             <span className="status-pill">Trigger pending</span>
           </div>
-          <h2>You have inherited assets from {estate.ownerLabel}.</h2>
+          <h2>You've inherited assets from {estate.ownerLabel}.</h2>
           <p>
-            Sign in with Google to claim your share. Gas is sponsored. The
+            Sign in with Google to claim your share. Gas is sponsored, and the
             letter unlocks only after the on-chain trigger.
           </p>
           <div className="claim-assets">
-            {estate.assets.map((asset) => (
-              <div className="asset-row" key={asset.label}>
-                <span>{asset.label}</span>
-                <strong>{asset.value}</strong>
+            {estate.assets.length > 0 ? (
+              estate.assets.map((asset) => (
+                <div className="asset-row" key={asset.label}>
+                  <span>{asset.label}</span>
+                  <strong>{asset.value}</strong>
+                </div>
+              ))
+            ) : (
+              <div className="asset-row">
+                <span>Escrowed assets</span>
+                <strong>SUI + objects</strong>
               </div>
-            ))}
+            )}
           </div>
-          <a className="claim-button" href="/claim/demo">
+          <Link className="claim-button" href={claimHref}>
             Claim with Google
-          </a>
-        </div>
+          </Link>
+        </aside>
       </section>
 
-      <section className="proof-strip" aria-label="Product proof points">
-        <div>
-          <strong>zkLogin</strong>
-          <span>Google heir binding</span>
+      <section className="proof-strip" aria-label="Trust points">
+        {trust.map((t) => (
+          <div key={t.label}>
+            <strong>{t.label}</strong>
+            <span>{t.detail}</span>
+          </div>
+        ))}
+      </section>
+
+      <section className="section" id="how">
+        <div className="section-heading">
+          <div>
+            <p className="kicker">How it works</p>
+            <h2>Three humane steps, from setup to inheritance.</h2>
+          </div>
         </div>
-        <div>
-          <strong>Gasless</strong>
-          <span>Enoki sponsored claim</span>
-        </div>
-        <div>
-          <strong>Seal + Walrus</strong>
-          <span>Letter unlock policy</span>
-        </div>
-        <div>
-          <strong>Shared Estate</strong>
-          <span>Assets escrowed on Sui</span>
+        <div className="flow-grid">
+          {steps.map((step) => (
+            <article className="flow-card" key={step.eyebrow}>
+              <p className="card-eyebrow">{step.eyebrow}</p>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+              <ul>
+                {step.checks.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -171,9 +205,7 @@ export default async function Home() {
         <div className="proof-header">
           <div>
             <p className="kicker">Already live on Sui testnet</p>
-            <h2>
-              Not just a mock: the hard inheritance primitives are proven.
-            </h2>
+            <h2>Not a mock — the hard primitives are proven on-chain.</h2>
           </div>
           <a className="package-card" href={currentPackage.explorerUrl}>
             <span>{currentPackage.label}</span>
@@ -181,7 +213,6 @@ export default async function Home() {
             <small>Publish digest {currentPackage.publishDigest}</small>
           </a>
         </div>
-
         <div className="proof-card-grid">
           {proofCards.map((proof) => (
             <article className="proof-card" key={proof.label}>
@@ -195,47 +226,20 @@ export default async function Home() {
             </article>
           ))}
         </div>
-
-        <div className="next-proof-panel">
-          <div>
-            <p className="kicker">What Lane B proves next</p>
-            <h3>Turn the family story into a gasless heir receipt.</h3>
-            <a className="text-link" href="/claim/demo">
-              Open the receipt surface
-            </a>
-          </div>
-          <div className="gate-list">
-            {openGates.map((gate) => (
-              <article key={gate.label}>
-                <span>{gate.state}</span>
-                <strong>{gate.label}</strong>
-                <p>{gate.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
       </section>
 
-      <FlowSimulator />
-
-      <section className="section" id="flows">
+      <section className="section">
         <div className="section-heading">
-          <p className="kicker">The three flows Lane B owns</p>
-          <h2>
-            Make inheritance understandable before making it programmable.
-          </h2>
+          <div>
+            <p className="kicker">Not just an app — the layer</p>
+            <h2>One engine. Every kind of asset continuity.</h2>
+          </div>
         </div>
         <div className="flow-grid">
-          {flowSteps.map((flow) => (
-            <article className="flow-card" key={flow.eyebrow}>
-              <p className="card-eyebrow">{flow.eyebrow}</p>
-              <h3>{flow.title}</h3>
-              <p>{flow.body}</p>
-              <ul>
-                {flow.checks.map((check) => (
-                  <li key={check}>{check}</li>
-                ))}
-              </ul>
+          {products.map((p) => (
+            <article className="flow-card" key={p.label}>
+              <h3>{p.label}</h3>
+              <p>{p.detail}</p>
             </article>
           ))}
         </div>
@@ -243,21 +247,19 @@ export default async function Home() {
 
       <section className="estate-section" id="estate">
         <div className="estate-copy">
-          <p className="kicker">Live, against the frozen SDK</p>
-          <h2>Frontend work moved before protocol wiring was final.</h2>
+          <p className="kicker">Live on testnet right now</p>
+          <h2>A real estate, read straight from Sui.</h2>
           <p>
-            This card reads a real Estate from the testnet package through the
-            frozen SDK contract, falling back to the demo when no estate exists
-            yet — the product flows never had to be redesigned.
+            This card reads the latest on-chain estate per request through the
+            same SDK the product uses — falling back to a demo when none exists
+            yet. Owner, heirs, timers, and escrowed assets are all real.
           </p>
-          <div className="sdk-list" aria-label="Frozen SDK signatures">
-            {sdkContract.map((signature) => (
-              <code key={signature}>{signature}</code>
-            ))}
-          </div>
+          <Link className="text-link" href="/estates">
+            Open the estates dashboard →
+          </Link>
         </div>
 
-        <aside className="estate-card" aria-label="Demo estate state">
+        <aside className="estate-card" aria-label="Live estate">
           <div className="estate-card-header">
             <span>Estate</span>
             <strong>{estate.status}</strong>
@@ -276,10 +278,6 @@ export default async function Home() {
               <dt>Grace</dt>
               <dd>{formatDuration(estate.gracePeriodMs)}</dd>
             </div>
-            <div>
-              <dt>Executor</dt>
-              <dd>{estate.executor}</dd>
-            </div>
           </dl>
           <div className="heir-list">
             {estate.heirs.map((heir) => (
@@ -295,51 +293,21 @@ export default async function Home() {
         </aside>
       </section>
 
-      <section className="section" id="spikes">
-        <div className="section-heading narrow">
-          <p className="kicker">Next integration gates</p>
-          <h2>What remains is explicit, scoped, and testable.</h2>
-        </div>
-        <div
-          className="readiness-grid"
-          aria-label="Lane B integration readiness"
-        >
-          <div>
-            <span>Sui network</span>
-            <strong>{config.network}</strong>
-          </div>
-          <div>
-            <span>Testnet package</span>
-            <strong>{shortObjectId(visiblePackageId)}</strong>
-          </div>
-          <div>
-            <span>Enoki sponsor key</span>
-            <strong>
-              {config.enokiPublicApiKey ? "Configured" : "Pending"}
-            </strong>
-          </div>
-          <div>
-            <span>Backend routes</span>
-            <strong>Ready</strong>
-          </div>
-        </div>
-        <div className="spike-board">
-          {spikeRows.map((spike) => (
-            <article className="spike-row" key={spike.id}>
-              <span>{spike.id}</span>
-              <div>
-                <h3>{spike.name}</h3>
-                <p>{spike.detail}</p>
-              </div>
-              <strong>{spike.status}</strong>
-            </article>
-          ))}
-        </div>
+      <section className="cta-band">
+        <p className="kicker">Your keys shouldn't die with you</p>
+        <h2>Set up your estate in minutes.</h2>
+        <p>
+          Create a protected estate, deposit assets, and name the people who
+          inherit. Free on testnet today.
+        </p>
+        <Link href="/create" className="button primary">
+          Create an estate
+        </Link>
       </section>
 
       <footer>
-        <span>Bequest · Sui Overflow 2026</span>
-        <span>Owner setup · Heir claim · Executor dashboard</span>
+        <span>Bequest · On-chain succession on Sui</span>
+        <span>Owner setup · Heir claim · Executor control</span>
       </footer>
     </main>
   );
