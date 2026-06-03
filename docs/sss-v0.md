@@ -2,7 +2,7 @@
 
 - **Status:** Draft (v0)
 - **Track:** Sui Overflow 2026, DeFi & Payments
-- **Reference implementation:** Bequest (`estate.move` + `gate.move`), Sui testnet package `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
+- **Reference implementation:** Bequest (`estate.move`), Sui testnet package `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
 - **Scope:** a minimal interface for on-chain succession and recovery objects on Sui, so wallets, custodians, indexers, keepers, and dApps can read, trigger, and settle any compliant policy without bespoke integration.
 
 ## Abstract
@@ -59,7 +59,7 @@ A compliant policy MUST be a shared object exposing at least:
 ```
 status:        u8                       // 0 | 1 | 2
 owner:         address
-beneficiaries: vector<{ recipient: address, bps: u16 }>   // bps sum == 10000; last takes remainder
+beneficiaries: vector<{ recipient: address, bps: u64 }>   // bps sum == 10000; last takes remainder
 timing:        { inactivity_ms: u64, grace_ms: u64, last_activity_ms: u64 }
 executor:      Option<address>
 trigger_kind:  u8                       // see section 4
@@ -78,7 +78,7 @@ A compliant implementation MUST emit:
 | `PolicyCreated` | a policy is created | `policy_id`, `owner`, `trigger_kind`, `timing` |
 | `Armed` | `ACTIVE -> PENDING` | `policy_id`, `armed_at_ms`, `eligible_at_ms` |
 | `Triggered` | `PENDING -> TRIGGERED` | `policy_id`, `triggered_at_ms` |
-| `Reset` | `PENDING -> ACTIVE` (heartbeat or executor pause) | `policy_id`, `reason: u8` (0 heartbeat, 1 executor) |
+| `Reset` | `PENDING -> ACTIVE` (owner activity or executor pause) | `policy_id`, `reason: u8` (0 owner activity, 1 executor pause) |
 | `Claimed` | a beneficiary receives a share | `policy_id`, `recipient`, `amount`, `asset_type` |
 
 These five events are sufficient for a keeper to drive a policy end to end and for an indexer to
@@ -169,11 +169,18 @@ An implementation is **SSS v0 compliant** if it:
 
 ## Reference implementation
 
-Bequest implements SSS v0 with `trigger_kind = 0` (Inactivity). `estate.move` is the policy and
-state machine; `gate.move` is the Seal binding. Full lifecycle (create, deposit, arm, finalize,
+Bequest implements SSS v0 with `trigger_kind = 0` (Inactivity). `estate.move` is the policy, the
+state machine, and the Seal binding (`estate::seal_approve`); the earlier `gate.move` Seal-policy
+spike is archived to `docs/spikes/gate.move`. Full lifecycle (create, deposit, arm, finalize,
 distribute) plus Seal-gated wishes and atomic multi-heir distribution are proven on Sui testnet at
 `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. See
 [`docs/architecture.md`](architecture.md).
+
+**Conformance status.** The reference impl emits all five canonical events: `EstateCreated` (the
+`PolicyCreated` name), `Armed`, `Triggered`, `Reset { reason: u8 }`, and `Claimed { recipient,
+amount }` (its SUI distribution leaves the asset type implicit). With the `EstateCreated -> PolicyCreated`
+alias it is fully SSS-v0 conformant on states, events, Seal binding, and claim semantics. `Heir.bps`
+is typed `u64` on chain, with values bounded to 0..10000.
 
 ## Security considerations
 
