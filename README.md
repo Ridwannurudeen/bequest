@@ -105,3 +105,7 @@ cd ../keeper && npm install && npm run typecheck && npm run verify:proof
 ## Verified toolchain (2026-05-22)
 `@mysten/seal@1.1.3`, `@mysten/sui@2.17.0` (peer `^2.16.2`), Seal mainnet-live with Move
 `seal_approve` time-locked/conditional policies. Move: edition `2024.beta`, `rev = framework/testnet`.
+
+## Why inheritance on Sui
+The thesis behind Bequest, and why this category belongs on Sui specifically:
+[`docs/why-inheritance.md`](docs/why-inheritance.md).
