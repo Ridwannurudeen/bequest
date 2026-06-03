@@ -22,7 +22,6 @@ flowchart LR
 
   subgraph Sui["Sui Move package @0x696ea0…b885"]
     EST[estate.move\ncustody + dead-man switch + seal_approve]
-    GATE[gate.move\nstatus-gated Seal policy]
   end
 
   subgraph Off["Off-chain services"]
@@ -53,7 +52,7 @@ stateDiagram-v2
   TRIGGERED --> [*]: distribute_coin / distribute_object to heirs (atomic PTB)
 ```
 
-While `ACTIVE`, `gate::seal_approve` denies decryption of the last-wishes blob. Once `TRIGGERED`,
+While `ACTIVE`, `estate::seal_approve` denies decryption of the last-wishes blob. Once `TRIGGERED`,
 `seal_approve` passes and heirs can decrypt the Walrus letter via Seal. Decryption is bound to
 estate status, not to a key handed out in advance.
 
@@ -61,7 +60,7 @@ estate status, not to a key handed out in advance.
 
 | Package | Role | Notes |
 |---|---|---|
-| `packages/move` | `estate.move` (custody + Clock-based ACTIVE→PENDING→TRIGGERED switch + `seal_approve`), `gate.move` (status-gated Seal policy) | Coin<T> held via dynamic field, objects via ObjectBag; heir bps sum to 10000, last heir gets the remainder (u128 overflow-guarded). |
+| `packages/move` | `estate.move` (custody + Clock-based ACTIVE→PENDING→TRIGGERED switch + `seal_approve` Seal policy) | Coin<T> held via dynamic field, objects via ObjectBag; heir bps sum to 10000, last heir gets the remainder (u128 overflow-guarded). |
 | `packages/keeper` | Event-driven daemon: discovers estates via `EstateCreated`, reads timers, submits `arm` then `finalize`. Ships a no-secret `verify:proof`. | Settlement is permissionless and time-gated: anyone can poke it, payouts route to the recorded heirs. |
 | `packages/web` | Lane B frontend: owner setup, heir claim, executor dashboard, all gasless via Enoki zkLogin. | Reads a live on-chain `Estate` on the homepage; sponsored writes via Enoki. |
 | `packages/wishes` | Seal-encrypt a last-wishes letter, store on Walrus, decrypt only after `TRIGGERED`. | Proven end to end on testnet. |
@@ -86,7 +85,7 @@ split deposited and distributed in a single transaction.
 | Network | Package ID | Status |
 |---|---|---|
 | Sui testnet | `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885` | Live. Full lifecycle (create → deposit → trigger → distribute), Seal-gated wishes, and atomic multi-heir distribution proven. |
-| Sui mainnet | TBD | Gated on the `gate.move` / upgrade-policy decision and KYC (Lane A). |
+| Sui mainnet | TBD | Gated on mainnet publish (see `docs/MAINNET-RUNBOOK.md`) + KYC (Lane A). |
 
 Verify the live testnet package without private keys:
 
