@@ -49,14 +49,14 @@ export const openGates = [
   },
   {
     label: "Enoki sponsored distribution",
-    state: "Next proof",
+    state: "Final V2 gate",
     detail:
-      "Sponsor estate::distribute_coin<SUI> so the heir can trigger distribution without wallet funding or SUI gas."
+      "Sponsor estate::distribute_coin<SUI> so the heir can trigger distribution without wallet funding or SUI gas. Do not claim this as live until a digest is pinned."
   },
   {
     label: "Public claim receipt",
     state: "Scaffolded",
     detail:
-      "A receipt page now shows the estate, heir, package, default distribution target, and Enoki readiness."
+      "A receipt page shows the estate, package, default distribution target, Enoki readiness, and the sponsored digest when configured."
   }
 ] as const;

@@ -5,7 +5,7 @@ import { OwnerSetup } from "../../components/owner-setup";
 export const metadata: Metadata = {
   title: "Bequest · create estate",
   description:
-    "Owner setup: sign in with Google, name your heirs and shares, set the inactivity window, and create your estate gaslessly.",
+    "Owner setup: sign in with Google, name your heirs and shares, set the inactivity window, and create your estate through the Enoki-sponsored path when configured.",
 };
 
 export default function CreateEstatePage() {
@@ -33,8 +33,9 @@ export default function CreateEstatePage() {
           <p className="lede">
             Sign in with Google, name the heirs who inherit and their shares,
             and choose how long of inactivity triggers the hand-off. Creating
-            the estate is gasless — Enoki sponsors it. Depositing assets into it
-            is the next step once your account holds them.
+            the estate uses the Enoki-sponsored path when credentials are
+            configured. Depositing assets into it is the next step once your
+            account holds them.
           </p>
         </div>
 

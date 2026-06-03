@@ -5,6 +5,7 @@ export type PublicBequestConfig = {
   packageId?: string;
   estateModule: string;
   claimTarget?: string;
+  sponsoredClaimDigest?: string;
   enokiPublicApiKey?: string;
   enokiConnectAppSlug?: string;
 };
@@ -38,6 +39,9 @@ export function getPublicConfig(): PublicBequestConfig {
     packageId: optional(process.env.NEXT_PUBLIC_BEQUEST_PACKAGE_ID),
     estateModule: process.env.NEXT_PUBLIC_BEQUEST_ESTATE_MODULE?.trim() || "estate",
     claimTarget: optional(process.env.NEXT_PUBLIC_BEQUEST_CLAIM_TARGET),
+    sponsoredClaimDigest: optional(
+      process.env.NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST,
+    ),
     enokiPublicApiKey: optional(process.env.NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY),
     enokiConnectAppSlug: optional(process.env.NEXT_PUBLIC_ENOKI_CONNECT_APP_SLUG)
   };

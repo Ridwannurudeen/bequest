@@ -26,9 +26,9 @@ is the first chain where all four are native rather than bolted on:
    specific vault), not just a number. An account-balance chain cannot express that cleanly.
 
 2. **Heirs who are not crypto users.** Your grandchild does not have a wallet or a seed phrase.
-   With Sui's zkLogin and sponsored transactions, an heir signs in with Google and claims their
-   inheritance gaslessly. No wallet install, no gas token to acquire, no seed phrase to lose.
-   This is the difference between a demo and something a real family could use.
+   Sui's zkLogin and sponsored transactions make a Google-based, gas-sponsored heir path possible.
+   The Bequest V2 submission treats the real sponsored claim digest as the proof gate before calling
+   that path proven.
 
 3. **Secrets that unlock only at the right moment.** A last-wishes letter, a password, a note
    to a child should be readable only after you are gone, never before. Seal gives conditional
@@ -50,8 +50,9 @@ Grandma Sarah escrows her assets into an `Estate` with a six-month inactivity tr
 two-week grace window, names her grandchildren Maya and Noah as heirs (70/30), and writes Maya a
 letter. While she is active, nothing happens; a single heartbeat resets the clock, and she can
 withdraw at any time. If she goes silent past the window, the estate moves Active to Pending to
-Triggered. Maya signs in with Google, claims her share gaslessly, and only now can she decrypt
-the letter. No lawyer, no custodian, no seed phrase, no gas.
+Triggered. Maya signs in with Google and triggers the SUI distribution path; once an Enoki-sponsored
+digest is pinned, this becomes the zero-SUI heir receipt. Only after the trigger can she decrypt the
+letter. No custodian, no owner seed phrase.
 
 The full lifecycle (create, deposit, the dead-man trigger, Seal-gated wishes, and atomic
 multi-heir distribution) is proven today on Sui testnet at package

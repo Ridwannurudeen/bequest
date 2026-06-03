@@ -54,6 +54,12 @@ export function claimTypeArguments(config: PublicBequestConfig) {
   return config.claimTarget ? [] : [suiCoinType];
 }
 
+export function claimProofUrl(config: PublicBequestConfig) {
+  return config.sponsoredClaimDigest
+    ? explorerTxUrl(config.sponsoredClaimDigest)
+    : undefined;
+}
+
 export function claimReadiness(
   config: PublicBequestConfig,
 ): ClaimReceiptStep[] {
@@ -86,10 +92,11 @@ export function claimReadiness(
         : "Waiting for Enoki portal keys and sponsorship allowlist.",
     },
     {
-      label: "Claim digest",
-      state: "next",
-      detail:
-        "When sponsored execution lands, this receipt page will pin the Sui tx digest and gas sponsor proof.",
+      label: "Sponsored claim digest",
+      state: config.sponsoredClaimDigest ? "done" : "next",
+      detail: config.sponsoredClaimDigest
+        ? `Pinned Sui transaction ${config.sponsoredClaimDigest}; use SuiScan to verify the sponsored distribution.`
+        : "Not proven yet. Do not claim a gasless Google heir flow until a sponsored Sui tx digest is pinned here.",
     },
   ];
 }

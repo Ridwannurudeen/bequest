@@ -39,7 +39,7 @@
   <text x="808" y="434" fill="#9a9ab0" font-family="Arial, sans-serif" font-size="22">NFT + letter</text>
   <text x="1048" y="434" fill="#f5f5fb" text-anchor="end" font-family="'Space Grotesk', Arial, sans-serif" font-size="22" font-weight="700">2 items</text>
   <rect x="786" y="492" width="284" height="64" rx="16" fill="url(#accent)"/>
-  <text x="928" y="532" fill="#06060b" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800">Claim with Google</text>
+  <text x="928" y="532" fill="#06060b" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800">Claim receipt</text>
 
   <!-- headline -->
   <circle cx="84" cy="108" r="6" fill="#2fe0c4"/>
@@ -47,7 +47,7 @@
   <text x="76" y="246" fill="#f5f5fb" font-family="'Space Grotesk', Arial, sans-serif" font-size="98" font-weight="700" letter-spacing="-5">Inheritance</text>
   <text x="76" y="344" fill="#f5f5fb" font-family="'Space Grotesk', Arial, sans-serif" font-size="98" font-weight="700" letter-spacing="-5">that works when</text>
   <text x="76" y="442" fill="url(#accent)" font-family="'Space Grotesk', Arial, sans-serif" font-size="98" font-weight="700" letter-spacing="-5">you no longer can.</text>
-  <text x="80" y="520" fill="#9a9ab0" font-family="Arial, sans-serif" font-size="29">Gasless heirs · Google sign-in · Seal-gated last wishes</text>
+  <text x="80" y="520" fill="#9a9ab0" font-family="Arial, sans-serif" font-size="29">Google-ready heirs · Sui escrow · Seal-gated last wishes</text>
   <rect x="76" y="566" width="172" height="58" rx="29" fill="url(#accent)"/>
   <text x="162" y="603" fill="#06060b" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800">Bequest</text>
 </svg>

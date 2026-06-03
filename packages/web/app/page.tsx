@@ -62,7 +62,10 @@ const ClaimIcon = (
 );
 
 const trust = [
-  { label: "Gasless", detail: "Heirs claim with Google — no wallet, no gas" },
+  {
+    label: "Sponsor-ready",
+    detail: "Claim bytes and Enoki routes are wired; digest is the proof gate",
+  },
   { label: "Encrypted", detail: "Last wishes unlock only after the trigger" },
   {
     label: "Non-custodial",
@@ -105,10 +108,10 @@ const steps = [
     icon: ClaimIcon,
     eyebrow: "Heir",
     title: "Inherit without a seed phrase.",
-    body: "After the trigger, your heir sees an inheritance banner, signs in with Google, and claims their share gaslessly. Then the encrypted letter you left decrypts — for them, only now.",
+    body: "After the trigger, your heir sees an inheritance banner, signs in with Google, and uses the sponsored claim path to trigger distribution to every named heir. Then the encrypted letter you left decrypts — for them, only now.",
     checks: [
       "Inheritance banner",
-      "Gasless claim",
+      "Sponsored claim path",
       "Assets arrive",
       "Letter unlocks",
     ],
@@ -135,7 +138,7 @@ const products = [
 ];
 
 const stats = [
-  { big: "100%", small: "gasless heir claims" },
+  { big: "1 path", small: "sponsor-ready heir claim" },
   { big: "1 PTB", small: "atomic multi-heir distribution" },
   { big: "0", small: "seed phrases for heirs" },
   { big: "Live", small: "on Sui testnet" },
@@ -144,7 +147,7 @@ const stats = [
 const faqs = [
   {
     q: "Do my heirs need a crypto wallet?",
-    a: "No. They sign in with Google (zkLogin) and claim gaslessly — no wallet to install, no seed phrase, no gas token to buy.",
+    a: "The product path is built for Google zkLogin plus Enoki sponsorship, so heirs do not need a seed phrase. The V2 submission only claims gasless execution after a sponsored Sui digest is pinned.",
   },
   {
     q: "What if I'm just away for a while?",
@@ -199,8 +202,9 @@ export default async function Home() {
           </h1>
           <p className="lede">
             Bequest is on-chain succession for crypto. Lock your assets behind a
-            dead-man's switch, and your heirs inherit gaslessly with a Google
-            sign-in — no seed phrase, no custodian, no lawyer.
+            dead-man's switch, and your heirs inherit through a Google-ready
+            claim path after the trigger — no owner key, no custodian, no
+            seed phrase.
           </p>
           <div className="hero-actions">
             <Link href="/create" className="button primary">
@@ -231,8 +235,8 @@ export default async function Home() {
             </div>
           </div>
           <p>
-            Sign in with Google to claim your share. The letter unlocks only
-            after the on-chain trigger.
+            Sign in with Google to trigger the distribution path. The letter
+            unlocks only after the on-chain trigger.
           </p>
           <div className="claim-assets">
             {estate.assets.length > 0 ? (
@@ -249,15 +253,13 @@ export default async function Home() {
               </div>
             )}
           </div>
-          <span className="sponsored-badge">
-            ✦ Gas sponsored — you pay nothing
-          </span>
+          <span className="sponsored-badge">✦ Enoki sponsor path wired</span>
           <Link
             className="claim-button"
             href={claimHref}
             style={{ marginTop: 14 }}
           >
-            Claim with Google
+            Open claim receipt
           </Link>
         </aside>
       </section>

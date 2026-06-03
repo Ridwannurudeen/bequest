@@ -2,9 +2,10 @@
 
 **On-chain inheritance for crypto assets, built on Sui.** An owner sets inheritance rules and
 escrows assets into an `Estate`. If they go inactive (dead-man's switch), the assets distribute
-atomically to named heirs via a PTB. Heirs claim by signing in with Google (zkLogin) — gasless,
-no seed phrase, no crypto knowledge. Encrypted last-wishes live on Walrus and decrypt via Seal
-only after the inheritance trigger fires.
+atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
+sponsorship, so a non-crypto heir can claim without the owner key once the sponsored digest is
+pinned. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
+trigger fires.
 
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
 
@@ -14,6 +15,8 @@ The system diagram, the dead-man's-switch lifecycle, the component breakdown, th
 trigger, and the deployed package IDs are in [`docs/architecture.md`](docs/architecture.md).
 
 ## Status
+Live app: <https://bequest.gudman.xyz>
+
 Live testnet proof surface in progress.
 
 - Move package published on Sui testnet with `estate` and `gate` modules.
@@ -24,9 +27,12 @@ Live testnet proof surface in progress.
 - CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
   `sui move test` on every push and PR.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
-- Remaining dependency: Enoki credentials and a live sponsored transaction. Lane B can use the
+- Remaining dependency: Enoki credentials and a live sponsored transaction digest. Lane B can use the
   existing `estate::distribute_coin<0x2::sui::SUI>` path first; a later dedicated Lane A `claim`
   entrypoint can override it if needed.
+- Limitation: Bequest is a Sui testnet technical succession primitive, not legal, probate, tax, or
+  financial advice. The current proof demonstrates custody/distribution mechanics, not legal estate
+  enforcement.
 
 ## Repo layout
 ```
@@ -68,6 +74,22 @@ npm install
 npm run verify:proof
 ```
 
+The live package includes an unused `gate` module from an earlier Seal spike. The production Seal
+path is `estate::seal_approve`; an estate-only package publish is reserved for the mainnet step in
+[`docs/MAINNET-RUNBOOK.md`](docs/MAINNET-RUNBOOK.md). We are not redeploying for submission because
+the current package already carries the valid lifecycle proof.
+
+### Submission proof table
+
+| Proof | Status | Link / command |
+| --- | --- | --- |
+| Package publish | Live | [`9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw`](https://suiscan.xyz/testnet/tx/9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw) |
+| Package object | Live | [`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`](https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885) |
+| Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
+| Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
+| Sponsored heir claim digest | Final V2 gate | Pending Enoki credentials. Do not claim gasless Google execution until `NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST` is pinned and linked on `/claim/<estateId>`. |
+| Seal/Walrus last-wishes policy | Proven by spike | `LAST-WISHES PASSED`; demo must pair this with the same judge estate once Enoki proof lands. |
+
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
 a contract; bump the version if a spike forces a change.
@@ -78,12 +100,17 @@ deposit(estateId, assets[])
 setHeirs(estateId, heirs[])        // heir = { binding, ratioBps }
 heartbeat(estateId)
 armTrigger(estateId, params)       // inactivityMs, gracePeriodMs, executor?
-claim(estateId)                    // gasless heir claim, post-trigger
+claim(estateId)                    // sponsored heir claim path, post-trigger
 executorOverride(estateId, action) // pause | cancel
 readEstate(estateId) -> EstateView
 uploadWishes(estateId, blob)       // -> Walrus blobId, Seal policy bound to estate
 decryptWishes(estateId)            // only resolves after status == Triggered
 ```
+
+Implementation boundary: the current testnet Move package backs estate creation, escrow,
+heartbeat/trigger transitions, SUI distribution, executor pause, and `seal_approve`. `setHeirs`
+and `uploadWishes` remain SDK/product-surface methods for the next on-chain metadata pass; do not
+present them as already stored on-chain in the submitted package.
 
 ## Architecture decisions (locked)
 - **Custody:** assets are escrowed into the shared `Estate` object (NOT left in the owner's

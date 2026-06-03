@@ -122,7 +122,7 @@ function ExecutorActionInner({
         onClick={pause}
         disabled={state === "working"}
       >
-        {state === "working" ? "Pausing…" : "Pause trigger (gasless)"}
+        {state === "working" ? "Pausing…" : "Pause trigger (sponsored)"}
       </button>
       {state === "error" && <p className="lede">Pause failed: {message}</p>}
     </div>

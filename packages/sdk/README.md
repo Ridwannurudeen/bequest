@@ -44,6 +44,18 @@ const estate = await sdk.readEstate(estateId); // EstateView
 Methods: `createEstate`, `deposit`, `setHeirs`, `heartbeat`, `armTrigger`, `claim`,
 `executorOverride`, `readEstate`, `uploadWishes`, `decryptWishes`.
 
+## Implementation status
+
+The SDK is intentionally ahead of the current testnet package so the frontend can keep a stable
+Lane A / Lane B contract. Do not describe every method as on-chain-backed yet.
+
+| Method / capability | Current status |
+| --- | --- |
+| `createEstate`, `deposit`, `heartbeat`, `armTrigger`, `executorOverride`, `claim`, `readEstate` | Backed by the deployed `estate` package or live read-model flow. |
+| `claim` gas sponsorship | Enoki-ready path; only call it proven after a sponsored Sui digest is pinned. |
+| `setHeirs` after creation | Roadmap. The current package stores heirs at creation but does not expose a beneficiary-update entrypoint. |
+| `uploadWishes` / `decryptWishes` metadata binding | Roadmap/product surface. Seal/Walrus conditional decrypt is proven, but the current package does not store a wishes blob id on-chain. |
+
 ## Status
 
 ```ts

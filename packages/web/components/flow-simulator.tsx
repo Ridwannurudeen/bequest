@@ -17,7 +17,7 @@ const flows = [
     label: "Heir claim",
     title: "Maya claims with Google",
     action: "Claim inheritance",
-    result: "Gasless claim ready: assets arrive, letter decrypts after trigger.",
+    result: "Sponsored claim path ready: assets arrive, letter decrypts after trigger.",
     calls: ["readEstate", "claim", "decryptWishes"],
     timeline: ["Inheritance banner", "Google sign-in", "Sponsored claim", "Letter unlock"]
   },

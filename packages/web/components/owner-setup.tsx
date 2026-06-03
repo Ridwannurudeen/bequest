@@ -111,7 +111,7 @@ function OwnerSetupInner() {
   if (state === "done") {
     return (
       <p className="lede">
-        ✓ Estate created — gaslessly. Tx{" "}
+        ✓ Estate created through the sponsored path. Tx{" "}
         <a
           href={`https://suiscan.xyz/${NETWORK}/tx/${message}`}
           target="_blank"
@@ -181,7 +181,7 @@ function OwnerSetupInner() {
         onClick={createEstate}
         disabled={state === "working"}
       >
-        {state === "working" ? "Creating…" : "Create estate (gasless)"}
+        {state === "working" ? "Creating…" : "Create estate (sponsored)"}
       </button>
       {state === "error" && <p className="lede">Create failed: {message}</p>}
     </div>

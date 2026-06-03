@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   claimReadiness,
+  claimProofUrl,
   claimTarget,
   claimTypeArguments,
   demoClaimReceipt,
@@ -39,6 +40,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
   const target = claimTarget(config);
   const typeArguments = claimTypeArguments(config);
   const steps = claimReadiness(config);
+  const sponsoredClaimUrl = claimProofUrl(config);
 
   // A real object id reads the live estate; anything else (e.g. /claim/demo) shows the demo card.
   const live = OBJECT_ID.test(estateId)
@@ -73,10 +75,10 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             <span>the owner key.</span>
           </h1>
           <p className="lede">
-            This page is the claim proof surface. Today it pins the estate,
-            heir, package, and integration boundary. Once Enoki credentials and
-            the Lane A claim target are confirmed, the same page pins the
-            sponsored claim digest.
+            This page is the claim proof surface. It pins the estate, package,
+            distribution target, and sponsorship boundary. If a sponsored claim
+            lands, the Sui transaction digest appears here; until then, no fake
+            gasless heir claim is presented.
           </p>
         </div>
 
@@ -151,7 +153,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
 
       <section className="receipt-section" aria-label="Claim proof readiness">
         <div className="section-heading">
-          <p className="kicker">Gasless claim boundary</p>
+          <p className="kicker">Sponsored claim boundary</p>
           <h2>What is live, and what still needs credentials.</h2>
         </div>
 
@@ -173,15 +175,39 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             {typeArguments.length > 0 ? typeArguments.join(", ") : "none"}
           </p>
           <p>
-            The first gasless claim proof should sponsor this existing deployed
+            The first sponsored heir proof should sponsor this existing deployed
             Sui distribution call. It does not need a new contract: after the
-            estate is Triggered, the heir can trigger the SUI split for every
-            named heir. Until sponsorship lands, the UI stays honest: no fake
-            claim transaction, no fake sponsor digest.
+            estate is Triggered, the heir action triggers the SUI split for
+            every named heir in one PTB. Until sponsorship lands, the UI stays
+            honest: no fake claim transaction, no fake sponsor digest.
           </p>
           <a href={explorerObjectUrl(packageId)}>
             Open current package on SuiScan
           </a>
+        </div>
+
+        <div className="claim-target-card">
+          <p className="kicker">Sponsored claim proof</p>
+          {sponsoredClaimUrl ? (
+            <>
+              <h3>{config.sponsoredClaimDigest}</h3>
+              <p>
+                This digest is the V2 proof gate: a sponsored heir-side
+                execution of the deployed distribution path, verifiable on
+                SuiScan.
+              </p>
+              <a href={sponsoredClaimUrl}>Open sponsored claim transaction</a>
+            </>
+          ) : (
+            <>
+              <h3>Not pinned yet</h3>
+              <p>
+                Enoki-sponsored execution is the remaining proof gate. If the
+                digest is not configured, submission copy must say the live
+                proof is permissionless distribution, not gasless Google claim.
+              </p>
+            </>
+          )}
         </div>
       </section>
     </main>

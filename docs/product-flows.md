@@ -39,7 +39,8 @@ Acceptance:
 
 ## Flow 2: heir claim
 
-Goal: Maya claims without seed phrase, SUI gas, or crypto jargon.
+Goal: Maya claims without seed phrase or crypto jargon; the zero-SUI gas experience is only marked
+live after a sponsored Sui digest is pinned.
 
 Steps:
 
@@ -61,7 +62,7 @@ decryptWishes(estateId)
 
 Acceptance:
 
-- The heir flow never asks for gas.
+- The submitted "gasless" claim requires a pinned sponsored transaction digest.
 - The heir flow never asks for seed phrase, wallet import, or private-key export.
 - The letter remains encrypted until the on-chain trigger allows Seal decryption.
 
@@ -98,8 +99,8 @@ The demo should follow one family:
 - Heir: Maya
 - Executor: Aunt Lina
 
-The emotional peak is not contract deployment. It is Maya claiming with Google and reading the
-letter after assets arrive.
+The emotional peak is not contract deployment. It is Maya triggering the sponsored claim path with
+Google, seeing the distribution digest, and reading the letter after assets arrive.
 
 ## Copy rules
 
@@ -107,7 +108,7 @@ Use:
 
 - "helps assets move under pre-set on-chain rules"
 - "augments traditional estate planning"
-- "gasless claim"
+- "gasless claim" only after a sponsored digest is pinned
 - "Google sign-in for heirs"
 - "executor can pause false alarms"
 

@@ -55,7 +55,7 @@ export function createMockClient(seed: EstateView = demoEstate): BequestSdk {
       return "0xtx_arm_trigger";
     },
     async claim() {
-      return "0xtx_gasless_claim";
+      return "0xtx_sponsored_claim";
     },
     async executorOverride(_estateId, action) {
       estate = { ...estate, status: "Active" };

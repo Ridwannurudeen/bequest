@@ -9,6 +9,7 @@ configuration are ready.
 The public claim receipt surface lives at `/claim/demo`. It is intentionally honest: it shows the
 current testnet package, the default claim target, and the Enoki readiness boundary, but does not
 claim a sponsored tx exists until the Enoki keys are configured and a live sponsored digest lands.
+Set `NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST` only after that real Sui transaction is available.
 
 ## Run
 
@@ -33,7 +34,7 @@ npm run verify:claim-kind
 - Launch metadata for app previews
 - Enoki backend route scaffolding for nonce, ZKP, address lookup, sponsorship, and execution
 - Claim transaction-kind builder for the default Enoki-sponsored distribution call
-- Public claim receipt page for the eventual gasless heir claim proof
+- Public claim receipt page for the eventual sponsored heir claim proof
 - Default sponsored claim target: `estate::distribute_coin<0x2::sui::SUI>`
 
 Not included yet:
@@ -68,3 +69,12 @@ If Lane A later adds a dedicated heir claim entrypoint, override the public targ
 NEXT_PUBLIC_BEQUEST_CLAIM_TARGET=0xPACKAGE::estate::claim
 ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::claim
 ```
+
+After a sponsored claim lands, pin it publicly:
+
+```
+NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST=<Sui tx digest>
+```
+
+Without that digest, demo and submission copy must describe the proof as permissionless SUI
+distribution plus a sponsor-ready claim path, not as a completed gasless Google heir claim.
