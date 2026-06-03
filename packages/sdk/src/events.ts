@@ -72,9 +72,9 @@ export type SuiEventEnvelope = {
 export type EventAliasMap = Record<string, SuccessionEventKind>;
 
 /**
- * Bequest reference aliases. `EstateCreated` is the verified name emitted by the
- * current testnet package; the canonical names are kept as identity aliases so
- * future implementations that adopt them parse with no extra config.
+ * Bequest reference aliases. The reference package (estate.move) emits all five
+ * canonical events: `EstateCreated` (mapped to `PolicyCreated`), `Armed`, `Triggered`,
+ * `Reset`, and `Claimed`. Other implementations register their own struct names here.
  */
 export const BEQUEST_EVENT_ALIASES: EventAliasMap = {
   EstateCreated: "PolicyCreated",
