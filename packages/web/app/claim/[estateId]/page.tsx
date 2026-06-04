@@ -13,6 +13,7 @@ import { getPublicConfig } from "../../../lib/config";
 import { readEstateOnChain } from "../../../lib/estate-onchain";
 import { ratioLabel } from "../../../lib/bequest-sdk";
 import { ClaimAction } from "../../../components/claim-action";
+import { WishesLetter } from "../../../components/wishes-letter";
 
 const OBJECT_ID = /^0x[0-9a-fA-F]{64}$/;
 
@@ -120,6 +121,13 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             <ClaimAction
               estateId={estateId}
               claimable={live.status === "Triggered"}
+            />
+            <WishesLetter
+              estateId={estateId}
+              packageId={config.packageId}
+              blobId={config.wishesBlobId}
+              innerIdHex={config.wishesInnerId}
+              triggered={live.status === "Triggered"}
             />
           </aside>
         ) : (
