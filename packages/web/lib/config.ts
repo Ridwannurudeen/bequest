@@ -6,6 +6,11 @@ export type PublicBequestConfig = {
   estateModule: string;
   claimTarget?: string;
   sponsoredClaimDigest?: string;
+  // Pinned last-wishes pointer for the judge estate (the package stores no wishes
+  // metadata on-chain yet). wishesInnerId = hex of [estate id bytes][nonce] used at
+  // Seal-encryption time; wishesBlobId = the Walrus blob holding the ciphertext.
+  wishesBlobId?: string;
+  wishesInnerId?: string;
   enokiPublicApiKey?: string;
   enokiConnectAppSlug?: string;
 };
@@ -42,6 +47,8 @@ export function getPublicConfig(): PublicBequestConfig {
     sponsoredClaimDigest: optional(
       process.env.NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST,
     ),
+    wishesBlobId: optional(process.env.NEXT_PUBLIC_BEQUEST_WISHES_BLOB_ID),
+    wishesInnerId: optional(process.env.NEXT_PUBLIC_BEQUEST_WISHES_INNER_ID),
     enokiPublicApiKey: optional(process.env.NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY),
     enokiConnectAppSlug: optional(process.env.NEXT_PUBLIC_ENOKI_CONNECT_APP_SLUG)
   };
