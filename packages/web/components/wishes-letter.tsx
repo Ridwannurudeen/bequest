@@ -53,18 +53,18 @@ function WishesLetterInner({
         network: NETWORK,
       });
 
-      // 1. Seal session key, signed by the heir's own zkLogin keypair.
+      // 1. Seal session key. Pass the heir's zkLogin keypair as the `signer` so the
+      //    SDK does zkLogin-aware personal-message signing at decrypt time. The manual
+      //    setPersonalMessageSignature path runs verifyPersonalMessageSignature, which
+      //    mis-handles a zkLogin signature — passing the signer avoids it.
       const keypair = await flow.getKeypair({ network: NETWORK });
       const sessionKey = await SessionKey.create({
         address,
         packageId,
         ttlMin: 10,
         suiClient,
+        signer: keypair,
       });
-      const { signature } = await keypair.signPersonalMessage(
-        sessionKey.getPersonalMessage(),
-      );
-      await sessionKey.setPersonalMessageSignature(signature);
 
       // 2. Fetch the ciphertext back from Walrus.
       const res = await fetch(`${WALRUS_AGGREGATOR}/v1/blobs/${blobId}`);
