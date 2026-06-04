@@ -1032,7 +1032,7 @@ dd {
 .receipt-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .receipt-step {

@@ -47,6 +47,41 @@ export default function CreateEstatePage() {
           <OwnerSetup />
         </aside>
       </section>
+
+      <section className="section">
+        <div className="section-heading">
+          <div>
+            <p className="kicker">What happens after you create</p>
+            <h2>Your estate, working in the background.</h2>
+          </div>
+        </div>
+        <div className="flow-grid">
+          <article className="flow-card">
+            <h3>Deposit &amp; stay in control</h3>
+            <p>
+              Fund the estate with SUI or NFTs. While you&apos;re active you can
+              withdraw or reset the timer anytime — a single heartbeat keeps it
+              dormant.
+            </p>
+          </article>
+          <article className="flow-card">
+            <h3>The switch arms itself</h3>
+            <p>
+              If you go inactive past your window, the estate arms and a grace
+              period starts. An executor can pause a false alarm; no one can
+              trigger it early.
+            </p>
+          </article>
+          <article className="flow-card">
+            <h3>Heirs inherit gaslessly</h3>
+            <p>
+              After the trigger, your heirs claim their shares with a Google
+              sign-in — no seed phrase, no gas — and the encrypted letter you
+              left unlocks for them.
+            </p>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }
