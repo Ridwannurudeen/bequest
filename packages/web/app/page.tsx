@@ -165,6 +165,8 @@ const faqs = [
 
 export default async function Home() {
   const config = getPublicConfig();
+  // Restore the strong "gasless" claim only when a real sponsored claim digest is pinned.
+  const claimProven = Boolean(config.sponsoredClaimDigest);
   const estate = await loadEstate(config);
   const claimHref =
     estate.estateId && estate.estateId !== "demo"
@@ -202,9 +204,10 @@ export default async function Home() {
           </h1>
           <p className="lede">
             Bequest is on-chain succession for crypto. Lock your assets behind a
-            dead-man's switch, and your heirs inherit through a Google-ready
-            claim path after the trigger — no owner key, no custodian, no
-            seed phrase.
+            dead-man's switch, and{" "}
+            {claimProven
+              ? "your heirs claim them with a Google sign-in: gasless, no owner key, no custodian, no seed phrase."
+              : "your heirs inherit through a Google-ready claim path after the trigger, with no owner key, no custodian, and no seed phrase."}
           </p>
           <div className="hero-actions">
             <Link href="/create" className="button primary">
@@ -235,8 +238,9 @@ export default async function Home() {
             </div>
           </div>
           <p>
-            Sign in with Google to trigger the distribution path. The letter
-            unlocks only after the on-chain trigger.
+            {claimProven
+              ? "Sign in with Google and claim gaslessly; the gas is sponsored. The letter unlocks only after the on-chain trigger."
+              : "Sign in with Google to trigger the distribution path. The letter unlocks only after the on-chain trigger."}
           </p>
           <div className="claim-assets">
             {estate.assets.length > 0 ? (
