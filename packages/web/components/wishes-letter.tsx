@@ -6,7 +6,6 @@ import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 import { fromHex } from "@mysten/sui/utils";
 import { useState } from "react";
-import { AuthButton } from "./auth-button";
 
 const NETWORK =
   (process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") ?? "testnet";
@@ -121,11 +120,12 @@ function WishesLetterInner({
   }
 
   if (!address) {
+    // The page already has a single Google sign-in (the claim action above); once the
+    // heir signs in there, the shared Enoki session unlocks this too. No second button.
     return (
-      <div className="nav-links">
-        <span>Sign in with Google to read the letter:</span>
-        <AuthButton />
-      </div>
+      <p className="lede">
+        Sign in with Google above to reveal the last-wishes letter.
+      </p>
     );
   }
 
