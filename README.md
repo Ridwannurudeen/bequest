@@ -17,7 +17,7 @@ trigger, and the deployed package IDs are in [`docs/architecture.md`](docs/archi
 ## Status
 Live app: <https://bequest.gudman.xyz>
 
-Live testnet proof surface in progress.
+Live testnet proof surface: the full gasless inheritance flow (create, heir claim, Seal last-wishes decrypt) is proven on Sui testnet.
 
 - Move package published on Sui testnet with `estate` and `gate` modules.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
@@ -27,10 +27,10 @@ Live testnet proof surface in progress.
 - CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
   `sui move test` on every push and PR.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
-- The Enoki zkLogin signing and sponsored-execution flow is implemented in the web app for owner
-  estate creation, heir claim, and last-wishes decrypt. Remaining dependency: the live sponsored
-  transaction digest, which activates once the Enoki sponsor credentials are configured in the
-  deployment.
+- The Enoki zkLogin signing and sponsored-execution flow is live and verified in prod: gasless owner
+  estate creation, a gasless heir claim (sponsored tx `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`,
+  sponsor-paid and verified on SuiScan), and heir-side Seal last-wishes decrypt in the browser, all
+  from a Google sign-in with no wallet and no gas.
 - Limitation: Bequest is a Sui testnet technical succession primitive, not legal, probate, tax, or
   financial advice. The current proof demonstrates custody/distribution mechanics, not legal estate
   enforcement.
@@ -97,8 +97,8 @@ the current package already carries the valid lifecycle proof.
 | Package object | Live | [`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`](https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885) |
 | Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
 | Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
-| Sponsored heir claim digest | Final V2 gate | Pending Enoki credentials. Do not claim gasless Google execution until `NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST` is pinned and linked on `/claim/<estateId>`. |
-| Seal/Walrus last-wishes policy | Proven by spike; web decrypt implemented | `LAST-WISHES PASSED` (CLI spike). Heir-side browser decrypt in `components/wishes-letter.tsx` (zkLogin `SessionKey`), gated on `Triggered`. |
+| Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): `estate::distribute_coin`, gas paid by the Enoki sponsor (sponsor address differs from the heir sender), status success. |
+| Seal/Walrus last-wishes policy | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`. |
 | Real testnet estate usage | Tooling live | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`. |
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
