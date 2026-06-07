@@ -41,22 +41,7 @@ export const proofCards = [
   }
 ] as const;
 
-export const openGates = [
-  {
-    label: "zkLogin heir binding",
-    state: "Next proof",
-    detail: "Resolve a Google identity to the same heir binding the owner pre-named."
-  },
-  {
-    label: "Enoki sponsored distribution",
-    state: "Final V2 gate",
-    detail:
-      "Sponsor estate::distribute_coin<SUI> so the heir can trigger distribution without wallet funding or SUI gas. Do not claim this as live until a digest is pinned."
-  },
-  {
-    label: "Public claim receipt",
-    state: "Scaffolded",
-    detail:
-      "A receipt page shows the estate, package, default distribution target, Enoki readiness, and the sponsored digest when configured."
-  }
-] as const;
+// zkLogin heir binding and Enoki sponsored distribution are proven live: sponsored claim digest
+// DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5, verified on testnet (sponsor pays gas, heir signs
+// with their zkLogin keypair). The public claim receipt is live at /claim/<estateId>. No open
+// gates remain for the gasless inheritance flow.

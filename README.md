@@ -3,8 +3,8 @@
 **On-chain inheritance for crypto assets, built on Sui.** An owner sets inheritance rules and
 escrows assets into an `Estate`. If they go inactive (dead-man's switch), the assets distribute
 atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
-sponsorship, so a non-crypto heir can claim without the owner key once the sponsored digest is
-pinned. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
+sponsorship, so a non-crypto heir can claim without the owner key and without gas, a sponsored
+claim path proven on testnet. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
 trigger fires.
 
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
@@ -17,7 +17,7 @@ trigger, and the deployed package IDs are in [`docs/architecture.md`](docs/archi
 ## Status
 Live app: <https://bequest.gudman.xyz>
 
-Live testnet proof surface in progress.
+Live testnet proof surface: the full gasless inheritance flow (create, heir claim, Seal last-wishes decrypt) is proven on Sui testnet.
 
 - Move package published on Sui testnet with `estate` and `gate` modules.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
@@ -27,9 +27,10 @@ Live testnet proof surface in progress.
 - CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
   `sui move test` on every push and PR.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
-- Remaining dependency: Enoki credentials and a live sponsored transaction digest. Lane B can use the
-  existing `estate::distribute_coin<0x2::sui::SUI>` path first; a later dedicated Lane A `claim`
-  entrypoint can override it if needed.
+- The Enoki zkLogin signing and sponsored-execution flow is live and verified in prod: gasless owner
+  estate creation, a gasless heir claim (sponsored tx `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`,
+  sponsor-paid and verified on SuiScan), and heir-side Seal last-wishes decrypt in the browser, all
+  from a Google sign-in with no wallet and no gas.
 - Limitation: Bequest is a Sui testnet technical succession primitive, not legal, probate, tax, or
   financial advice. The current proof demonstrates custody/distribution mechanics, not legal estate
   enforcement.
@@ -48,10 +49,12 @@ bequest/
 ```
 
 ## Lane B frontend
-The first product surface lives in `packages/web`. The read path is wired to the live testnet
-package (the homepage reads a real `Estate`); the remaining write methods stay mocked against the
-frozen `bequest-sdk` signatures until the signing layer lands, so owner setup, heir claim, and the
-executor dashboard can keep progressing.
+The product surface lives in `packages/web`. The read path is wired to the live testnet package
+(the homepage reads a real `Estate`), and the write path is implemented end to end against Enoki
+zkLogin: owner estate creation, heir claim, and last-wishes decrypt each sign with the owner/heir
+zkLogin keypair and execute through the Enoki sponsor routes. The flows render and execute when the
+Enoki credentials are configured at runtime; without them the components degrade gracefully so CI
+can still typecheck and build.
 
 ```
 cd packages/web
@@ -59,9 +62,16 @@ npm install
 npm run check
 ```
 
-The current UI is not the final Enoki integration. It is the product skeleton and launch surface:
-clear flows, metadata, SVG logo/favicon, OG image, and a typed mock SDK replacement point.
-Enoki integration prep lives in `docs/spikes/enoki-integration-plan.md`.
+- Owner setup (`components/owner-setup.tsx`): Google sign-in, name heirs and shares, set the
+  inactivity window, create the estate through the Enoki-sponsored path.
+- Heir claim (`components/claim-action.tsx`): Google sign-in, sponsored `distribute_coin` execution.
+- Last-wishes (`components/wishes-letter.tsx`): heir-side Seal threshold-decrypt, with the key
+  servers releasing only after the estate is `Triggered`.
+
+Required runtime env for the live flows: `NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY`,
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID`, the pinned last-wishes pointer
+(`NEXT_PUBLIC_BEQUEST_WISHES_BLOB_ID` and `NEXT_PUBLIC_BEQUEST_WISHES_INNER_ID`), and the
+server-side Enoki sponsor key. See `.env.example`.
 
 ## Live testnet proof
 The current Sui testnet package is published at
@@ -87,8 +97,9 @@ the current package already carries the valid lifecycle proof.
 | Package object | Live | [`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`](https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885) |
 | Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
 | Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
-| Sponsored heir claim digest | Final V2 gate | Pending Enoki credentials. Do not claim gasless Google execution until `NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST` is pinned and linked on `/claim/<estateId>`. |
-| Seal/Walrus last-wishes policy | Proven by spike | `LAST-WISHES PASSED`; demo must pair this with the same judge estate once Enoki proof lands. |
+| Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): sponsor-paid `estate::distribute_coin<SUI>`, the gas owner differs from the sender so the heir paid no gas, status success. Verify via the transaction gas data on SuiScan, not an event log. |
+| Seal/Walrus last-wishes policy | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`. |
+| Real testnet estate usage | Tooling live | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`. |
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
@@ -114,8 +125,9 @@ present them as already stored on-chain in the submitted package.
 
 ## Architecture decisions (locked)
 - **Custody:** assets are escrowed into the shared `Estate` object (NOT left in the owner's
-  address — there is no owner signature at trigger time). Owner can withdraw/cancel anytime while
-  `Active`. After trigger, `claim` is authorized purely from on-chain state.
+  address, since there is no owner signature at trigger time). The owner can withdraw and reset the
+  timer while `Active`; cancellation applies in the `Pending` grace window (`cancel_pending`). After
+  trigger, `claim` is authorized purely from on-chain state.
 - **State machine:** `Active → Pending (grace + warnings) → Triggered → Claimed`. Any
   deposit/withdraw or `heartbeat()` resets to `Active`; executor can `pause`/`cancel` `Pending`.
 - **Seal policy:** `seal_approve(id, gate/estate)` releases the key only when status is
