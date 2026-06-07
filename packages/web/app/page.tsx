@@ -63,8 +63,8 @@ const ClaimIcon = (
 
 const trust = [
   {
-    label: "Sponsor-ready",
-    detail: "Claim bytes and Enoki routes are wired; digest is the proof gate",
+    label: "Full-portfolio custody",
+    detail: "SUI, stake positions, and objects fit the same Estate",
   },
   { label: "Encrypted", detail: "Last wishes unlock only after the trigger" },
   {
@@ -82,11 +82,11 @@ const steps = [
     icon: LockIcon,
     eyebrow: "Owner",
     title: "Lock assets while you're in control.",
-    body: "Sign in with Google, name your heirs and their shares, set an inactivity window, and deposit SUI or NFTs into a shared estate. Withdraw or reset any time.",
+    body: "Sign in with Google, name your heirs and their shares, set an inactivity window, and deposit liquid SUI, transferable objects, or native stake positions into a shared estate. Withdraw or reset any time.",
     checks: [
       "Google sign-in",
       "Heir ratios",
-      "Escrow on-chain",
+      "Full-portfolio escrow",
       "Encrypted letter",
     ],
   },
@@ -108,10 +108,11 @@ const steps = [
     icon: ClaimIcon,
     eyebrow: "Heir",
     title: "Inherit without a seed phrase.",
-    body: "After the trigger, your heir sees an inheritance banner, signs in with Google, and uses the sponsored claim path to trigger distribution to every named heir. Then the encrypted letter you left decrypts — for them, only now.",
+    body: "After the trigger, the estate can distribute the bundle to the named heirs: SUI splits by shares, key+store objects route to their assigned heir, and the encrypted letter decrypts only then.",
     checks: [
       "Inheritance banner",
-      "Sponsored claim path",
+      "Sponsored SUI claim",
+      "Keeper bundle payout",
       "Assets arrive",
       "Letter unlocks",
     ],
@@ -138,10 +139,10 @@ const products = [
 ];
 
 const stats = [
-  { big: "1 path", small: "sponsor-ready heir claim" },
+  { big: "1 live", small: "sponsored claim receipt" },
+  { big: "key+store", small: "object inheritance path" },
   { big: "1 PTB", small: "atomic multi-heir distribution" },
-  { big: "0", small: "seed phrases for heirs" },
-  { big: "Live", small: "on Sui testnet" },
+  { big: "11/11", small: "Move tests passing" },
 ];
 
 const faqs = [
@@ -203,8 +204,12 @@ export default async function Home() {
             <span className="grad">you no longer can.</span>
           </h1>
           <p className="lede">
-            Bequest is on-chain succession for crypto. Lock your assets behind a
-            dead-man's switch, and{" "}
+            Bequest turns a Sui portfolio into an estate your heirs can receive
+            without your seed phrase: liquid SUI, transferable objects, native
+            stake positions, and the final letter. Assets stay escrowed
+            on-chain; the switch is Clock-gated; the letter stays encrypted
+            until the trigger.
+            {" "}
             {claimProven
               ? "your heirs claim them with a Google sign-in: gasless, no owner key, no custodian, no seed phrase."
               : "your heirs inherit through a Google-ready claim path after the trigger, with no owner key, no custodian, and no seed phrase."}
@@ -239,25 +244,31 @@ export default async function Home() {
           </div>
           <p>
             {claimProven
-              ? "Sign in with Google and claim gaslessly; the gas is sponsored. The letter unlocks only after the on-chain trigger."
-              : "Sign in with Google to trigger the distribution path. The letter unlocks only after the on-chain trigger."}
+              ? "Sign in with Google to claim the SUI leg gaslessly; the keeper can push the object bundle after the same on-chain trigger. The letter unlocks only then."
+              : "Sign in with Google to trigger the SUI distribution path. The object bundle is keeper-distributed after the same on-chain trigger."}
           </p>
           <div className="claim-assets">
             {estate.assets.length > 0 ? (
-              estate.assets.map((asset) => (
-                <div className="asset-row" key={asset.label}>
-                  <span>{asset.label}</span>
+              estate.assets.map((asset, i) => (
+                <div className="asset-row" key={`${asset.label}-${i}`}>
+                  <span>
+                    <b>{asset.type}</b>
+                    {asset.label}
+                    {asset.note ? <small>{asset.note}</small> : null}
+                  </span>
                   <strong>{asset.value}</strong>
                 </div>
               ))
             ) : (
               <div className="asset-row">
                 <span>Escrowed assets</span>
-                <strong>SUI + objects</strong>
+                <strong>SUI + stake + objects</strong>
               </div>
             )}
           </div>
-          <span className="sponsored-badge">✦ Enoki sponsor path wired</span>
+          <span className="sponsored-badge">
+            Sponsored SUI claim pinned · bundle path is generic Move
+          </span>
           <Link
             className="claim-button"
             href={claimHref}
@@ -329,8 +340,8 @@ export default async function Home() {
         <section className="proof-section" id="proof">
           <div className="proof-header">
             <div>
-              <p className="kicker">Already live on Sui testnet</p>
-              <h2>Not a mock — the hard primitives are proven on-chain.</h2>
+              <p className="kicker">Live proof + V2 package surface</p>
+              <h2>Not a mock — the hard primitives are either proven or reproducible.</h2>
             </div>
             <a className="package-card" href={currentPackage.explorerUrl}>
               <span>{currentPackage.label}</span>
@@ -450,8 +461,8 @@ export default async function Home() {
           <p className="kicker">Your keys shouldn't die with you</p>
           <h2>Set up your estate in minutes.</h2>
           <p>
-            Create a protected estate, deposit assets, and name the people who
-            inherit. Free on testnet today.
+            Create a protected estate, deposit a Sui portfolio, and name the
+            people who inherit. Free on testnet today.
           </p>
           <Link href="/create" className="button primary">
             Create an estate

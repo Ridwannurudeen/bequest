@@ -102,7 +102,7 @@ function DepositObjectActionInner({
       <input
         type="text"
         aria-label="object id to deposit"
-        placeholder="NFT / object id (0x…)"
+        placeholder="Object / StakedSui id (0x…)"
         value={objectId}
         onChange={(e) => setObjectId(e.target.value)}
         style={{ width: "12rem" }}
@@ -124,7 +124,7 @@ function DepositObjectActionInner({
         onClick={deposit}
         disabled={state === "working"}
       >
-        {state === "working" ? "Depositing…" : "Deposit NFT (you pay)"}
+        {state === "working" ? "Depositing…" : "Deposit object (you pay)"}
       </button>
       {state === "error" && <p className="lede">Deposit failed: {message}</p>}
     </div>

@@ -7,10 +7,13 @@ export type HeirBinding = {
 };
 
 export type Asset = {
-  type: "SUI" | "COIN" | "NFT" | "LETTER";
+  type: "SUI" | "COIN" | "POSITION" | "OBJECT" | "NFT" | "LETTER";
   label: string;
   value: string;
   state: "escrowed" | "encrypted" | "claimable";
+  objectId?: string;
+  objectType?: string;
+  note?: string;
 };
 
 export type EstateView = {
@@ -90,6 +93,13 @@ const demoEstate: EstateView = {
       label: "Family archive NFT",
       value: "1 object",
       state: "escrowed",
+    },
+    {
+      type: "POSITION",
+      label: "Staked SUI position",
+      value: "native stake object",
+      state: "escrowed",
+      note: "native StakedSui object",
     },
     {
       type: "LETTER",
