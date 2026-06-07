@@ -135,7 +135,9 @@ export default async function EstatesPage() {
                     <dt>Assets</dt>
                     <dd>
                       {view.assets.length > 0
-                        ? view.assets.map((a) => a.label).join(", ")
+                        ? view.assets
+                            .map((a) => `${a.label} (${a.value})`)
+                            .join(", ")
                         : "None escrowed"}
                     </dd>
                   </div>

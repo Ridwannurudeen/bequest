@@ -71,6 +71,33 @@ function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+function shortObjectId(id: string) {
+  return `${id.slice(0, 8)}…${id.slice(-6)}`;
+}
+
+function objectAsset(objectType: string, objectId?: string): Asset {
+  const id = objectId ? shortObjectId(objectId) : "object";
+  if (objectType.endsWith("::staking_pool::StakedSui")) {
+    return {
+      type: "POSITION",
+      label: "Staked SUI position",
+      value: id,
+      state: "escrowed",
+      objectId,
+      objectType,
+      note: "native Sui stake object",
+    };
+  }
+  return {
+    type: "OBJECT",
+    label: shortType(objectType),
+    value: id,
+    state: "escrowed",
+    objectId,
+    objectType,
+  };
+}
+
 type Rpc = ReturnType<typeof rpc>;
 
 // Escrowed coin balances: each is a `CoinKey<T>` dynamic field on the Estate whose value is a
@@ -115,12 +142,7 @@ async function readObjectAssets(client: Rpc, bagId: string): Promise<Asset[]> {
   do {
     const page = await client.getDynamicFields({ parentId: bagId, cursor });
     for (const df of page.data) {
-      assets.push({
-        type: "NFT",
-        label: shortType(df.objectType ?? "object"),
-        value: "1 object",
-        state: "escrowed",
-      });
+      assets.push(objectAsset(df.objectType ?? "object", df.objectId));
     }
     cursor = page.hasNextPage ? page.nextCursor : null;
   } while (cursor);

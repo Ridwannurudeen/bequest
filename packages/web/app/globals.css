@@ -389,6 +389,20 @@ button.status-pill {
 
 .asset-row span {
   color: var(--muted);
+  display: grid;
+  gap: 3px;
+}
+
+.asset-row span b {
+  color: var(--gold);
+  font-size: 0.65rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.asset-row span small {
+  color: var(--faint);
+  font-size: 0.76rem;
 }
 
 .asset-row strong {

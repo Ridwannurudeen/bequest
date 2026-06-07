@@ -109,7 +109,9 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
                 <dt>Assets</dt>
                 <dd>
                   {live.assets.length > 0
-                    ? live.assets.map((a) => a.label).join(", ")
+                    ? live.assets
+                        .map((a) => `${a.label} (${a.value})`)
+                        .join(", ")
                     : "None escrowed"}
                 </dd>
               </div>

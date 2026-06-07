@@ -1,8 +1,8 @@
 # Bequest
 
 **On-chain inheritance for crypto assets, built on Sui.** An owner sets inheritance rules and
-escrows assets into an `Estate`. If they go inactive (dead-man's switch), the assets distribute
-atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
+escrows assets into an `Estate`. If they go inactive (dead-man's switch), liquid SUI and assigned
+key+store objects distribute atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
 sponsorship, so a non-crypto heir can claim without the owner key and without gas, a sponsored
 claim path proven on testnet. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
 trigger fires.
@@ -22,6 +22,9 @@ Live testnet proof surface: the full gasless inheritance flow (create, heir clai
 - Move package published on Sui testnet with `estate` and `gate` modules.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
   distribution.
+- Full-portfolio V2 path is contract-backed without redeploy: the package exposes
+  `deposit_object<T: key + store>` and `distribute_objects<T>`, and the keeper can distribute every
+  escrowed coin and object type after `Triggered`.
 - The web app reads a live on-chain estate on the homepage (newest via `EstateCreated` events),
   falling back to a demo when none exists, plus a public `/claim/demo` receipt.
 - CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
@@ -65,6 +68,8 @@ npm run check
 - Owner setup (`components/owner-setup.tsx`): Google sign-in, name heirs and shares, set the
   inactivity window, create the estate through the Enoki-sponsored path.
 - Heir claim (`components/claim-action.tsx`): Google sign-in, sponsored `distribute_coin` execution.
+- Full-portfolio custody: the live reader and estate dashboard surface liquid SUI plus escrowed
+  key+store objects, including native `StakedSui` positions when present.
 - Last-wishes (`components/wishes-letter.tsx`): heir-side Seal threshold-decrypt, with the key
   servers releasing only after the estate is `Triggered`.
 
@@ -98,6 +103,7 @@ the current package already carries the valid lifecycle proof.
 | Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
 | Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
 | Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): sponsor-paid `estate::distribute_coin<SUI>`, the gas owner differs from the sender so the heir paid no gas, status success. Verify via the transaction gas data on SuiScan, not an event log. |
+| Full-portfolio validation | Script ready | `cd packages/keeper && npm run full-portfolio` creates a live estate, escrows liquid SUI plus a native `StakedSui` object and optional caller-owned object, triggers, distributes, and verifies final heir ownership. Requires `PACKAGE_ID` + funded `SUI_SECRET_KEY`; do not claim a live bundle digest until this command prints `BEQUEST_FULL_PORTFOLIO_PASSED` or `BEQUEST_YIELD_BUNDLE_PASSED`. |
 | Seal/Walrus last-wishes policy | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`. |
 | Real testnet estate usage | Tooling live | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`. |
 

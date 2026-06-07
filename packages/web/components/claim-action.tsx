@@ -112,7 +112,7 @@ function ClaimActionInner({
   if (state === "done") {
     return (
       <p className="lede">
-        ✓ Inheritance distributed through the sponsored path. Tx{" "}
+        ✓ SUI inheritance share distributed through the sponsored path. Tx{" "}
         <a
           href={`https://suiscan.xyz/${NETWORK}/tx/${message}`}
           target="_blank"
@@ -132,7 +132,7 @@ function ClaimActionInner({
         onClick={claim}
         disabled={state === "working"}
       >
-        {state === "working" ? "Claiming…" : "Claim inheritance (sponsored)"}
+        {state === "working" ? "Claiming…" : "Claim SUI share (sponsored)"}
       </button>
       {state === "error" && <p className="lede">Claim failed: {message}</p>}
     </div>
