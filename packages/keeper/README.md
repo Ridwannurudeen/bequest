@@ -46,6 +46,38 @@ npm run keeper          # single pass — for cron / systemd timer
 npm run keeper:watch    # loop every KEEPER_INTERVAL_MS
 ```
 
+## V2 full-portfolio validation
+`npm run full-portfolio` is the no-redeploy gate for the V2 story. With a funded testnet key, it:
+
+1. Stakes testnet SUI through `0x3::sui_system::request_add_stake` and receives a native
+   `StakedSui` object.
+2. Creates a two-heir Bequest estate.
+3. Deposits liquid SUI plus the `StakedSui` object into the estate, earmarking the stake object to
+   heir A.
+4. Optionally deposits one caller-owned object/NFT via `BUNDLE_NFT_OBJECT_ID`, earmarking it to
+   heir B.
+5. Arms, finalizes, distributes, then verifies the liquid SUI split and final object ownership.
+
+```
+PACKAGE_ID=0x696...b885 \
+SUI_SECRET_KEY=suiprivkey1... \
+npm run full-portfolio
+```
+
+Optional knobs:
+
+```
+BUNDLE_STAKE_MIST=1000000000       # default 1 SUI
+BUNDLE_DEPOSIT_MIST=100000000      # default 0.1 SUI
+BUNDLE_NFT_OBJECT_ID=0x...         # optional owned key+store object
+BUNDLE_REQUIRE_NFT=1               # fail if the optional object is absent
+```
+
+Safe proof language:
+- `BEQUEST_YIELD_BUNDLE_PASSED` proves liquid SUI plus native `StakedSui` inheritance.
+- `BEQUEST_FULL_PORTFOLIO_PASSED` proves liquid SUI plus `StakedSui` plus the optional object.
+- Do not claim a live full-portfolio digest until this command prints one of those markers.
+
 ### As a cron job (single pass each run)
 ```
 */1 * * * * cd /opt/bequest/packages/keeper && /usr/bin/npm run keeper >> keeper.log 2>&1

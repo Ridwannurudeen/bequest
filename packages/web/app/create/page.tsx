@@ -59,9 +59,9 @@ export default function CreateEstatePage() {
           <article className="flow-card">
             <h3>Deposit &amp; stay in control</h3>
             <p>
-              Fund the estate with SUI or NFTs. While you&apos;re active you can
-              withdraw or reset the timer anytime — a single heartbeat keeps it
-              dormant.
+              Fund the estate with SUI, transferable objects, or a native
+              StakedSui position. While you&apos;re active you can withdraw or
+              reset the timer anytime — a single heartbeat keeps it dormant.
             </p>
           </article>
           <article className="flow-card">

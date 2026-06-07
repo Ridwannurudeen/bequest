@@ -26,7 +26,7 @@ export const demoClaimReceipt: ClaimReceipt = {
   heirLabel: "Maya",
   heirBinding: "google:maya@example.com",
   heirShare: "70%",
-  assetSummary: "SUI + family archive object",
+  assetSummary: "SUI + StakedSui position + family archive object",
   letterPolicy: "Seal key releases only after Estate status is Triggered",
   status: "ready-to-wire",
 };
@@ -82,7 +82,7 @@ export function claimReadiness(
     {
       label: "Heir claim target",
       state: "done",
-      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs.`,
+      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs; object and stake bundles are pushed through the keeper's distribute_objects path.`,
     },
     {
       label: "Enoki sponsor",

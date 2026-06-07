@@ -23,6 +23,14 @@ export const proofCards = [
     evidence: "DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5"
   },
   {
+    label: "Full-portfolio estate",
+    status: "Move-tested",
+    title: "SUI plus key+store objects fit the same estate.",
+    detail:
+      "The deployed estate module exposes deposit_object<T> and distribute_objects<T>; the keeper can distribute every escrowed object type after Triggered.",
+    evidence: "deposit_object<T> + distribute_objects<T>"
+  },
+  {
     label: "Estate custody",
     status: "Proven live",
     title: "Assets escrow into a shared Estate.",

@@ -33,6 +33,8 @@ npm run verify:claim-kind
 - Heir claim: Google sign-in, sponsored `distribute_coin` execution (`components/claim-action.tsx`).
 - Last-wishes: heir-side Seal threshold-decrypt, gated so the key servers release only after the
   estate is `Triggered` (`components/wishes-letter.tsx`).
+- Full-portfolio read surface: the homepage, claim receipt, and estates dashboard render liquid SUI
+  plus escrowed key+store objects; native `StakedSui` objects are labeled as staked SUI positions.
 - Executor dashboard, live homepage estate read, public claim receipt, SVG favicon/logo/OG image.
 - Enoki backend routes for nonce, ZKP, address lookup, sponsorship, and execution.
 - Claim transaction-kind builder for the default sponsored distribution call.
@@ -46,6 +48,9 @@ npm run verify:claim-kind
 - A live Enoki-sponsored claim/distribution digest:
   `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5` (sponsor-paid `distribute_coin<SUI>`, the gas owner
   differs from the sender, status success), verifiable on SuiScan.
+- The object/yield leg is contract-backed through `deposit_object<T>` / `distribute_objects<T>`.
+  Pin a live bundle digest only after `cd ../keeper && npm run full-portfolio` succeeds with a
+  funded testnet key.
 
 ## Enoki prep
 
