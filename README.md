@@ -3,8 +3,8 @@
 **On-chain inheritance for crypto assets, built on Sui.** An owner sets inheritance rules and
 escrows assets into an `Estate`. If they go inactive (dead-man's switch), the assets distribute
 atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
-sponsorship, so a non-crypto heir can claim without the owner key once the sponsored digest is
-pinned. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
+sponsorship, so a non-crypto heir can claim without the owner key and without gas, a sponsored
+claim path proven on testnet. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
 trigger fires.
 
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
@@ -97,7 +97,7 @@ the current package already carries the valid lifecycle proof.
 | Package object | Live | [`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`](https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885) |
 | Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
 | Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
-| Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): `estate::distribute_coin`, gas paid by the Enoki sponsor (sponsor address differs from the heir sender), status success. |
+| Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): sponsor-paid `estate::distribute_coin<SUI>`, the gas owner differs from the sender so the heir paid no gas, status success. Verify via the transaction gas data on SuiScan, not an event log. |
 | Seal/Walrus last-wishes policy | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`. |
 | Real testnet estate usage | Tooling live | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`. |
 
@@ -125,8 +125,9 @@ present them as already stored on-chain in the submitted package.
 
 ## Architecture decisions (locked)
 - **Custody:** assets are escrowed into the shared `Estate` object (NOT left in the owner's
-  address — there is no owner signature at trigger time). Owner can withdraw/cancel anytime while
-  `Active`. After trigger, `claim` is authorized purely from on-chain state.
+  address, since there is no owner signature at trigger time). The owner can withdraw and reset the
+  timer while `Active`; cancellation applies in the `Pending` grace window (`cancel_pending`). After
+  trigger, `claim` is authorized purely from on-chain state.
 - **State machine:** `Active → Pending (grace + warnings) → Triggered → Claimed`. Any
   deposit/withdraw or `heartbeat()` resets to `Active`; executor can `pause`/`cancel` `Pending`.
 - **Seal policy:** `seal_approve(id, gate/estate)` releases the key only when status is
