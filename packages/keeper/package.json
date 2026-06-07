@@ -10,6 +10,7 @@
     "seed": "tsx src/seed.ts",
     "distribute": "tsx src/distribute.ts",
     "verify:proof": "tsx src/verifyProof.ts",
+    "traction": "tsx src/traction.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
