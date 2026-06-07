@@ -6,7 +6,22 @@ export const currentPackage = {
     "https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885"
 } as const;
 
+export const sponsoredClaim = {
+  digest: "DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5",
+  estateId: "0x1dcd09fae680bb633266bb3e236119cc17a8d7901c46aa050134a9b8969c2f38",
+  explorerUrl:
+    "https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5",
+} as const;
+
 export const proofCards = [
+  {
+    label: "Sponsored claim",
+    status: "Proven live",
+    title: "A heir-side claim executed with sponsor-paid gas.",
+    detail:
+      "The transaction calls estate::distribute_coin<SUI>; sender and gas sponsor differ, and payout routes to the recorded heir.",
+    evidence: "DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5"
+  },
   {
     label: "Estate custody",
     status: "Proven live",

@@ -3,22 +3,22 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Bequest | Sui-native inheritance",
+  title: "Bequest | Crypto inheritance your family can claim",
   description:
-    "Sui-native on-chain inheritance with a Google-ready heir claim path and encrypted last-wishes that unlock only after the trigger.",
+    "Sui-native crypto inheritance with on-chain estate custody, sponsored heir claims, and encrypted last-wishes that unlock only after the trigger.",
   metadataBase: new URL("https://bequest.gudman.xyz"),
   openGraph: {
-    title: "Bequest | Inheritance that still works when the owner cannot sign",
+    title: "Bequest | Crypto inheritance your family can claim",
     description:
-      "A Sui estate flow for owners, heirs, and executors: zkLogin-ready onboarding, sponsored-claim proof surface, and Seal-gated encrypted letters.",
-    images: ["/bequest-og.svg"],
+      "A live Sui estate flow for owners, heirs, and executors: sponsored claim proof, on-chain custody, and Seal-gated encrypted letters.",
+    images: ["/bequest-og.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bequest | Sui-native inheritance",
+    title: "Bequest | Crypto inheritance your family can claim",
     description:
-      "Google-ready heir claims, Sui estate custody, and encrypted last-wishes on Sui.",
-    images: ["/bequest-og.svg"],
+      "Sponsored heir claims, Sui estate custody, and encrypted last-wishes on Sui.",
+    images: ["/bequest-og.png"],
   },
 };
 

@@ -5,7 +5,7 @@ import type { EstateView } from "../lib/bequest-sdk";
 import { bequestSdkMock, formatDuration, ratioLabel } from "../lib/bequest-sdk";
 import { getPublicConfig, type PublicBequestConfig } from "../lib/config";
 import { findLatestEstate, readEstateOnChain } from "../lib/estate-onchain";
-import { currentPackage, proofCards } from "../lib/live-proof";
+import { currentPackage, proofCards, sponsoredClaim } from "../lib/live-proof";
 
 // Read a real estate per request (testnet RPC); fall back to the demo when none exists or the
 // network is unreachable, so the page always renders.
@@ -63,15 +63,15 @@ const ClaimIcon = (
 
 const trust = [
   {
-    label: "Sponsor-ready",
-    detail: "Claim bytes and Enoki routes are wired; digest is the proof gate",
+    label: "Sponsor-paid claim",
+    detail: "A live Sui tx proves the heir-side claim path",
   },
-  { label: "Encrypted", detail: "Last wishes unlock only after the trigger" },
+  { label: "Private wishes", detail: "Seal unlocks the letter only after Triggered" },
   {
-    label: "Non-custodial",
-    detail: "No company can move or freeze your assets",
+    label: "Sui custody",
+    detail: "Assets sit inside a shared Estate object",
   },
-  { label: "Live on Sui", detail: "Full lifecycle proven on testnet" },
+  { label: "Atomic payout", detail: "Distribution runs in one PTB after trigger" },
 ];
 
 const tech = ["Sui", "zkLogin", "Enoki sponsored tx", "Seal", "Walrus", "Move"];
@@ -138,10 +138,10 @@ const products = [
 ];
 
 const stats = [
-  { big: "1 path", small: "sponsor-ready heir claim" },
+  { big: "1 live", small: "sponsored claim receipt" },
   { big: "1 PTB", small: "atomic multi-heir distribution" },
-  { big: "0", small: "seed phrases for heirs" },
-  { big: "Live", small: "on Sui testnet" },
+  { big: "11/11", small: "Move tests passing" },
+  { big: "0", small: "seed phrases for heirs in the claim flow" },
 ];
 
 const faqs = [
@@ -198,33 +198,45 @@ export default async function Home() {
             <span className="live-dot" /> On-chain succession · Live on Sui
           </p>
           <h1>
-            <span>Inheritance</span>
-            <span>that works when</span>
-            <span className="grad">you no longer can.</span>
+            <span>Crypto inheritance</span>
+            <span>your family can</span>
+            <span className="grad">actually claim.</span>
           </h1>
           <p className="lede">
-            Bequest is on-chain succession for crypto. Lock your assets behind a
-            dead-man's switch, and{" "}
+            Bequest turns Sui assets into an estate your heirs can receive
+            without your seed phrase. Assets stay escrowed on-chain; the switch
+            is Clock-gated; the final letter stays encrypted until the trigger.
+            {" "}
             {claimProven
-              ? "your heirs claim them with a Google sign-in: gasless, no owner key, no custodian, no seed phrase."
-              : "your heirs inherit through a Google-ready claim path after the trigger, with no owner key, no custodian, and no seed phrase."}
+              ? "The sponsored claim is already pinned and verifiable on Sui testnet."
+              : "The claim path is Google-ready and proof-gated by a pinned sponsored digest."}
           </p>
           <div className="hero-actions">
             <Link href="/create" className="button primary">
               Create an estate
             </Link>
-            <a href="#how" className="button secondary">
-              See how it works
+            <Link href={`/claim/${sponsoredClaim.estateId}`} className="button secondary">
+              Inspect live claim
+            </Link>
+          </div>
+          <div className="hero-proof-dock" aria-label="Live proof shortcuts">
+            <a href={sponsoredClaim.explorerUrl}>
+              <span>Sponsored claim</span>
+              <strong>{sponsoredClaim.digest.slice(0, 12)}…</strong>
+            </a>
+            <a href={currentPackage.explorerUrl}>
+              <span>Package</span>
+              <strong>{currentPackage.packageId.slice(0, 10)}…b885</strong>
             </a>
           </div>
         </div>
 
         <aside className="claim-card" aria-label="Heir claim preview">
           <div className="claim-card-top">
-            <span>Heir notification</span>
+            <span>Heir receipt</span>
             <span className="status-pill">
               <span className="live-dot" style={{ marginRight: 8 }} />
-              Trigger pending
+              Triggered
             </span>
           </div>
           <div className="heir-head">
@@ -242,6 +254,12 @@ export default async function Home() {
               ? "Sign in with Google and claim gaslessly; the gas is sponsored. The letter unlocks only after the on-chain trigger."
               : "Sign in with Google to trigger the distribution path. The letter unlocks only after the on-chain trigger."}
           </p>
+          <div className="claim-timeline" aria-label="Estate claim timeline">
+            <span>Estate created</span>
+            <span>Trigger fired</span>
+            <span>Claim sponsored</span>
+            <span>Letter unlocked</span>
+          </div>
           <div className="claim-assets">
             {estate.assets.length > 0 ? (
               estate.assets.map((asset) => (
@@ -257,7 +275,7 @@ export default async function Home() {
               </div>
             )}
           </div>
-          <span className="sponsored-badge">✦ Enoki sponsor path wired</span>
+          <span className="sponsored-badge">Sponsor-paid tx pinned on Sui testnet</span>
           <Link
             className="claim-button"
             href={claimHref}
