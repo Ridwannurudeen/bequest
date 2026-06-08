@@ -31,6 +31,16 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>{children}</Providers>
+        <footer
+          style={{
+            textAlign: "center",
+            padding: "2rem 1rem",
+            fontSize: "0.8rem",
+            color: "var(--muted)",
+          }}
+        >
+          Sui testnet demo · no real funds · not legal, probate, or tax advice.
+        </footer>
       </body>
     </html>
   );
