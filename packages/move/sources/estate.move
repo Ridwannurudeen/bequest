@@ -39,6 +39,7 @@ const ETooEarly: u64 = 7;
 const ENotExecutor: u64 = 8;
 const EBadShares: u64 = 9;
 const ENoAccess: u64 = 10;
+const EWrongKind: u64 = 11;
 
 const BPS_TOTAL: u64 = 10000;
 
@@ -46,9 +47,21 @@ const STATUS_ACTIVE: u8 = 0;
 const STATUS_PENDING: u8 = 1;
 const STATUS_TRIGGERED: u8 = 2;
 
+/// Trigger kinds: an inactivity dead-man's switch (default) or a fixed-date scheduled release.
+const KIND_INACTIVITY: u8 = 0;
+const KIND_SCHEDULED: u8 = 1;
+
 public struct Heir has store, copy, drop {
     addr: address,
     bps: u64,
+}
+
+/// On-chain anchor for the encrypted last-wishes letter: the Walrus blob id, the Seal key id,
+/// and a content digest the heir verifies the fetched ciphertext against (so it can't be swapped).
+public struct Wishes has store, copy, drop {
+    blob_id: vector<u8>,
+    key_id: vector<u8>,
+    digest: vector<u8>,
 }
 
 public struct Estate has key {
@@ -57,10 +70,13 @@ public struct Estate has key {
     heirs: vector<Heir>,
     executor: Option<address>,
     status: u8,
+    trigger_kind: u8,
     inactivity_ms: u64,
     grace_ms: u64,
+    release_at_ms: u64,
     last_active_ms: u64,
     pending_since_ms: u64,
+    wishes: Option<Wishes>,
     objects: ObjectBag,
     object_heir: Table<ID, address>,
 }
@@ -78,15 +94,44 @@ public struct Reset has copy, drop { estate: ID, reason: u8 }
 public struct Claimed has copy, drop { estate: ID, recipient: address, amount: u64 }
 /// Owner amended the estate (heirs/shares, executor, or timers) while still in control.
 public struct EstateUpdated has copy, drop { estate: ID }
+/// Owner anchored (or replaced) the encrypted last-wishes letter on-chain.
+public struct WishesSet has copy, drop { estate: ID }
 
-/// Create and share an Estate (ACTIVE). `heir_addrs[i]` gets `heir_bps[i]` basis points of every
-/// coin; the bps must sum to 10000. `executor` is optional.
+/// Create and share an Estate (ACTIVE) as an inactivity dead-man's switch. `heir_addrs[i]` gets
+/// `heir_bps[i]` basis points of every coin; the bps must sum to 10000. `executor` is optional.
 public fun create_estate(
     heir_addrs: vector<address>,
     heir_bps: vector<u64>,
     executor: Option<address>,
     inactivity_ms: u64,
     grace_ms: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): ID {
+    new_estate(heir_addrs, heir_bps, executor, KIND_INACTIVITY, inactivity_ms, grace_ms, 0, clock, ctx)
+}
+
+/// Create and share a SCHEDULED estate: it distributes once wall-clock time reaches `release_at_ms`,
+/// independent of owner activity (gifting, vesting cliffs). Owner can still withdraw to cancel before then.
+public fun create_scheduled_estate(
+    heir_addrs: vector<address>,
+    heir_bps: vector<u64>,
+    executor: Option<address>,
+    release_at_ms: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): ID {
+    new_estate(heir_addrs, heir_bps, executor, KIND_SCHEDULED, 0, 0, release_at_ms, clock, ctx)
+}
+
+fun new_estate(
+    heir_addrs: vector<address>,
+    heir_bps: vector<u64>,
+    executor: Option<address>,
+    trigger_kind: u8,
+    inactivity_ms: u64,
+    grace_ms: u64,
+    release_at_ms: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ID {
@@ -109,10 +154,13 @@ public fun create_estate(
         heirs,
         executor,
         status: STATUS_ACTIVE,
+        trigger_kind,
         inactivity_ms,
         grace_ms,
+        release_at_ms,
         last_active_ms: clock::timestamp_ms(clock),
         pending_since_ms: 0,
+        wishes: option::none(),
         objects: object_bag::new(ctx),
         object_heir: table::new(ctx),
     };
@@ -270,8 +318,27 @@ public fun update_timers(
     touch(estate, clock);
 }
 
+/// Owner anchors (or replaces) the encrypted last-wishes on-chain: Walrus `blob_id`, Seal `key_id`,
+/// and a content `digest` the heir checks the fetched ciphertext against. Not after TRIGGERED.
+public fun set_wishes(
+    estate: &mut Estate,
+    blob_id: vector<u8>,
+    key_id: vector<u8>,
+    digest: vector<u8>,
+    clock: &Clock,
+    ctx: &TxContext,
+) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    estate.wishes = option::some(Wishes { blob_id, key_id, digest });
+    event::emit(WishesSet { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
 /// Permissionless: ACTIVE -> PENDING once `inactivity_ms` has elapsed since last activity.
+/// Only inactivity estates use the arm/finalize path; scheduled estates use `finalize_scheduled`.
 public fun arm(estate: &mut Estate, clock: &Clock) {
+    assert!(estate.trigger_kind == KIND_INACTIVITY, EWrongKind);
     assert!(estate.status == STATUS_ACTIVE, ENotActive);
     assert!(clock::timestamp_ms(clock) >= estate.last_active_ms + estate.inactivity_ms, ETooEarly);
     estate.status = STATUS_PENDING;
@@ -283,6 +350,15 @@ public fun arm(estate: &mut Estate, clock: &Clock) {
 public fun finalize(estate: &mut Estate, clock: &Clock) {
     assert!(estate.status == STATUS_PENDING, ENotPending);
     assert!(clock::timestamp_ms(clock) >= estate.pending_since_ms + estate.grace_ms, ETooEarly);
+    estate.status = STATUS_TRIGGERED;
+    event::emit(Triggered { estate: object::id(estate) });
+}
+
+/// Permissionless: a SCHEDULED estate goes straight to TRIGGERED once `release_at_ms` is reached.
+public fun finalize_scheduled(estate: &mut Estate, clock: &Clock) {
+    assert!(estate.trigger_kind == KIND_SCHEDULED, EWrongKind);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    assert!(clock::timestamp_ms(clock) >= estate.release_at_ms, ETooEarly);
     estate.status = STATUS_TRIGGERED;
     event::emit(Triggered { estate: object::id(estate) });
 }
@@ -360,12 +436,31 @@ public fun heir_count(estate: &Estate): u64 {
     estate.heirs.length()
 }
 
+public fun trigger_kind(estate: &Estate): u8 {
+    estate.trigger_kind
+}
+
+public fun release_at_ms(estate: &Estate): u64 {
+    estate.release_at_ms
+}
+
+/// The on-chain last-wishes anchor, if the owner set one.
+public fun wishes(estate: &Estate): &Option<Wishes> {
+    &estate.wishes
+}
+
+public fun wishes_blob_id(w: &Wishes): vector<u8> { w.blob_id }
+public fun wishes_key_id(w: &Wishes): vector<u8> { w.key_id }
+public fun wishes_digest(w: &Wishes): vector<u8> { w.digest }
+
 /// Seal access policy for the encrypted last-wishes: the key servers release the decryption key
-/// ONLY when (1) the requested key-id is in this estate's namespace ([pkg id][estate id][nonce])
-/// and (2) the estate has been TRIGGERED. Called read-only by Seal key servers via dry-run.
-entry fun seal_approve(id: vector<u8>, estate: &Estate) {
+/// ONLY when (1) the requested key-id is in this estate's namespace ([pkg id][estate id][nonce]),
+/// (2) the estate has been TRIGGERED, and (3) the requester (the Seal session-key address) is a
+/// named heir. Called read-only by Seal key servers via dry-run, so `ctx.sender()` is the requester.
+entry fun seal_approve(id: vector<u8>, estate: &Estate, ctx: &TxContext) {
     assert!(is_prefix(estate.id.to_bytes(), id), ENoAccess);
     assert!(estate.status == STATUS_TRIGGERED, ENoAccess);
+    assert!(is_heir(estate, ctx.sender()), ENoAccess);
 }
 
 fun is_prefix(prefix: vector<u8>, word: vector<u8>): bool {
@@ -596,7 +691,7 @@ fun test_seal_denied_while_active() {
     let estate = sc.take_shared<Estate>();
     let mut key = estate.id.to_bytes(); // valid namespace: [estate id][nonce]
     key.push_back(0u8);
-    seal_approve(key, &estate); // ACTIVE -> aborts ENoAccess
+    seal_approve(key, &estate, sc.ctx()); // ACTIVE -> aborts ENoAccess
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
@@ -611,9 +706,14 @@ fun test_seal_allowed_after_trigger() {
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     trigger_now(&mut estate, &mut clk);
+    ts::return_shared(estate);
+
+    // The requester (Seal session-key address) must be a named heir.
+    sc.next_tx(H1);
+    let estate = sc.take_shared<Estate>();
     let mut key = estate.id.to_bytes();
     key.push_back(7u8);
-    seal_approve(key, &estate); // TRIGGERED + valid namespace -> succeeds
+    seal_approve(key, &estate, sc.ctx()); // TRIGGERED + valid namespace + heir -> succeeds
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
@@ -629,7 +729,29 @@ fun test_seal_denied_wrong_namespace() {
     let mut estate = sc.take_shared<Estate>();
     trigger_now(&mut estate, &mut clk);
     // key-id NOT in the estate namespace -> denied even though TRIGGERED
-    seal_approve(vector[0u8, 1u8, 2u8, 3u8], &estate);
+    seal_approve(vector[0u8, 1u8, 2u8, 3u8], &estate, sc.ctx());
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ENoAccess)]
+fun test_seal_denied_non_heir() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    trigger_now(&mut estate, &mut clk);
+    ts::return_shared(estate);
+
+    // A stranger with a valid namespace key is still denied: not a named heir.
+    sc.next_tx(@0xBAD);
+    let estate = sc.take_shared<Estate>();
+    let mut key = estate.id.to_bytes();
+    key.push_back(7u8);
+    seal_approve(key, &estate, sc.ctx());
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
@@ -707,6 +829,76 @@ fun test_cannot_update_heirs_after_trigger() {
     let mut estate = sc.take_shared<Estate>();
     trigger_now(&mut estate, &mut clk);
     update_heirs(&mut estate, vector[H2], vector[10000], &clk, sc.ctx()); // aborts EAlreadyTriggered
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_scheduled_release_distributes() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_scheduled_estate(vector[H1], vector[10000], option::none(), 1000, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    assert!(estate.trigger_kind() == KIND_SCHEDULED, 0);
+    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(500, sc.ctx()), &clk, sc.ctx());
+    clock::increment_for_testing(&mut clk, 1000); // reaches release_at_ms
+    finalize_scheduled(&mut estate, &clk);
+    assert!(estate.status() == STATUS_TRIGGERED, 1);
+    distribute_coin<SUI>(&mut estate, sc.ctx());
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let c = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c) == 500, 2);
+    coin::burn_for_testing(c);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ETooEarly)]
+fun test_scheduled_finalize_too_early() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_scheduled_estate(vector[H1], vector[10000], option::none(), 1000, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    clock::increment_for_testing(&mut clk, 500); // before release
+    finalize_scheduled(&mut estate, &clk); // aborts ETooEarly
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EWrongKind)]
+fun test_arm_rejects_scheduled() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_scheduled_estate(vector[H1], vector[10000], option::none(), 1000, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    clock::increment_for_testing(&mut clk, 1000);
+    arm(&mut estate, &clk); // aborts EWrongKind (scheduled estates don't use arm/finalize)
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_set_wishes_anchors_digest() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    let digest = vector[1u8, 2u8, 3u8, 4u8];
+    set_wishes(&mut estate, b"blob123", b"keyid456", digest, &clk, sc.ctx());
+    let w = option::borrow(estate.wishes());
+    assert!(wishes_digest(w) == vector[1u8, 2u8, 3u8, 4u8], 0);
+    assert!(wishes_blob_id(w) == b"blob123", 1);
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
