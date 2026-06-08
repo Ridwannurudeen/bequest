@@ -8,6 +8,7 @@ import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
 import { ExecutorAction } from "../../components/executor-action";
 import { DepositAction } from "../../components/deposit-action";
 import { DepositObjectAction } from "../../components/deposit-object-action";
+import { OwnerManage } from "../../components/owner-manage";
 import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
@@ -162,6 +163,7 @@ export default async function EstatesPage() {
                   status={view.status}
                   heirs={view.heirs}
                 />
+                <OwnerManage estate={view} />
               </aside>
             ))}
           </div>
