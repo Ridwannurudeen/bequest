@@ -11,6 +11,7 @@
     "seed:judge": "tsx src/seedJudge.ts",
     "distribute": "tsx src/distribute.ts",
     "full-portfolio": "tsx src/fullPortfolio.ts",
+    "productive": "tsx src/productive.ts",
     "verify:proof": "tsx src/verifyProof.ts",
     "traction": "tsx src/traction.ts",
     "typecheck": "tsc --noEmit"
