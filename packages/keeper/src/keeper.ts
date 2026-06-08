@@ -31,12 +31,16 @@ const STATUS_ACTIVE = 0;
 const STATUS_PENDING = 1;
 const STATUS_TRIGGERED = 2;
 
+const KIND_SCHEDULED = 1;
+
 interface EstateFields {
   status: number | string;
+  trigger_kind: number | string;
   last_active_ms: string;
   inactivity_ms: string;
   grace_ms: string;
   pending_since_ms: string;
+  release_at_ms: string;
 }
 
 function requireEnv(): { pkg: string; key: string } {
@@ -87,7 +91,7 @@ async function call(
   client: SuiJsonRpcClient,
   keypair: Ed25519Keypair,
   pkg: string,
-  fn: "arm" | "finalize",
+  fn: "arm" | "finalize" | "finalize_scheduled",
   estateId: string,
 ): Promise<string> {
   const tx = new Transaction();
@@ -209,11 +213,41 @@ async function tick(
     const f = await readEstate(client, id);
     if (!f) continue;
     const status = Number(f.status);
+    const tag = id.slice(0, 10) + "…";
+
+    // Already TRIGGERED (either kind): just push any remaining assets to the heirs.
+    if (status === STATUS_TRIGGERED) {
+      const digest = await distributeAll(client, keypair, pkg, id);
+      console.log(
+        digest
+          ? `  ${tag} TRIGGERED → distributed (${digest})`
+          : `  ${tag} TRIGGERED — nothing to distribute`,
+      );
+      continue;
+    }
+
+    // Scheduled estates skip arm/finalize: ACTIVE -> TRIGGERED once release_at_ms is reached.
+    if (Number(f.trigger_kind) === KIND_SCHEDULED) {
+      if (now >= Number(f.release_at_ms)) {
+        console.log(`  ${tag} scheduled release reached → finalizing`);
+        console.log(
+          `    TRIGGERED (${await call(client, keypair, pkg, "finalize_scheduled", id)})`,
+        );
+        const digest = await distributeAll(client, keypair, pkg, id);
+        console.log(
+          digest ? `    distributed (${digest})` : "    nothing to distribute",
+        );
+      } else {
+        console.log(`  ${tag} scheduled — releases later`);
+      }
+      continue;
+    }
+
+    // Inactivity dead-man's switch: ACTIVE --inactivity--> PENDING --grace--> TRIGGERED.
     const lastActive = Number(f.last_active_ms);
     const inactivity = Number(f.inactivity_ms);
     const grace = Number(f.grace_ms);
     const pendingSince = Number(f.pending_since_ms);
-    const tag = id.slice(0, 10) + "…";
     if (status === STATUS_ACTIVE && now >= lastActive + inactivity) {
       console.log(`  ${tag} inactive → arming`);
       console.log(`    armed (${await call(client, keypair, pkg, "arm", id)})`);
@@ -225,13 +259,6 @@ async function tick(
       const digest = await distributeAll(client, keypair, pkg, id);
       console.log(
         digest ? `    distributed (${digest})` : "    nothing to distribute",
-      );
-    } else if (status === STATUS_TRIGGERED) {
-      const digest = await distributeAll(client, keypair, pkg, id);
-      console.log(
-        digest
-          ? `  ${tag} TRIGGERED → distributed (${digest})`
-          : `  ${tag} TRIGGERED — nothing to distribute`,
       );
     } else {
       console.log(`  ${tag} status=${status} — no action`);
