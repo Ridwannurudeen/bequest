@@ -24,7 +24,7 @@ type Network = "testnet" | "mainnet";
 const NETWORK = (process.env.NETWORK ?? "testnet") as Network;
 const PACKAGE_ID =
   process.env.PACKAGE_ID ??
-  "0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885";
+  "0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272";
 const GOAL = 20;
 
 const TEAM = new Set(
