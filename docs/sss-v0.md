@@ -2,7 +2,7 @@
 
 - **Status:** Draft (v0)
 - **Track:** Sui Overflow 2026, DeFi & Payments
-- **Reference implementation:** Bequest (`estate.move`), Sui testnet package `0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
+- **Reference implementation:** Bequest (`estate.move`), Sui testnet package `0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`
 - **Scope:** a minimal interface for on-chain succession and recovery objects on Sui, so wallets, custodians, indexers, keepers, and dApps can read, trigger, and settle any compliant policy without bespoke integration.
 
 ## Abstract
@@ -126,6 +126,10 @@ The key-id MUST live in the policy's namespace `[package id][object id][nonce]` 
 server releases the decryption key only after the policy is `TRIGGERED`. Decryption is bound to
 on-chain status, not to a key shared in advance.
 
+Implementations MAY further restrict decryption to named beneficiaries. The reference impl does:
+`estate::seal_approve` additionally asserts the requesting Seal session-key address `is_heir`, so a
+triggered policy's letter decrypts only for a recorded beneficiary, not for any signed-in address.
+
 ### 6. Claim semantics
 
 After `TRIGGERED`, `claim` MUST be authorizable from on-chain state alone (no owner signature) and
@@ -169,18 +173,22 @@ An implementation is **SSS v0 compliant** if it:
 
 ## Reference implementation
 
-Bequest implements SSS v0 with `trigger_kind = 0` (Inactivity). `estate.move` is the policy, the
-state machine, and the Seal binding (`estate::seal_approve`); the earlier `gate.move` Seal-policy
-spike is archived to `docs/spikes/gate.move`. Full lifecycle (create, deposit, arm, finalize,
-distribute) plus Seal-gated wishes and atomic multi-heir distribution are proven on Sui testnet at
-`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. See
+Bequest implements SSS v0 with `trigger_kind = 0` (Inactivity, via `create_estate` + `arm`/`finalize`)
+and `trigger_kind = 1` (Scheduled, via `create_scheduled_estate` + `finalize_scheduled`). `estate.move`
+is the policy, the state machine, the on-chain `wishes` anchor (`set_wishes`), and the Seal binding
+(`estate::seal_approve`); the earlier `gate.move` Seal-policy spike is archived to `docs/spikes/gate.move`.
+Full lifecycle (create, deposit, arm, finalize, distribute), owner amendments (heirs/executor/timers,
+object withdraw), Seal-gated wishes, and atomic multi-heir distribution are proven on Sui testnet at
+`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`. See
 [`docs/architecture.md`](architecture.md).
 
 **Conformance status.** The reference impl emits all five canonical events: `EstateCreated` (the
 `PolicyCreated` name), `Armed`, `Triggered`, `Reset { reason: u8 }`, and `Claimed { recipient,
 amount }` (its SUI distribution leaves the asset type implicit). With the `EstateCreated -> PolicyCreated`
-alias it is fully SSS-v0 conformant on states, events, Seal binding, and claim semantics. `Heir.bps`
-is typed `u64` on chain, with values bounded to 0..10000.
+alias it is fully SSS-v0 conformant on states, events, Seal binding, and claim semantics. It also
+carries the section-2 `trigger_kind` (0 Inactivity, 1 Scheduled) and the on-chain `wishes` anchor
+(`{ walrus_blob_id, seal_key_id, digest }` via `set_wishes`), and exceeds the section-5 minimum by
+binding decryption to `is_heir`. `Heir.bps` is typed `u64` on chain, with values bounded to 0..10000.
 
 ## Security considerations
 
