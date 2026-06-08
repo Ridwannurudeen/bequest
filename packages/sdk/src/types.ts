@@ -22,13 +22,25 @@ export type HeirBinding = {
   ratioBps: number;
 };
 
-export type AssetKind = "SUI" | "COIN" | "NFT" | "LETTER";
+export type AssetKind =
+  | "SUI"
+  | "COIN"
+  | "NFT"
+  | "POSITION"
+  | "OBJECT"
+  | "LETTER";
 
 export type Asset = {
   type: AssetKind;
   label: string;
   value: string;
   state: "escrowed" | "encrypted" | "claimable";
+  /** On-chain object id, for object/position assets. */
+  objectId?: string;
+  /** Fully-qualified Move type, for object/position assets. */
+  objectType?: string;
+  /** Optional human note (e.g. "native Sui stake object"). */
+  note?: string;
 };
 
 export type EstateView = {
