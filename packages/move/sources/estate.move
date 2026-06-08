@@ -76,6 +76,8 @@ public struct Triggered has copy, drop { estate: ID }
 /// (reason 0 = owner activity, 1 = executor pause); `Claimed` fires per heir payout.
 public struct Reset has copy, drop { estate: ID, reason: u8 }
 public struct Claimed has copy, drop { estate: ID, recipient: address, amount: u64 }
+/// Owner amended the estate (heirs/shares, executor, or timers) while still in control.
+public struct EstateUpdated has copy, drop { estate: ID }
 
 /// Create and share an Estate (ACTIVE). `heir_addrs[i]` gets `heir_bps[i]` basis points of every
 /// coin; the bps must sum to 10000. `executor` is optional.
@@ -194,6 +196,78 @@ public fun withdraw_coin<T>(
     let c = coin::take(bal, amount, ctx);
     touch(estate, clock);
     c
+}
+
+/// Owner reclaims a deposited object while the estate is not yet TRIGGERED. Counts as activity.
+public fun withdraw_object<T: key + store>(
+    estate: &mut Estate,
+    id: ID,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): T {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    let _ = table::remove(&mut estate.object_heir, id);
+    let obj = object_bag::remove<ID, T>(&mut estate.objects, id);
+    touch(estate, clock);
+    obj
+}
+
+/// Owner amends the heir set + shares (bps must sum to 10000). Not after TRIGGERED. Counts as activity.
+public fun update_heirs(
+    estate: &mut Estate,
+    heir_addrs: vector<address>,
+    heir_bps: vector<u64>,
+    clock: &Clock,
+    ctx: &TxContext,
+) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    let n = heir_addrs.length();
+    assert!(n > 0 && n == heir_bps.length(), EBadShares);
+    let mut heirs = vector<Heir>[];
+    let mut sum = 0;
+    let mut i = 0;
+    while (i < n) {
+        let bps = heir_bps[i];
+        sum = sum + bps;
+        heirs.push_back(Heir { addr: heir_addrs[i], bps });
+        i = i + 1;
+    };
+    assert!(sum == BPS_TOTAL, EBadShares);
+    estate.heirs = heirs;
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
+/// Owner sets/clears the executor. Not after TRIGGERED. Counts as activity.
+public fun update_executor(
+    estate: &mut Estate,
+    executor: Option<address>,
+    clock: &Clock,
+    ctx: &TxContext,
+) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    estate.executor = executor;
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
+/// Owner adjusts the inactivity + grace windows. Not after TRIGGERED. Counts as activity.
+public fun update_timers(
+    estate: &mut Estate,
+    inactivity_ms: u64,
+    grace_ms: u64,
+    clock: &Clock,
+    ctx: &TxContext,
+) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    estate.inactivity_ms = inactivity_ms;
+    estate.grace_ms = grace_ms;
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
 }
 
 /// Permissionless: ACTIVE -> PENDING once `inactivity_ms` has elapsed since last activity.
@@ -556,6 +630,83 @@ fun test_seal_denied_wrong_namespace() {
     trigger_now(&mut estate, &mut clk);
     // key-id NOT in the estate namespace -> denied even though TRIGGERED
     seal_approve(vector[0u8, 1u8, 2u8, 3u8], &estate);
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_update_heirs_then_distribute() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    update_heirs(&mut estate, vector[H1, H2], vector[4000, 6000], &clk, sc.ctx());
+    assert!(estate.heir_count() == 2, 0);
+    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
+    trigger_now(&mut estate, &mut clk);
+    distribute_coin<SUI>(&mut estate, sc.ctx());
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let c1 = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c1) == 400, 1);
+    coin::burn_for_testing(c1);
+    sc.next_tx(H2);
+    let c2 = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c2) == 600, 2);
+    coin::burn_for_testing(c2);
+
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_withdraw_object_returns_to_owner() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    let nft = Nft { id: object::new(sc.ctx()) };
+    let id = object::id(&nft);
+    deposit_object(&mut estate, nft, H1, &clk, sc.ctx());
+    let back = withdraw_object<Nft>(&mut estate, id, &clk, sc.ctx());
+    assert!(object::id(&back) == id, 0);
+    assert!(object_bag::is_empty(&estate.objects), 1);
+    let Nft { id: uid } = back;
+    object::delete(uid);
+    ts::return_shared(estate);
+
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EBadShares)]
+fun test_update_heirs_bad_shares() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    update_heirs(&mut estate, vector[H1, H2], vector[4000, 5000], &clk, sc.ctx()); // 90% -> abort
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EAlreadyTriggered)]
+fun test_cannot_update_heirs_after_trigger() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    trigger_now(&mut estate, &mut clk);
+    update_heirs(&mut estate, vector[H2], vector[10000], &clk, sc.ctx()); // aborts EAlreadyTriggered
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
