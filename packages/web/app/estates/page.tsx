@@ -30,6 +30,12 @@ function fmtDuration(ms: number): string {
 
 // Human timing for the dead-man's switch, computed from the estate's clock fields.
 function timing(estate: EstateView, now: number): string {
+  if (estate.status === "Triggered") return "claimable by heirs";
+  if (estate.triggerKind === "scheduled") {
+    if (!estate.releaseAtMs) return "scheduled";
+    const ms = estate.releaseAtMs - now;
+    return ms > 0 ? `releases in ${fmtDuration(ms)}` : "release due";
+  }
   if (estate.status === "Active") {
     const armsAt = Date.parse(estate.lastActive) + estate.inactivityMs;
     const ms = armsAt - now;
@@ -40,7 +46,6 @@ function timing(estate: EstateView, now: number): string {
     const ms = triggersAt - now;
     return ms > 0 ? `triggers in ${fmtDuration(ms)}` : "trigger due";
   }
-  if (estate.status === "Triggered") return "claimable by heirs";
   return "";
 }
 

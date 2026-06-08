@@ -113,17 +113,28 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
   }
 
   const working = (label: string) => busy === label;
+  const scheduled = estate.triggerKind === "scheduled";
+  const releaseLabel = estate.releaseAtMs
+    ? new Date(estate.releaseAtMs).toLocaleString()
+    : null;
 
   return (
     <div className="owner-form" aria-label="Owner controls">
-      <button
-        type="button"
-        className="button primary"
-        onClick={() => run("heartbeat", { action: "heartbeat" })}
-        disabled={busy !== null}
-      >
-        {working("heartbeat") ? "Confirming…" : "I'm alive (reset the timer)"}
-      </button>
+      {scheduled ? (
+        <p className="lede">
+          Scheduled estate{releaseLabel ? ` · releases ${releaseLabel}` : ""}. No
+          check-ins needed; heirs can claim at the release time.
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="button primary"
+          onClick={() => run("heartbeat", { action: "heartbeat" })}
+          disabled={busy !== null}
+        >
+          {working("heartbeat") ? "Confirming…" : "I'm alive (reset the timer)"}
+        </button>
+      )}
 
       <div>
         <p className="kicker">Heirs and shares</p>
@@ -185,40 +196,42 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
         </button>
       </div>
 
-      <div className="nav-links">
-        <label>
-          Inactivity (days){" "}
-          <input
-            type="number"
-            value={inactivityDays}
-            onChange={(e) => setInactivityDays(e.target.value)}
-            style={{ width: "6rem" }}
-          />
-        </label>
-        <label>
-          Grace (days){" "}
-          <input
-            type="number"
-            value={graceDays}
-            onChange={(e) => setGraceDays(e.target.value)}
-            style={{ width: "6rem" }}
-          />
-        </label>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={busy !== null}
-          onClick={() =>
-            run("timers", {
-              action: "update_timers",
-              inactivityMs: Math.round(Number(inactivityDays) * DAY_MS),
-              graceMs: Math.round(Number(graceDays) * DAY_MS),
-            })
-          }
-        >
-          {working("timers") ? "Saving…" : "Update timers"}
-        </button>
-      </div>
+      {!scheduled && (
+        <div className="nav-links">
+          <label>
+            Inactivity (days){" "}
+            <input
+              type="number"
+              value={inactivityDays}
+              onChange={(e) => setInactivityDays(e.target.value)}
+              style={{ width: "6rem" }}
+            />
+          </label>
+          <label>
+            Grace (days){" "}
+            <input
+              type="number"
+              value={graceDays}
+              onChange={(e) => setGraceDays(e.target.value)}
+              style={{ width: "6rem" }}
+            />
+          </label>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={busy !== null}
+            onClick={() =>
+              run("timers", {
+                action: "update_timers",
+                inactivityMs: Math.round(Number(inactivityDays) * DAY_MS),
+                graceMs: Math.round(Number(graceDays) * DAY_MS),
+              })
+            }
+          >
+            {working("timers") ? "Saving…" : "Update timers"}
+          </button>
+        </div>
+      )}
 
       <div className="nav-links">
         <label>

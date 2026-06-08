@@ -21,8 +21,10 @@ export type EstateView = {
   owner: string;
   ownerLabel: string;
   status: EstateStatus;
+  triggerKind: "inactivity" | "scheduled";
   inactivityMs: number;
   gracePeriodMs: number;
+  releaseAtMs?: number;
   executor: string;
   executorAddress?: string;
   heirs: HeirBinding[];
@@ -66,6 +68,7 @@ const demoEstate: EstateView = {
   owner: "0xSARAH...1941",
   ownerLabel: "Grandma Sarah",
   status: "Pending",
+  triggerKind: "inactivity",
   inactivityMs: 1000 * 60 * 60 * 24 * 180,
   gracePeriodMs: 1000 * 60 * 60 * 24 * 14,
   executor: "0xEXEC...A11Y",
