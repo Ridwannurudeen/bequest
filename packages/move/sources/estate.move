@@ -40,6 +40,8 @@ const ENotExecutor: u64 = 8;
 const EBadShares: u64 = 9;
 const ENoAccess: u64 = 10;
 const EWrongKind: u64 = 11;
+const EBadVesting: u64 = 12;
+const EVesting: u64 = 13;
 
 const BPS_TOTAL: u64 = 10000;
 
@@ -64,6 +66,14 @@ public struct Wishes has store, copy, drop {
     digest: vector<u8>,
 }
 
+/// Optional linear-with-cliff vesting for coin distribution, measured from `triggered_at_ms`:
+/// nothing releasable before `cliff_ms` elapses, then linear up to 100% at `duration_ms`. Expresses
+/// age-gates (cliff == duration) and recurring allowances (claim the unlocked slice over time).
+public struct Vesting has store, copy, drop {
+    cliff_ms: u64,
+    duration_ms: u64,
+}
+
 public struct Estate has key {
     id: UID,
     owner: address,
@@ -76,13 +86,18 @@ public struct Estate has key {
     release_at_ms: u64,
     last_active_ms: u64,
     pending_since_ms: u64,
+    triggered_at_ms: u64,
     wishes: Option<Wishes>,
+    vesting: Option<Vesting>,
     objects: ObjectBag,
     object_heir: Table<ID, address>,
 }
 
 /// Dynamic-field key for the escrowed `Balance<T>` of each coin type.
 public struct CoinKey<phantom T> has copy, drop, store {}
+
+/// Dynamic-field key tracking how much of coin type `T` has already been released under vesting.
+public struct ClaimedKey<phantom T> has copy, drop, store {}
 
 // Events — let the off-chain keeper discover estates and observe trigger transitions.
 public struct EstateCreated has copy, drop { estate: ID, owner: address }
@@ -160,7 +175,9 @@ fun new_estate(
         release_at_ms,
         last_active_ms: clock::timestamp_ms(clock),
         pending_since_ms: 0,
+        triggered_at_ms: 0,
         wishes: option::none(),
+        vesting: option::none(),
         objects: object_bag::new(ctx),
         object_heir: table::new(ctx),
     };
@@ -335,6 +352,30 @@ public fun set_wishes(
     touch(estate, clock);
 }
 
+/// Owner enables linear-with-cliff vesting for coin distribution (measured from trigger). When set,
+/// coins release via `distribute_coin_vested<T>` instead of the all-at-once `distribute_coin<T>`.
+/// `cliff_ms <= duration_ms` and `duration_ms > 0`. Not after TRIGGERED. Counts as activity.
+public fun set_vesting(estate: &mut Estate, cliff_ms: u64, duration_ms: u64, clock: &Clock, ctx: &TxContext) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    assert!(duration_ms > 0 && cliff_ms <= duration_ms, EBadVesting);
+    estate.vesting = option::some(Vesting { cliff_ms, duration_ms });
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
+/// Fraction (in basis points, 0..10000) of the estate that is releasable now. No vesting => 10000;
+/// before TRIGGERED => 0; before the cliff => 0; at/after `duration_ms` => 10000; else linear.
+public fun vested_bps(estate: &Estate, clock: &Clock): u64 {
+    if (estate.vesting.is_none()) return BPS_TOTAL;
+    if (estate.status != STATUS_TRIGGERED) return 0;
+    let v = option::borrow(&estate.vesting);
+    let elapsed = clock::timestamp_ms(clock) - estate.triggered_at_ms;
+    if (elapsed < v.cliff_ms) return 0;
+    if (elapsed >= v.duration_ms) return BPS_TOTAL;
+    (((elapsed as u128) * (BPS_TOTAL as u128)) / (v.duration_ms as u128)) as u64
+}
+
 /// Permissionless: ACTIVE -> PENDING once `inactivity_ms` has elapsed since last activity.
 /// Only inactivity estates use the arm/finalize path; scheduled estates use `finalize_scheduled`.
 public fun arm(estate: &mut Estate, clock: &Clock) {
@@ -351,6 +392,7 @@ public fun finalize(estate: &mut Estate, clock: &Clock) {
     assert!(estate.status == STATUS_PENDING, ENotPending);
     assert!(clock::timestamp_ms(clock) >= estate.pending_since_ms + estate.grace_ms, ETooEarly);
     estate.status = STATUS_TRIGGERED;
+    estate.triggered_at_ms = clock::timestamp_ms(clock);
     event::emit(Triggered { estate: object::id(estate) });
 }
 
@@ -360,6 +402,7 @@ public fun finalize_scheduled(estate: &mut Estate, clock: &Clock) {
     assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
     assert!(clock::timestamp_ms(clock) >= estate.release_at_ms, ETooEarly);
     estate.status = STATUS_TRIGGERED;
+    estate.triggered_at_ms = clock::timestamp_ms(clock);
     event::emit(Triggered { estate: object::id(estate) });
 }
 
@@ -380,6 +423,7 @@ public fun executor_pause(estate: &mut Estate, clock: &Clock, ctx: &TxContext) {
 /// loops over heirs). Last heir absorbs any rounding remainder. Permissionless after TRIGGERED.
 public fun distribute_coin<T>(estate: &mut Estate, ctx: &mut TxContext) {
     assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    assert!(estate.vesting.is_none(), EVesting);
     let eid = object::id(estate);
     let bal: Balance<T> = df::remove(&mut estate.id, CoinKey<T> {});
     let mut c = coin::from_balance(bal, ctx);
@@ -398,6 +442,52 @@ public fun distribute_coin<T>(estate: &mut Estate, ctx: &mut TxContext) {
     let last_amt = coin::value(&c);
     transfer::public_transfer(c, last.addr);
     event::emit(Claimed { estate: eid, recipient: last.addr, amount: last_amt });
+}
+
+/// Release the currently-unlocked-but-unclaimed slice of coin type T to the heirs by basis points,
+/// for a VESTING estate. Permissionless after TRIGGERED; callable repeatedly as more vests (a no-op
+/// while nothing new has unlocked). Tracks cumulative released amount in a `ClaimedKey<T>` field.
+public fun distribute_coin_vested<T>(estate: &mut Estate, clock: &Clock, ctx: &mut TxContext) {
+    assert!(estate.status == STATUS_TRIGGERED, ENotTriggered);
+    assert!(estate.vesting.is_some(), EVesting);
+    let eid = object::id(estate);
+
+    let bal_ref: &Balance<T> = df::borrow(&estate.id, CoinKey<T> {});
+    let remaining = balance::value(bal_ref);
+    let claimed = if (df::exists(&estate.id, ClaimedKey<T> {})) {
+        let cl: &u64 = df::borrow(&estate.id, ClaimedKey<T> {});
+        *cl
+    } else {
+        0
+    };
+    let original = remaining + claimed;
+    let vbps = vested_bps(estate, clock);
+    let unlocked = (((original as u128) * (vbps as u128)) / (BPS_TOTAL as u128)) as u64;
+    if (unlocked <= claimed) return;
+    let releasable = unlocked - claimed;
+
+    let bal_mut: &mut Balance<T> = df::borrow_mut(&mut estate.id, CoinKey<T> {});
+    let mut c = coin::from_balance(balance::split(bal_mut, releasable), ctx);
+    let n = estate.heirs.length();
+    let mut i = 0;
+    while (i < n - 1) {
+        let h = estate.heirs[i];
+        let amt = (((releasable as u128) * (h.bps as u128)) / (BPS_TOTAL as u128)) as u64;
+        transfer::public_transfer(coin::split(&mut c, amt, ctx), h.addr);
+        event::emit(Claimed { estate: eid, recipient: h.addr, amount: amt });
+        i = i + 1;
+    };
+    let last = estate.heirs[n - 1];
+    let last_amt = coin::value(&c);
+    transfer::public_transfer(c, last.addr);
+    event::emit(Claimed { estate: eid, recipient: last.addr, amount: last_amt });
+
+    if (df::exists(&estate.id, ClaimedKey<T> {})) {
+        let cl: &mut u64 = df::borrow_mut(&mut estate.id, ClaimedKey<T> {});
+        *cl = claimed + releasable;
+    } else {
+        df::add(&mut estate.id, ClaimedKey<T> {}, claimed + releasable);
+    };
 }
 
 /// Push a single escrowed object to its assigned heir. Permissionless after TRIGGERED.
@@ -899,6 +989,87 @@ fun test_set_wishes_anchors_digest() {
     let w = option::borrow(estate.wishes());
     assert!(wishes_digest(w) == vector[1u8, 2u8, 3u8, 4u8], 0);
     assert!(wishes_blob_id(w) == b"blob123", 1);
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_vested_bps_cliff_and_full() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_vesting(&mut estate, 500, 1000, &clk, sc.ctx());
+    assert!(estate.vested_bps(&clk) == 0, 0); // not triggered -> 0
+    trigger_now(&mut estate, &mut clk); // triggered_at set
+    assert!(estate.vested_bps(&clk) == 0, 1); // elapsed 0 < cliff 500
+    clock::increment_for_testing(&mut clk, 500); // elapsed 500 -> 50%
+    assert!(estate.vested_bps(&clk) == 5000, 2);
+    clock::increment_for_testing(&mut clk, 600); // elapsed 1100 >= duration -> 100%
+    assert!(estate.vested_bps(&clk) == 10000, 3);
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_vesting_releases_linearly() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1, H2], vector[7000, 3000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_vesting(&mut estate, 0, 1000, &clk, sc.ctx());
+    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
+    trigger_now(&mut estate, &mut clk);
+    clock::increment_for_testing(&mut clk, 500); // 50% vested
+    distribute_coin_vested<SUI>(&mut estate, &clk, sc.ctx()); // releases 500 (350/150)
+    clock::increment_for_testing(&mut clk, 600); // 100% vested
+    distribute_coin_vested<SUI>(&mut estate, &clk, sc.ctx()); // releases remaining 500
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let a = sc.take_from_sender<Coin<SUI>>();
+    let b = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&a) + coin::value(&b) == 700, 0); // 70% of 1000
+    coin::burn_for_testing(a);
+    coin::burn_for_testing(b);
+    sc.next_tx(H2);
+    let c = sc.take_from_sender<Coin<SUI>>();
+    let d = sc.take_from_sender<Coin<SUI>>();
+    assert!(coin::value(&c) + coin::value(&d) == 300, 1); // 30% of 1000
+    coin::burn_for_testing(c);
+    coin::burn_for_testing(d);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EVesting)]
+fun test_distribute_coin_rejects_vesting() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_vesting(&mut estate, 0, 1000, &clk, sc.ctx());
+    deposit_coin<SUI>(&mut estate, coin::mint_for_testing<SUI>(1000, sc.ctx()), &clk, sc.ctx());
+    trigger_now(&mut estate, &mut clk);
+    distribute_coin<SUI>(&mut estate, sc.ctx()); // aborts EVesting (must use vested path)
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EBadVesting)]
+fun test_set_vesting_bad_params() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_vesting(&mut estate, 2000, 1000, &clk, sc.ctx()); // cliff > duration -> abort
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
