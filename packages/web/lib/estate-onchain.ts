@@ -77,23 +77,94 @@ function shortObjectId(id: string) {
   return `${id.slice(0, 8)}…${id.slice(-6)}`;
 }
 
-function objectAsset(objectType: string, objectId?: string): Asset {
-  const id = objectId ? shortObjectId(objectId) : "object";
-  if (objectType.endsWith("::staking_pool::StakedSui")) {
+const STAKED_SUI_TYPE_SUFFIX = "::staking_pool::StakedSui";
+
+function isStakedSui(objectType: string): boolean {
+  return objectType.endsWith(STAKED_SUI_TYPE_SUFFIX);
+}
+
+// MIST (1e9 per SUI) -> a trimmed SUI string: 1000000000 -> "1", 1012300000 -> "1.0123".
+function mistToSui(mist: number, dp = 4): string {
+  return (mist / 10 ** SUI_DECIMALS).toLocaleString("en-US", {
+    maximumFractionDigits: dp,
+  });
+}
+
+// A native StakedSui auto-compounds via the pool exchange rate, so the escrowed position grows
+// while held. `getStakesByIds` returns the live principal and (once Active) the estimatedReward,
+// both in MIST, keyed by StakedSui object id. Best-effort: on any RPC error we fall back to the
+// bare position so the asset still renders.
+type StakeValue = { principalMist: number; rewardMist: number; active: boolean };
+
+async function stakeValuesByObjectId(
+  client: Rpc,
+  stakedSuiIds: string[],
+): Promise<Map<string, StakeValue>> {
+  const out = new Map<string, StakeValue>();
+  if (stakedSuiIds.length === 0) return out;
+  try {
+    const delegated = await client.getStakesByIds({ stakedSuiIds });
+    for (const ds of delegated) {
+      for (const s of ds.stakes) {
+        if (s.status === "Active") {
+          out.set(s.stakedSuiId, {
+            principalMist: Number(s.principal),
+            rewardMist: Number(s.estimatedReward),
+            active: true,
+          });
+        } else {
+          out.set(s.stakedSuiId, {
+            principalMist: Number(s.principal),
+            rewardMist: 0,
+            active: false,
+          });
+        }
+      }
+    }
+  } catch {
+    // Stake lookup is best-effort; the position still renders without live numbers.
+  }
+  return out;
+}
+
+// The escrowed StakedSui as an Asset: value is the current worth (principal + accrued rewards),
+// and the note spells out the growth so the "estate grows while held" story is visible.
+function stakedAsset(
+  objectType: string,
+  objectId: string | undefined,
+  stake: StakeValue | undefined,
+): Asset {
+  if (!stake) {
     return {
       type: "POSITION",
-      label: "Staked SUI position",
-      value: id,
+      label: "Staked SUI",
+      value: objectId ? shortObjectId(objectId) : "stake",
       state: "escrowed",
       objectId,
       objectType,
-      note: "native Sui stake object",
+      note: "native Sui stake position",
     };
   }
+  const total = stake.principalMist + stake.rewardMist;
+  return {
+    type: "POSITION",
+    label: "Staked SUI",
+    value: `${mistToSui(total)} SUI`,
+    state: "escrowed",
+    objectId,
+    objectType,
+    note: stake.active
+      ? `${mistToSui(stake.principalMist)} SUI staked · +${mistToSui(stake.rewardMist)} SUI earned`
+      : `${mistToSui(stake.principalMist)} SUI staked · activating`,
+  };
+}
+
+// Generic escrowed object (NFT / other key+store) that is not a recognised position.
+function objectAsset(objectType: string, objectId?: string): Asset {
   return {
     type: "OBJECT",
     label: shortType(objectType),
-    value: id,
+    value: objectId ? shortObjectId(objectId) : "object",
     state: "escrowed",
     objectId,
     objectType,
@@ -139,16 +210,34 @@ async function readCoinAssets(client: Rpc, estateId: string): Promise<Asset[]> {
 
 // Escrowed objects (NFTs / positions) live in the Estate's ObjectBag, keyed by object id.
 async function readObjectAssets(client: Rpc, bagId: string): Promise<Asset[]> {
-  const assets: Asset[] = [];
+  const objects: { objectType: string; objectId?: string }[] = [];
   let cursor: string | null | undefined = null;
   do {
     const page = await client.getDynamicFields({ parentId: bagId, cursor });
     for (const df of page.data) {
-      assets.push(objectAsset(df.objectType ?? "object", df.objectId));
+      objects.push({
+        objectType: df.objectType ?? "object",
+        objectId: df.objectId,
+      });
     }
     cursor = page.hasNextPage ? page.nextCursor : null;
   } while (cursor);
-  return assets;
+
+  // Enrich every escrowed StakedSui with its live principal + accrued reward in one batched call.
+  const stakedIds = objects
+    .filter((o) => isStakedSui(o.objectType) && o.objectId)
+    .map((o) => o.objectId as string);
+  const stakeValues = await stakeValuesByObjectId(client, stakedIds);
+
+  return objects.map((o) =>
+    isStakedSui(o.objectType)
+      ? stakedAsset(
+          o.objectType,
+          o.objectId,
+          o.objectId ? stakeValues.get(o.objectId) : undefined,
+        )
+      : objectAsset(o.objectType, o.objectId),
+  );
 }
 
 /** Newest estate id from the package's EstateCreated events, or null if none exist. */

@@ -142,7 +142,11 @@ export default async function EstatesPage() {
                     <dd>
                       {view.assets.length > 0
                         ? view.assets
-                            .map((a) => `${a.label} (${a.value})`)
+                            .map((a) =>
+                              a.note
+                                ? `${a.label} (${a.value} · ${a.note})`
+                                : `${a.label} (${a.value})`,
+                            )
                             .join(", ")
                         : "None escrowed"}
                     </dd>

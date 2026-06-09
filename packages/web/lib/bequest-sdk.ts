@@ -99,10 +99,10 @@ const demoEstate: EstateView = {
     },
     {
       type: "POSITION",
-      label: "Staked SUI position",
-      value: "native stake object",
+      label: "Staked SUI",
+      value: "1.0125 SUI",
       state: "escrowed",
-      note: "native StakedSui object",
+      note: "1 SUI staked · +0.0125 SUI earned",
     },
     {
       type: "LETTER",
