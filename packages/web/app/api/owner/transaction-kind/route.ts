@@ -14,7 +14,11 @@ type OwnerAction =
   | "update_executor"
   | "update_timers"
   | "withdraw_coin"
-  | "withdraw_object";
+  | "withdraw_object"
+  | "set_guardians"
+  | "propose_recovery"
+  | "approve_recovery"
+  | "cancel_recovery";
 
 type Body = {
   action?: OwnerAction;
@@ -30,6 +34,9 @@ type Body = {
   coinType?: string;
   objectId?: string;
   objectType?: string;
+  guardians?: string[];
+  threshold?: number;
+  newOwner?: string;
 };
 
 function bad(message: string) {
@@ -185,6 +192,48 @@ export async function POST(request: Request) {
         tx.transferObjects([obj], tx.pure.address(body.sender));
         break;
       }
+      case "set_guardians": {
+        const guardians = body.guardians ?? [];
+        if (guardians.length === 0)
+          return bad("Provide at least one guardian address.");
+        if (!guardians.every((g) => ADDRESS.test(g)))
+          return bad("Each guardian must be a 32-byte Sui address (0x…).");
+        const threshold = Math.floor(body.threshold ?? 0);
+        if (threshold < 1 || threshold > guardians.length)
+          return bad("Threshold must be between 1 and the number of guardians.");
+        tx.moveCall({
+          target: target("set_guardians"),
+          arguments: [
+            tx.object(estateId!),
+            tx.pure.vector("address", guardians),
+            tx.pure.u64(threshold),
+            tx.object.clock(),
+          ],
+        });
+        break;
+      }
+      case "propose_recovery": {
+        const newOwner = body.newOwner?.trim();
+        if (!newOwner || !ADDRESS.test(newOwner))
+          return bad("newOwner must be a 32-byte Sui address (0x…).");
+        tx.moveCall({
+          target: target("propose_recovery"),
+          arguments: [tx.object(estateId!), tx.pure.address(newOwner)],
+        });
+        break;
+      }
+      case "approve_recovery":
+        tx.moveCall({
+          target: target("approve_recovery"),
+          arguments: [tx.object(estateId!)],
+        });
+        break;
+      case "cancel_recovery":
+        tx.moveCall({
+          target: target("cancel_recovery"),
+          arguments: [tx.object(estateId!)],
+        });
+        break;
       default:
         return bad(`Unknown owner action: ${String(action)}`);
     }
