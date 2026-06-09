@@ -60,7 +60,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
           <span>Bequest</span>
         </Link>
         <div className="nav-links">
-          <Link href="/#proof">Proof</Link>
+          <Link href="/proof">Proof</Link>
           <Link href="/#spikes">Gates</Link>
           <a href={explorerObjectUrl(packageId)}>SuiScan</a>
         </div>

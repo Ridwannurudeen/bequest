@@ -81,7 +81,7 @@ export default async function EstatesPage() {
           <span>Bequest</span>
         </Link>
         <div className="nav-links">
-          <Link href="/#proof">Proof</Link>
+          <Link href="/proof">Proof</Link>
           <Link href="/#estate">Estate</Link>
           <AuthButton />
         </div>
