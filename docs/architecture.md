@@ -21,7 +21,7 @@ flowchart LR
     ENOKI[Enoki zkLogin\nGoogle sign-in + sponsored tx]
   end
 
-  subgraph Sui["Sui Move package @0x1eb5d7…1272"]
+  subgraph Sui["Sui Move package @0x5224dd7d…35c49d1"]
     EST[estate.move\ncustody + dead-man switch + seal_approve]
   end
 
@@ -86,7 +86,7 @@ split deposited and distributed in a single transaction.
 
 | Network | Package ID | Status |
 |---|---|---|
-| Sui testnet | `0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272` | Live. Full lifecycle (create → deposit → trigger → distribute), Seal-gated wishes, and atomic multi-heir distribution proven. |
+| Sui testnet | `0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1` | Live. Full lifecycle (create → deposit → trigger → distribute), Seal-gated wishes, and atomic multi-heir distribution proven. |
 | Sui mainnet | TBD | Gated on mainnet publish (see `docs/MAINNET-RUNBOOK.md`) + KYC (Lane A). |
 
 Verify the live testnet package without private keys:

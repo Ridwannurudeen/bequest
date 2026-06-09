@@ -61,3 +61,8 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
 
 - Republished `estate` to testnet: **new package id `0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`** (publish digest `2WrbJ1rE76rAXE1fcnmqQ414vCkspmH3rnBL1c4wQzzm`, upgrade-cap `0x1223d4957024813164ba0b508d7d968f01fb4d9096db27a77eb0356a7fa220cd`). Supersedes the prior `0x696ea071…dcfb885`.
 - Re-pointed all live pins (`live-proof.ts`, keeper `verifyProof.ts`/`traction.ts`, `verify-claim-kind.mjs`) + envs to the new package; README, `Published.toml`, `architecture.md`, and the runbooks now reference it as canonical.
+
+## Second republish — 2026-06-09
+
+- Republished `estate` (now with vesting #53, guardian recovery #54, attestation trigger #56) to testnet: **new package id `0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`** (publish digest `47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB`, upgrade-cap `0x064022b134f5b932365b944208288dbea3bc873f4a223984a6f229b02a03f124`). Supersedes `0x1eb5d739…731272`. 32/32 Move tests; 37 exposed functions.
+- Re-pointed all runtime pins (`live-proof.ts`, keeper `verifyProof.ts`/`traction.ts`, `verify-claim-kind.mjs`) + docs + envs; Enoki allowlist rebuilt on the new package (+ vesting/guardian/attest targets); re-seeded the canonical estate.
