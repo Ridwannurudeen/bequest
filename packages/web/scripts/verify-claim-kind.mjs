@@ -5,7 +5,7 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 
 const DEFAULT_PACKAGE_ID =
-  "0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272";
+  "0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1";
 const SUI_COIN_TYPE = "0x2::sui::SUI";
 const OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 

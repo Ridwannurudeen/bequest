@@ -1,9 +1,9 @@
 export const currentPackage = {
   label: "Current testnet package",
-  packageId: "0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272",
-  publishDigest: "2WrbJ1rE76rAXE1fcnmqQ414vCkspmH3rnBL1c4wQzzm",
+  packageId: "0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1",
+  publishDigest: "47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB",
   explorerUrl:
-    "https://suiscan.xyz/testnet/object/0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272"
+    "https://suiscan.xyz/testnet/object/0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1"
 } as const;
 
 export const proofCards = [
