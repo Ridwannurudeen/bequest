@@ -14,7 +14,8 @@ type OwnerAction =
   | "update_executor"
   | "update_timers"
   | "withdraw_coin"
-  | "withdraw_object";
+  | "withdraw_object"
+  | "set_wishes";
 
 type Body = {
   action?: OwnerAction;
@@ -30,6 +31,9 @@ type Body = {
   coinType?: string;
   objectId?: string;
   objectType?: string;
+  blobId?: string;
+  keyIdHex?: string;
+  digestHex?: string;
 };
 
 function bad(message: string) {
@@ -183,6 +187,27 @@ export async function POST(request: Request) {
           ],
         });
         tx.transferObjects([obj], tx.pure.address(body.sender));
+        break;
+      }
+      case "set_wishes": {
+        const blobId = typeof body.blobId === "string" ? body.blobId.trim() : "";
+        const keyIdHex = (body.keyIdHex ?? "").replace(/^0x/, "");
+        const digestHex = (body.digestHex ?? "").replace(/^0x/, "");
+        if (!blobId) return bad("blobId is required for set_wishes.");
+        if (!/^[0-9a-fA-F]+$/.test(keyIdHex))
+          return bad("keyIdHex must be hex (the Seal key id).");
+        if (!/^[0-9a-fA-F]*$/.test(digestHex))
+          return bad("digestHex must be hex.");
+        tx.moveCall({
+          target: target("set_wishes"),
+          arguments: [
+            tx.object(estateId!),
+            tx.pure.vector("u8", Array.from(Buffer.from(blobId, "utf8"))),
+            tx.pure.vector("u8", Array.from(Buffer.from(keyIdHex, "hex"))),
+            tx.pure.vector("u8", Array.from(Buffer.from(digestHex, "hex"))),
+            tx.object.clock(),
+          ],
+        });
         break;
       }
       default:

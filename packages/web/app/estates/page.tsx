@@ -3,12 +3,13 @@ import Link from "next/link";
 import type { EstateView } from "../../lib/bequest-sdk";
 import { ratioLabel } from "../../lib/bequest-sdk";
 import { getPublicConfig } from "../../lib/config";
-import { explorerObjectUrl } from "../../lib/claim-receipt";
+import { explorerObjectUrl, resolvedPackageId } from "../../lib/claim-receipt";
 import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
 import { ExecutorAction } from "../../components/executor-action";
 import { DepositAction } from "../../components/deposit-action";
 import { DepositObjectAction } from "../../components/deposit-object-action";
 import { OwnerManage } from "../../components/owner-manage";
+import { SetWishes } from "../../components/set-wishes";
 import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
@@ -51,6 +52,7 @@ function timing(estate: EstateView, now: number): string {
 
 export default async function EstatesPage() {
   const config = getPublicConfig();
+  const pkg = resolvedPackageId(config);
   let estates: { id: string; view: EstateView }[] = [];
   try {
     const ids = await listEstates(config);
@@ -173,6 +175,7 @@ export default async function EstatesPage() {
                   heirs={view.heirs}
                 />
                 <OwnerManage estate={view} />
+                <SetWishes estate={view} packageId={pkg} />
               </aside>
             ))}
           </div>
