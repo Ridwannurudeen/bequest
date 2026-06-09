@@ -15,6 +15,7 @@ type OwnerAction =
   | "update_timers"
   | "withdraw_coin"
   | "withdraw_object"
+  | "set_wishes"
   | "set_guardians"
   | "propose_recovery"
   | "approve_recovery"
@@ -34,6 +35,9 @@ type Body = {
   coinType?: string;
   objectId?: string;
   objectType?: string;
+  blobId?: string;
+  keyIdHex?: string;
+  digestHex?: string;
   guardians?: string[];
   threshold?: number;
   newOwner?: string;
@@ -76,7 +80,8 @@ export async function POST(request: Request) {
       return bad("estateId must be a 32-byte Sui object id.");
 
     const tx = new Transaction();
-    if (body.sender && ADDRESS.test(body.sender)) tx.setSenderIfNotSet(body.sender);
+    if (body.sender && ADDRESS.test(body.sender))
+      tx.setSenderIfNotSet(body.sender);
 
     switch (action) {
       case "create": {
@@ -157,7 +162,8 @@ export async function POST(request: Request) {
       case "withdraw_coin": {
         if (!body.sender || !ADDRESS.test(body.sender))
           return bad("sender is required to receive the withdrawn coin.");
-        if (!body.coinType) return bad("coinType is required for withdraw_coin.");
+        if (!body.coinType)
+          return bad("coinType is required for withdraw_coin.");
         let amount: bigint;
         try {
           amount = BigInt(body.amount ?? 0);
@@ -168,7 +174,11 @@ export async function POST(request: Request) {
         const [coin] = tx.moveCall({
           target: target("withdraw_coin"),
           typeArguments: [body.coinType],
-          arguments: [tx.object(estateId!), tx.pure.u64(amount), tx.object.clock()],
+          arguments: [
+            tx.object(estateId!),
+            tx.pure.u64(amount),
+            tx.object.clock(),
+          ],
         });
         tx.transferObjects([coin], tx.pure.address(body.sender));
         break;
@@ -192,6 +202,28 @@ export async function POST(request: Request) {
         tx.transferObjects([obj], tx.pure.address(body.sender));
         break;
       }
+      case "set_wishes": {
+        const blobId =
+          typeof body.blobId === "string" ? body.blobId.trim() : "";
+        const keyIdHex = (body.keyIdHex ?? "").replace(/^0x/, "");
+        const digestHex = (body.digestHex ?? "").replace(/^0x/, "");
+        if (!blobId) return bad("blobId is required for set_wishes.");
+        if (!/^[0-9a-fA-F]+$/.test(keyIdHex))
+          return bad("keyIdHex must be hex (the Seal key id).");
+        if (!/^[0-9a-fA-F]*$/.test(digestHex))
+          return bad("digestHex must be hex.");
+        tx.moveCall({
+          target: target("set_wishes"),
+          arguments: [
+            tx.object(estateId!),
+            tx.pure.vector("u8", Array.from(Buffer.from(blobId, "utf8"))),
+            tx.pure.vector("u8", Array.from(Buffer.from(keyIdHex, "hex"))),
+            tx.pure.vector("u8", Array.from(Buffer.from(digestHex, "hex"))),
+            tx.object.clock(),
+          ],
+        });
+        break;
+      }
       case "set_guardians": {
         const guardians = body.guardians ?? [];
         if (guardians.length === 0)
@@ -200,7 +232,9 @@ export async function POST(request: Request) {
           return bad("Each guardian must be a 32-byte Sui address (0x…).");
         const threshold = Math.floor(body.threshold ?? 0);
         if (threshold < 1 || threshold > guardians.length)
-          return bad("Threshold must be between 1 and the number of guardians.");
+          return bad(
+            "Threshold must be between 1 and the number of guardians.",
+          );
         tx.moveCall({
           target: target("set_guardians"),
           arguments: [
@@ -238,10 +272,13 @@ export async function POST(request: Request) {
         return bad(`Unknown owner action: ${String(action)}`);
     }
 
-    const bytes = await tx.build({ client: new SuiJsonRpcClient({
-      url: getJsonRpcFullnodeUrl(config.network),
-      network: config.network,
-    }), onlyTransactionKind: true });
+    const bytes = await tx.build({
+      client: new SuiJsonRpcClient({
+        url: getJsonRpcFullnodeUrl(config.network),
+        network: config.network,
+      }),
+      onlyTransactionKind: true,
+    });
 
     return NextResponse.json({
       network: config.network,
