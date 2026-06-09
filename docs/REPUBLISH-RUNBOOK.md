@@ -6,7 +6,7 @@ the package id), must be re-pointed, then the funded judge estate re-seeded. Run
 the `sui` CLI + the deploy key (Lane A). There is no local `sui` on the Windows dev box — CI is the
 only Move validator, and it is already green on #67.
 
-Old testnet package id (being replaced): `0x696ea0…dcfb885` (full value is the current `currentPackage.packageId` in `packages/web/lib/live-proof.ts`).
+Old testnet package id (being replaced): `0x696ea0…dcfb885`. The current live package is `0x1eb5d7…731272`, pinned as `currentPackage.packageId` in `packages/web/lib/live-proof.ts`.
 
 ## 1. Build & publish
 ```bash

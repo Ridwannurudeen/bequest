@@ -80,7 +80,7 @@ server-side Enoki sponsor key. See `.env.example`.
 
 ## Live testnet proof
 The current Sui testnet package is published at
-`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. Judges can verify the
+`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`. Judges can verify the
 package surface without private keys:
 
 ```
@@ -98,8 +98,8 @@ the current package already carries the valid lifecycle proof.
 
 | Proof | Status | Link / command |
 | --- | --- | --- |
-| Package publish | Live | [`9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw`](https://suiscan.xyz/testnet/tx/9RMMNHL1CejdpeBA68mReopQu9nRBRKo2R3bBmTuP9Zw) |
-| Package object | Live | [`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`](https://suiscan.xyz/testnet/object/0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885) |
+| Package publish | Live | [`2WrbJ1rE76rAXE1fcnmqQ414vCkspmH3rnBL1c4wQzzm`](https://suiscan.xyz/testnet/tx/2WrbJ1rE76rAXE1fcnmqQ414vCkspmH3rnBL1c4wQzzm) |
+| Package object | Live | [`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`](https://suiscan.xyz/testnet/object/0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272) |
 | Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
 | Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
 | Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): sponsor-paid `estate::distribute_coin<SUI>`, the gas owner differs from the sender so the heir paid no gas, status success. Verify via the transaction gas data on SuiScan, not an event log. |
