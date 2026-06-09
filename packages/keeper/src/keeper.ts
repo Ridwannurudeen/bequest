@@ -26,6 +26,8 @@ import { Transaction } from "@mysten/sui/transactions";
 const NETWORK = (process.env.NETWORK ?? "testnet") as "testnet" | "mainnet";
 const PACKAGE_ID = process.env.PACKAGE_ID;
 const SUI_SECRET_KEY = process.env.SUI_SECRET_KEY;
+// Alert (not abort) when the keeper's own gas drops below this — it pays for arm/finalize/distribute.
+const MIN_GAS_MIST = Number(process.env.KEEPER_MIN_GAS_MIST ?? 100_000_000); // 0.1 SUI
 
 const STATUS_ACTIVE = 0;
 const STATUS_PENDING = 1;
@@ -201,12 +203,23 @@ async function distributeAll(
   return res.digest;
 }
 
+// Alert when the keeper's own gas is low — it pays for every arm/finalize/distribute.
+async function checkGas(client: SuiJsonRpcClient, addr: string): Promise<void> {
+  const { totalBalance } = await client.getBalance({ owner: addr });
+  if (Number(totalBalance) < MIN_GAS_MIST) {
+    console.error(
+      `[ALERT] keeper gas low: ${Number(totalBalance) / 1e9} SUI (< ${MIN_GAS_MIST / 1e9}); fund ${addr} or arm/finalize/distribute will fail.`,
+    );
+  }
+}
+
 async function tick(
   client: SuiJsonRpcClient,
   keypair: Ed25519Keypair,
   pkg: string,
 ): Promise<void> {
   const now = Date.now();
+  await checkGas(client, keypair.toSuiAddress());
   const ids = await discoverEstates(client, pkg);
   console.log(`[${new Date().toISOString()}] ${ids.length} estate(s)`);
   for (const id of ids) {

@@ -19,6 +19,7 @@ NETWORK=testnet
 PACKAGE_ID=0x<bequest package id>
 SUI_SECRET_KEY=suiprivkey1<keeper account key>   # any funded account; arm/finalize are permissionless
 KEEPER_INTERVAL_MS=30000                          # only used by --watch
+KEEPER_MIN_GAS_MIST=100000000                     # low-gas alert threshold (default 0.1 SUI)
 ```
 
 ```
@@ -91,6 +92,14 @@ ExecStart=/usr/bin/npm run keeper:watch
 Restart=always
 EnvironmentFile=/opt/bequest/packages/keeper/.env
 ```
+
+## Reliability (operating safely)
+The keeper is a **convenience, not a trust anchor** — its correctness comes from the contract, not from any single instance.
+
+- **Run 2+ keepers on independent infra.** Every transition (`arm`/`finalize`/`finalize_scheduled`/`distribute_*`) is permissionless and re-checks its condition on-chain, so redundant keepers are safe: if two race, the second simply no-ops or its tx aborts harmlessly (e.g. `distribute_coin` aborts once a type's balance is already removed). More keepers = higher liveness, never double-spend.
+- **Low-gas alerting.** Each tick checks the keeper account's own balance and logs `[ALERT] keeper gas low: …` (to stderr) below `KEEPER_MIN_GAS_MIST` (default 0.1 SUI). Point your log/alerting at the `[ALERT]` prefix and fund the account before it can't pay for transitions.
+- **Liveness.** Each tick logs `[<ISO timestamp>] N estate(s)`; tick errors are caught and logged `tick error: …` without killing the `--watch` loop. Alert on absence of a recent tick line (stale keeper) and on `tick error:`.
+- **Heir self-claim fallback.** Distribution never depends solely on the keeper: after `TRIGGERED`, **anyone** (a heir, the web claim button, or a stranger) can call `distribute_coin<T>` / `distribute_objects<T>` to push the inheritance. If every keeper is down, the inheritance is still claimable on-chain — the keeper only makes it automatic.
 
 ## Test it
 `npm run seed` creates an estate with `inactivity=grace=0` (immediately eligible). Then run the
