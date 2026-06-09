@@ -56,7 +56,7 @@ letter. No custodian, no owner seed phrase.
 
 The full lifecycle (create, deposit, the dead-man trigger, Seal-gated wishes, and atomic
 multi-heir distribution) is proven today on Sui testnet at package
-`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`. See
+`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`. See
 [`docs/architecture.md`](architecture.md).
 
 ## Why this is infrastructure, not an app

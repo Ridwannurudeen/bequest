@@ -117,4 +117,4 @@ npm run build       # emits dist/ (ESM + .d.ts)
 `bequest-sdk`. Follow-ups: point `packages/web` at this package (workspace dep),
 and add a live `createOnchainClient(suiClient, packageId)` once the signing layer
 lands. The reference Move implementation is published on Sui testnet at
-`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`.
+`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`.
