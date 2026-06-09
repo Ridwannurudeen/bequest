@@ -22,7 +22,9 @@ const KEY_SERVER_IDS = [
   "0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8",
 ];
 const THRESHOLD = 2;
-const WALRUS_EPOCHS = 3;
+// User-authored letters must outlive the judging window, so store for 30 epochs
+// to match the judge-estate seeder. (packages/wishes uses 3 as a throwaway test.)
+const WALRUS_EPOCHS = 30;
 
 async function postJson(url: string, body: unknown) {
   const res = await fetch(url, {
