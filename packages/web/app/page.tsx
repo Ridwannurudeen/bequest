@@ -184,7 +184,7 @@ export default async function Home() {
         </a>
         <div className="nav-links">
           <a href="#how">How it works</a>
-          <a href="#proof">Proof</a>
+          <Link href="/proof">Proof</Link>
           <Link href="/estates">Estates</Link>
           <AuthButton />
           <Link href="/create" className="button primary">
