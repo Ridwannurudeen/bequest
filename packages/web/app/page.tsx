@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 async function loadEstate(config: PublicBequestConfig): Promise<EstateView> {
   try {
-    const estateId = await findLatestEstate(config);
+    const estateId = config.demoEstateId ?? (await findLatestEstate(config));
     if (estateId) return await readEstateOnChain(estateId, config);
   } catch (error) {
     console.warn("Live estate read failed; using demo fallback:", error);
@@ -208,8 +208,7 @@ export default async function Home() {
             without your seed phrase: liquid SUI, transferable objects, native
             stake positions, and the final letter. Assets stay escrowed
             on-chain; the switch is Clock-gated; the letter stays encrypted
-            until the trigger.
-            {" "}
+            until the trigger.{" "}
             {claimProven
               ? "your heirs claim them with a Google sign-in: gasless, no owner key, no custodian, no seed phrase."
               : "your heirs inherit through a Google-ready claim path after the trigger, with no owner key, no custodian, and no seed phrase."}
@@ -341,7 +340,10 @@ export default async function Home() {
           <div className="proof-header">
             <div>
               <p className="kicker">Live proof + V2 package surface</p>
-              <h2>Not a mock — the hard primitives are either proven or reproducible.</h2>
+              <h2>
+                Not a mock — the hard primitives are either proven or
+                reproducible.
+              </h2>
             </div>
             <a className="package-card" href={currentPackage.explorerUrl}>
               <span>{currentPackage.label}</span>
