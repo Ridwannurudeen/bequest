@@ -4,7 +4,7 @@ Lane A operational runbook for publishing Bequest to **Sui mainnet** and cutting
 Closes roadmap item #31. Ratified decisions (2026-06-02): **publish `estate.move` only (exclude `gate.move`)**, **publish mutable (retain `UpgradeCap`), secure to multisig before scaling value, immutable only post-audit.**
 
 > Target window: **early August 2026** (ahead of the Aug 27 announcement → 100%-upfront prize).
-> Reference testnet package: `0x696ea071…fb885` (upgrade-cap `0x02fa8affe…a828c`).
+> Reference testnet package: `0x1eb5d739…731272` (upgrade-cap `0x1223d495…fa220cd`).
 
 ---
 

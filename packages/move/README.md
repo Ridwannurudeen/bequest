@@ -17,7 +17,7 @@ sui move build
 Status: **11/11 tests passing** on Sui CLI 1.72.2 (testnet).
 
 Current testnet package:
-`0x696ea071464b9836ea018c12fea0b4475099fa269a94b8c92d7672887dcfb885`
+`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`
 
 ## Move.toml — keep it clean
 No dependencies are pinned. The Sui framework + MoveStdlib are **implicit system dependencies**

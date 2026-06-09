@@ -56,3 +56,8 @@ B: #1 zkLogin heir-binding, #6 Enoki sponsored-tx, #7 competition + legal scan.
   - **Lane A backend COMPLETE + proven on testnet.** Next: hand to B for zkLogin/Enoki claim flow + frontend.
 - **B:** _(fill in)_ — dolepee invited (write); brief = BEQUEST-BRIEF-B in Music.
 - **Blockers:** none.
+
+## Republish — 2026-06-08
+
+- Republished `estate` to testnet: **new package id `0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`** (publish digest `2WrbJ1rE76rAXE1fcnmqQ414vCkspmH3rnBL1c4wQzzm`, upgrade-cap `0x1223d4957024813164ba0b508d7d968f01fb4d9096db27a77eb0356a7fa220cd`). Supersedes the prior `0x696ea071…dcfb885`.
+- Re-pointed all live pins (`live-proof.ts`, keeper `verifyProof.ts`/`traction.ts`, `verify-claim-kind.mjs`) + envs to the new package; README, `Published.toml`, `architecture.md`, and the runbooks now reference it as canonical.
