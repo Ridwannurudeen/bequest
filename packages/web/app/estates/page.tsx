@@ -9,6 +9,7 @@ import { ExecutorAction } from "../../components/executor-action";
 import { DepositAction } from "../../components/deposit-action";
 import { DepositObjectAction } from "../../components/deposit-object-action";
 import { OwnerManage } from "../../components/owner-manage";
+import { RecoveryPanel } from "../../components/recovery-panel";
 import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
@@ -151,6 +152,14 @@ export default async function EstatesPage() {
                         : "None escrowed"}
                     </dd>
                   </div>
+                  <div>
+                    <dt>Recovery</dt>
+                    <dd>
+                      {view.guardians.length > 0
+                        ? `${view.recoveryThreshold}-of-${view.guardians.length} guardians${view.recovery ? ` · pending → ${view.recovery.newOwner.slice(0, 6)}… (${view.recovery.approvals.length}/${view.recoveryThreshold})` : ""}`
+                        : "No guardians set"}
+                    </dd>
+                  </div>
                 </dl>
                 <div className="nav-links">
                   <Link href={`/claim/${id}`}>Claim receipt</Link>
@@ -173,6 +182,7 @@ export default async function EstatesPage() {
                   heirs={view.heirs}
                 />
                 <OwnerManage estate={view} />
+                <RecoveryPanel estate={view} />
               </aside>
             ))}
           </div>

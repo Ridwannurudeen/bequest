@@ -28,6 +28,9 @@ type RawEstateFields = {
   last_active_ms: string;
   pending_since_ms: string;
   heirs: RawHeir[];
+  guardians: string[];
+  recovery_threshold: string;
+  recovery: { fields: { new_owner: string; approvals: string[] } } | null;
   objects: { fields: { id: { id: string }; size: string } };
 };
 
@@ -308,6 +311,13 @@ export async function readEstateOnChain(
     ratioBps: Number(heir.fields.bps),
   }));
 
+  const recovery = fields.recovery
+    ? {
+        newOwner: fields.recovery.fields.new_owner,
+        approvals: fields.recovery.fields.approvals ?? [],
+      }
+    : undefined;
+
   const pendingSinceMs = Number(fields.pending_since_ms);
   const releaseAtMs = Number(fields.release_at_ms);
 
@@ -328,6 +338,9 @@ export async function readEstateOnChain(
     executor: fields.executor ? shortAddress(fields.executor) : "None",
     executorAddress: fields.executor ?? undefined,
     heirs,
+    guardians: fields.guardians ?? [],
+    recoveryThreshold: Number(fields.recovery_threshold ?? 0),
+    recovery,
     assets: [...coinAssets, ...objectAssets],
     lastActive: new Date(Number(fields.last_active_ms)).toISOString(),
     pendingSince:

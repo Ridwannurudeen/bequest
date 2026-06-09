@@ -28,6 +28,9 @@ export type EstateView = {
   executor: string;
   executorAddress?: string;
   heirs: HeirBinding[];
+  guardians: string[];
+  recoveryThreshold: number;
+  recovery?: { newOwner: string; approvals: string[] };
   assets: Asset[];
   lastActive: string;
   pendingSince?: string;
@@ -111,6 +114,8 @@ const demoEstate: EstateView = {
       state: "encrypted",
     },
   ],
+  guardians: [],
+  recoveryThreshold: 0,
   lastActive: "2026-02-24T09:30:00.000Z",
   pendingSince: "2026-05-24T09:30:00.000Z",
   wishesBlobId: "walrus://grandma-sarah-letter",
