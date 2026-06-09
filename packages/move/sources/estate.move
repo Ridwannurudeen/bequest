@@ -21,10 +21,12 @@
 /// Framework signatures verified 2026-05-22 against sui-framework `framework/testnet`.
 module bequest::estate;
 
+use std::bcs;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::dynamic_field as df;
+use sui::ed25519;
 use sui::event;
 use sui::object_bag::{Self, ObjectBag};
 use sui::table::{Self, Table};
@@ -42,6 +44,15 @@ const ENoAccess: u64 = 10;
 const EWrongKind: u64 = 11;
 const EBadVesting: u64 = 12;
 const EVesting: u64 = 13;
+const EBadThreshold: u64 = 14;
+const ENotGuardian: u64 = 15;
+const ENoRecovery: u64 = 16;
+const ERecoveryPending: u64 = 17;
+const EAlreadyApproved: u64 = 18;
+const EBadSig: u64 = 19;
+
+/// Domain-separation tag for the attestation-trigger signed message.
+const INTENT_TRIGGER: u8 = 1;
 
 const BPS_TOTAL: u64 = 10000;
 
@@ -74,6 +85,22 @@ public struct Vesting has store, copy, drop {
     duration_ms: u64,
 }
 
+/// A pending guardian-recovery request: rotate the estate's owner to `new_owner` once a quorum of
+/// guardians (>= `recovery_threshold`) has approved. Lets the owner regain control if locked out.
+public struct Recovery has store, drop {
+    new_owner: address,
+    approvals: vector<address>,
+}
+
+/// The canonical message a designated attester (off-chain; e.g. a Nautilus enclave) signs to trigger
+/// an estate. Bound to this estate's id (no cross-estate replay) and a timestamp; mirrors the Nautilus
+/// runtime intent-message pattern so the attester key can later be a TEE-attested enclave key.
+public struct AttestMessage has drop {
+    intent: u8,
+    estate_id: ID,
+    timestamp_ms: u64,
+}
+
 public struct Estate has key {
     id: UID,
     owner: address,
@@ -89,6 +116,10 @@ public struct Estate has key {
     triggered_at_ms: u64,
     wishes: Option<Wishes>,
     vesting: Option<Vesting>,
+    guardians: vector<address>,
+    recovery_threshold: u64,
+    recovery: Option<Recovery>,
+    attester_pk: vector<u8>,
     objects: ObjectBag,
     object_heir: Table<ID, address>,
 }
@@ -111,6 +142,12 @@ public struct Claimed has copy, drop { estate: ID, recipient: address, amount: u
 public struct EstateUpdated has copy, drop { estate: ID }
 /// Owner anchored (or replaced) the encrypted last-wishes letter on-chain.
 public struct WishesSet has copy, drop { estate: ID }
+/// Guardian-recovery lifecycle: a request is proposed, approved by guardians, and on quorum the
+/// owner is rotated (Recovered), or the current owner vetoes it (RecoveryCancelled).
+public struct RecoveryProposed has copy, drop { estate: ID, new_owner: address }
+public struct RecoveryApproved has copy, drop { estate: ID, guardian: address, approvals: u64 }
+public struct Recovered has copy, drop { estate: ID, new_owner: address }
+public struct RecoveryCancelled has copy, drop { estate: ID }
 
 /// Create and share an Estate (ACTIVE) as an inactivity dead-man's switch. `heir_addrs[i]` gets
 /// `heir_bps[i]` basis points of every coin; the bps must sum to 10000. `executor` is optional.
@@ -178,6 +215,10 @@ fun new_estate(
         triggered_at_ms: 0,
         wishes: option::none(),
         vesting: option::none(),
+        guardians: vector<address>[],
+        recovery_threshold: 0,
+        recovery: option::none(),
+        attester_pk: vector<u8>[],
         objects: object_bag::new(ctx),
         object_heir: table::new(ctx),
     };
@@ -374,6 +415,104 @@ public fun vested_bps(estate: &Estate, clock: &Clock): u64 {
     if (elapsed < v.cliff_ms) return 0;
     if (elapsed >= v.duration_ms) return BPS_TOTAL;
     (((elapsed as u128) * (BPS_TOTAL as u128)) / (v.duration_ms as u128)) as u64
+}
+
+/// Owner names a guardian set + an m-of-n `threshold` for self-recovery. Amendable; not after TRIGGERED.
+public fun set_guardians(
+    estate: &mut Estate,
+    guardian_addrs: vector<address>,
+    threshold: u64,
+    clock: &Clock,
+    ctx: &TxContext,
+) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    assert!(threshold > 0 && threshold <= guardian_addrs.length(), EBadThreshold);
+    estate.guardians = guardian_addrs;
+    estate.recovery_threshold = threshold;
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
+/// A guardian proposes rotating the owner to `new_owner` (the owner's new key). Records the proposer's
+/// approval and executes immediately if the threshold is 1. Not after TRIGGERED.
+public fun propose_recovery(estate: &mut Estate, new_owner: address, ctx: &TxContext) {
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    let sender = ctx.sender();
+    assert!(estate.guardians.contains(&sender), ENotGuardian);
+    assert!(estate.recovery.is_none(), ERecoveryPending);
+    let eid = object::id(estate);
+    estate.recovery = option::some(Recovery { new_owner, approvals: vector<address>[sender] });
+    event::emit(RecoveryProposed { estate: eid, new_owner });
+    try_execute_recovery(estate, eid);
+}
+
+/// Another guardian approves the pending recovery; on reaching the threshold the owner rotates.
+public fun approve_recovery(estate: &mut Estate, ctx: &TxContext) {
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    let sender = ctx.sender();
+    assert!(estate.guardians.contains(&sender), ENotGuardian);
+    assert!(estate.recovery.is_some(), ENoRecovery);
+    let eid = object::id(estate);
+    let count = {
+        let r = option::borrow_mut(&mut estate.recovery);
+        assert!(!r.approvals.contains(&sender), EAlreadyApproved);
+        r.approvals.push_back(sender);
+        r.approvals.length()
+    };
+    event::emit(RecoveryApproved { estate: eid, guardian: sender, approvals: count });
+    try_execute_recovery(estate, eid);
+}
+
+/// The current owner vetoes a pending recovery (anti-hijack).
+public fun cancel_recovery(estate: &mut Estate, ctx: &TxContext) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.recovery.is_some(), ENoRecovery);
+    let _ = option::extract(&mut estate.recovery);
+    event::emit(RecoveryCancelled { estate: object::id(estate) });
+}
+
+fun try_execute_recovery(estate: &mut Estate, eid: ID) {
+    let met = option::borrow(&estate.recovery).approvals.length() >= estate.recovery_threshold;
+    if (met) {
+        let Recovery { new_owner, approvals: _ } = option::extract(&mut estate.recovery);
+        estate.owner = new_owner;
+        event::emit(Recovered { estate: eid, new_owner });
+    }
+}
+
+/// Owner designates an attester Ed25519 public key (32 bytes) for verifiable triggering. Empty key
+/// disables the path. Not after TRIGGERED. The key can later be a Nautilus-attested enclave key.
+public fun set_attester(estate: &mut Estate, attester_pk: vector<u8>, clock: &Clock, ctx: &TxContext) {
+    assert!(estate.owner == ctx.sender(), ENotOwner);
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    estate.attester_pk = attester_pk;
+    event::emit(EstateUpdated { estate: object::id(estate) });
+    touch(estate, clock);
+}
+
+/// Permissionless verifiable trigger: the designated attester signs `AttestMessage { INTENT_TRIGGER,
+/// estate_id, timestamp_ms }` off-chain; anyone submits the signature and the contract verifies it
+/// on-chain (Ed25519) before triggering. Trust model: this PROVES the trigger was authorized by the
+/// attester key; it still TRUSTS whoever holds that key — wired so the key can be swapped for a
+/// Nautilus AWS-Nitro-attested enclave key (`enclave.pk`) with no change to this verification path.
+public fun attest_trigger(
+    estate: &mut Estate,
+    signature: vector<u8>,
+    timestamp_ms: u64,
+    clock: &Clock,
+) {
+    assert!(estate.status != STATUS_TRIGGERED, EAlreadyTriggered);
+    assert!(!estate.attester_pk.is_empty(), EBadSig);
+    let msg = AttestMessage {
+        intent: INTENT_TRIGGER,
+        estate_id: object::id(estate),
+        timestamp_ms,
+    };
+    assert!(ed25519::ed25519_verify(&signature, &estate.attester_pk, &bcs::to_bytes(&msg)), EBadSig);
+    estate.status = STATUS_TRIGGERED;
+    estate.triggered_at_ms = clock::timestamp_ms(clock);
+    event::emit(Triggered { estate: object::id(estate) });
 }
 
 /// Permissionless: ACTIVE -> PENDING once `inactivity_ms` has elapsed since last activity.
@@ -1070,6 +1209,151 @@ fun test_set_vesting_bad_params() {
     sc.next_tx(OWNER);
     let mut estate = sc.take_shared<Estate>();
     set_vesting(&mut estate, 2000, 1000, &clk, sc.ctx()); // cliff > duration -> abort
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test]
+fun test_recovery_rotates_owner() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_guardians(&mut estate, vector[H1, H2, H3], 2, &clk, sc.ctx());
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let mut estate = sc.take_shared<Estate>();
+    propose_recovery(&mut estate, @0xF1, sc.ctx()); // 1 of 2
+    assert!(estate.owner == OWNER, 0); // not yet rotated
+    ts::return_shared(estate);
+
+    sc.next_tx(H2);
+    let mut estate = sc.take_shared<Estate>();
+    approve_recovery(&mut estate, sc.ctx()); // 2 of 2 -> rotate
+    assert!(estate.owner == @0xF1, 1);
+    ts::return_shared(estate);
+
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ENotGuardian)]
+fun test_recovery_non_guardian_rejected() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_guardians(&mut estate, vector[H1, H2], 2, &clk, sc.ctx());
+    ts::return_shared(estate);
+
+    sc.next_tx(@0xBAD);
+    let mut estate = sc.take_shared<Estate>();
+    propose_recovery(&mut estate, @0xF1, sc.ctx()); // not a guardian -> abort
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EBadThreshold)]
+fun test_set_guardians_bad_threshold() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_guardians(&mut estate, vector[H1], 2, &clk, sc.ctx()); // threshold > guardians -> abort
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = ENoRecovery)]
+fun test_cancel_recovery_blocks_approval() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_guardians(&mut estate, vector[H1, H2], 2, &clk, sc.ctx());
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let mut estate = sc.take_shared<Estate>();
+    propose_recovery(&mut estate, @0xF1, sc.ctx()); // 1 of 2
+    ts::return_shared(estate);
+
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    cancel_recovery(&mut estate, sc.ctx()); // owner veto
+    ts::return_shared(estate);
+
+    sc.next_tx(H2);
+    let mut estate = sc.take_shared<Estate>();
+    approve_recovery(&mut estate, sc.ctx()); // nothing pending -> abort ENoRecovery
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EAlreadyApproved)]
+fun test_double_approve_rejected() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_guardians(&mut estate, vector[H1, H2, H3], 3, &clk, sc.ctx()); // threshold 3, no auto-exec
+    ts::return_shared(estate);
+
+    sc.next_tx(H1);
+    let mut estate = sc.take_shared<Estate>();
+    propose_recovery(&mut estate, @0xF1, sc.ctx()); // H1 approves (1 of 3)
+    approve_recovery(&mut estate, sc.ctx()); // H1 again -> abort EAlreadyApproved
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+// RFC 8032 Ed25519 test vector 1 (empty message) — proves the framework's ed25519_verify (used by
+// attest_trigger and by Nautilus's runtime check) works on this network.
+#[test]
+fun test_ed25519_known_vector() {
+    let pk = x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
+    let sig = x"e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
+    let msg = x"";
+    assert!(ed25519::ed25519_verify(&sig, &pk, &msg), 0);
+    let tampered = x"00564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
+    assert!(!ed25519::ed25519_verify(&tampered, &pk, &msg), 1);
+}
+
+#[test, expected_failure(abort_code = EBadSig)]
+fun test_attest_trigger_requires_attester() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    // no attester set -> attest_trigger rejects
+    attest_trigger(&mut estate, x"e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b", 0, &clk);
+    ts::return_shared(estate);
+    clock::destroy_for_testing(clk);
+    sc.end();
+}
+
+#[test, expected_failure(abort_code = EBadSig)]
+fun test_attest_trigger_rejects_bad_sig() {
+    let mut sc = ts::begin(OWNER);
+    let mut clk = clock::create_for_testing(sc.ctx());
+    create_estate(vector[H1], vector[10000], option::none(), 100, 50, &clk, sc.ctx());
+    sc.next_tx(OWNER);
+    let mut estate = sc.take_shared<Estate>();
+    set_attester(&mut estate, x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", &clk, sc.ctx());
+    // a well-formed (64-byte) signature that does not match this estate's message -> verify false
+    attest_trigger(&mut estate, x"e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b", 0, &clk);
     ts::return_shared(estate);
     clock::destroy_for_testing(clk);
     sc.end();
