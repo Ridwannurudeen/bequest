@@ -41,6 +41,8 @@ function OwnerSetupInner() {
   ]);
   const [inactivityDays, setInactivityDays] = useState("180");
   const [graceDays, setGraceDays] = useState("14");
+  const [releaseAt, setReleaseAt] = useState("");
+  const [mode, setMode] = useState<"deadman" | "scheduled">("deadman");
   const [executor, setExecutor] = useState("");
   const [state, setState] = useState<"idle" | "working" | "done" | "error">(
     "idle",
@@ -59,14 +61,28 @@ function OwnerSetupInner() {
       if (bps.reduce((a, b) => a + b, 0) !== 10000) {
         throw new Error("Heir shares must add up to 100%.");
       }
-      const kind = await postJson("/api/owner/transaction-kind", {
+      const common = {
         sender: address,
         heirs: heirs.map((h) => h.addr.trim()),
         bps,
-        inactivityMs: Math.round(Number(inactivityDays) * DAY_MS),
-        graceMs: Math.round(Number(graceDays) * DAY_MS),
         executor: executor.trim() || undefined,
-      });
+      };
+      let body: Record<string, unknown>;
+      if (mode === "scheduled") {
+        const releaseAtMs = releaseAt ? new Date(releaseAt).getTime() : 0;
+        if (!Number.isFinite(releaseAtMs) || releaseAtMs <= Date.now()) {
+          throw new Error("Pick a release date and time in the future.");
+        }
+        body = { ...common, action: "create_scheduled", releaseAtMs };
+      } else {
+        body = {
+          ...common,
+          action: "create",
+          inactivityMs: Math.round(Number(inactivityDays) * DAY_MS),
+          graceMs: Math.round(Number(graceDays) * DAY_MS),
+        };
+      }
+      const kind = await postJson("/api/owner/transaction-kind", body);
       if (typeof kind.error === "string") throw new Error(kind.error);
 
       const sponsored = unwrap<{ bytes: string; digest: string }>(
@@ -145,26 +161,56 @@ function OwnerSetupInner() {
           <span>%</span>
         </div>
       ))}
-      <div className="nav-links">
-        <label>
-          Inactivity (days){" "}
-          <input
-            type="number"
-            value={inactivityDays}
-            onChange={(e) => setInactivityDays(e.target.value)}
-            style={{ width: "6rem" }}
-          />
-        </label>
-        <label>
-          Grace (days){" "}
-          <input
-            type="number"
-            value={graceDays}
-            onChange={(e) => setGraceDays(e.target.value)}
-            style={{ width: "6rem" }}
-          />
-        </label>
+      <div className="nav-links" role="group" aria-label="Trigger type">
+        <button
+          type="button"
+          className={`button ${mode === "deadman" ? "primary" : ""}`}
+          onClick={() => setMode("deadman")}
+        >
+          Dead-man&apos;s switch
+        </button>
+        <button
+          type="button"
+          className={`button ${mode === "scheduled" ? "primary" : ""}`}
+          onClick={() => setMode("scheduled")}
+        >
+          Scheduled release
+        </button>
       </div>
+      {mode === "deadman" ? (
+        <div className="nav-links">
+          <label>
+            Inactivity (days){" "}
+            <input
+              type="number"
+              value={inactivityDays}
+              onChange={(e) => setInactivityDays(e.target.value)}
+              style={{ width: "6rem" }}
+            />
+          </label>
+          <label>
+            Grace (days){" "}
+            <input
+              type="number"
+              value={graceDays}
+              onChange={(e) => setGraceDays(e.target.value)}
+              style={{ width: "6rem" }}
+            />
+          </label>
+        </div>
+      ) : (
+        <div className="nav-links">
+          <label>
+            Release on{" "}
+            <input
+              type="datetime-local"
+              value={releaseAt}
+              onChange={(e) => setReleaseAt(e.target.value)}
+            />
+          </label>
+          <span>heirs can claim at this time; no check-ins needed</span>
+        </div>
+      )}
       <div className="nav-links">
         <input
           type="text"

@@ -20,9 +20,11 @@ type RawHeir = { fields: { addr: string; bps: string } };
 type RawEstateFields = {
   owner: string;
   status: number;
+  trigger_kind: number;
   executor: string | null;
   inactivity_ms: string;
   grace_ms: string;
+  release_at_ms: string;
   last_active_ms: string;
   pending_since_ms: string;
   heirs: RawHeir[];
@@ -218,6 +220,7 @@ export async function readEstateOnChain(
   }));
 
   const pendingSinceMs = Number(fields.pending_since_ms);
+  const releaseAtMs = Number(fields.release_at_ms);
 
   const [coinAssets, objectAssets] = await Promise.all([
     readCoinAssets(client, estateId),
@@ -229,8 +232,10 @@ export async function readEstateOnChain(
     owner: fields.owner,
     ownerLabel: shortAddress(fields.owner),
     status: STATUS_BY_CODE[fields.status] ?? "Active",
+    triggerKind: fields.trigger_kind === 1 ? "scheduled" : "inactivity",
     inactivityMs: Number(fields.inactivity_ms),
     gracePeriodMs: Number(fields.grace_ms),
+    releaseAtMs: releaseAtMs > 0 ? releaseAtMs : undefined,
     executor: fields.executor ? shortAddress(fields.executor) : "None",
     executorAddress: fields.executor ?? undefined,
     heirs,
