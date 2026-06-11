@@ -2,7 +2,7 @@
 
 - **Status:** Draft (v0)
 - **Track:** Sui Overflow 2026, DeFi & Payments
-- **Reference implementation:** Bequest (`estate.move`), Sui testnet package `0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`
+- **Reference implementation:** Bequest (`estate.move`), Sui testnet package `0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`
 - **Scope:** a minimal interface for on-chain succession and recovery objects on Sui, so wallets, custodians, indexers, keepers, and dApps can read, trigger, and settle any compliant policy without bespoke integration.
 
 ## Abstract
@@ -179,7 +179,7 @@ is the policy, the state machine, the on-chain `wishes` anchor (`set_wishes`), a
 (`estate::seal_approve`); the earlier `gate.move` Seal-policy spike is archived to `docs/spikes/gate.move`.
 Full lifecycle (create, deposit, arm, finalize, distribute), owner amendments (heirs/executor/timers,
 object withdraw), Seal-gated wishes, and atomic multi-heir distribution are proven on Sui testnet at
-`0x1eb5d739100981217e4db2d5787d0f005f34efc31db8dc9369ea491fdb731272`. See
+`0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`. See
 [`docs/architecture.md`](architecture.md).
 
 **Conformance status.** The reference impl emits all five canonical events: `EstateCreated` (the
