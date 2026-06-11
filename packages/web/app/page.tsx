@@ -66,7 +66,7 @@ const trust = [
     label: "Full-portfolio custody",
     detail: "SUI, stake positions, and objects fit the same Estate",
   },
-  { label: "Encrypted", detail: "Last wishes unlock only after the trigger" },
+  { label: "Private", detail: "Sealed letters unlock only after the trigger" },
   {
     label: "Non-custodial",
     detail: "No company can move or freeze your assets",
@@ -81,11 +81,11 @@ const steps = [
     n: "01",
     icon: LockIcon,
     eyebrow: "Owner",
-    title: "Lock assets while you're in control.",
-    body: "Sign in with Google, name your heirs and their shares, set an inactivity window, and deposit liquid SUI, transferable objects, or native stake positions into a shared estate. Withdraw or reset any time.",
+    title: "Set the rule while you're in control.",
+    body: "Sign in with Google, name recipients and shares, choose the release condition, and deposit liquid SUI, transferable objects, or native stake positions into a shared estate. Withdraw or reset any time.",
     checks: [
       "Google sign-in",
-      "Heir ratios",
+      "Recipient ratios",
       "Full-portfolio escrow",
       "Encrypted letter",
     ],
@@ -94,8 +94,8 @@ const steps = [
     n: "02",
     icon: SwitchIcon,
     eyebrow: "The switch",
-    title: "A dead-man's switch that can't fire early.",
-    body: "Go inactive past your window and the estate arms, starting a grace period. Any activity resets it; an executor can pause a false alarm. The trigger is permissionless but clock-gated — no one can rush it.",
+    title: "A trustless condition that can't fire early.",
+    body: "When the condition is met, the estate arms and starts a grace period. Any owner activity resets it; an executor can pause a false alarm. The trigger is permissionless but clock-gated, so no one can rush it.",
     checks: [
       "Inactivity timer",
       "Grace window",
@@ -106,11 +106,11 @@ const steps = [
   {
     n: "03",
     icon: ClaimIcon,
-    eyebrow: "Heir",
-    title: "Inherit without a seed phrase.",
-    body: "After the trigger, the estate can distribute the bundle to the named heirs: SUI splits by shares, key+store objects route to their assigned heir, and the encrypted letter decrypts only then.",
+    eyebrow: "Recipient",
+    title: "Receive without a seed phrase.",
+    body: "After the trigger, the estate can distribute the bundle to the named recipients: SUI splits by shares, key+store objects route to their assigned recipient, and the encrypted letter decrypts only then.",
     checks: [
-      "Inheritance banner",
+      "Claim banner",
       "Sponsored SUI claim",
       "Keeper bundle payout",
       "Assets arrive",
@@ -122,7 +122,7 @@ const steps = [
 const products = [
   {
     label: "Inheritance",
-    detail: "Inactivity trigger distributes to named heirs. Live today.",
+    detail: "The flagship conditional transfer: inactivity releases assets to family. Live today.",
   },
   {
     label: "Social recovery",
@@ -134,21 +134,21 @@ const products = [
   },
   {
     label: "Scheduled transfers",
-    detail: "Age-gated, vesting, or oracle-triggered releases.",
+    detail: "Age-gated, vesting, or fixed-date releases.",
   },
 ];
 
 const stats = [
   { big: "1 live", small: "sponsored claim receipt" },
-  { big: "key+store", small: "object inheritance path" },
-  { big: "1 PTB", small: "atomic multi-heir distribution" },
+  { big: "key+store", small: "object transfer path" },
+  { big: "1 PTB", small: "atomic multi-recipient distribution" },
   { big: "11/11", small: "Move tests passing" },
 ];
 
 const faqs = [
   {
-    q: "Do my heirs need a crypto wallet?",
-    a: "The product path is built for Google zkLogin plus Enoki sponsorship, so heirs do not need a seed phrase. The V2 submission only claims gasless execution after a sponsored Sui digest is pinned.",
+    q: "Do recipients need a crypto wallet?",
+    a: "The product path is built for Google zkLogin plus Enoki sponsorship, so recipients do not need a seed phrase. The V2 submission only claims gasless execution after a sponsored Sui digest is pinned.",
   },
   {
     q: "What if I'm just away for a while?",
@@ -156,7 +156,7 @@ const faqs = [
   },
   {
     q: "Can someone take my assets early?",
-    a: "No. The trigger is permissionless but time-gated by the on-chain Clock. While active only you can withdraw, and after the trigger, funds route only to your named heirs.",
+    a: "No. The trigger is permissionless but time-gated by the on-chain Clock. While active only you can withdraw, and after the trigger, funds route only to your named recipients.",
   },
   {
     q: "Is the letter I leave really private?",
@@ -186,6 +186,7 @@ export default async function Home() {
           <a href="#how">How it works</a>
           <a href="#proof">Proof</a>
           <Link href="/estates">Estates</Link>
+          <Link href="/demo">Demo</Link>
           <AuthButton />
           <Link href="/create" className="button primary">
             Launch app
@@ -196,26 +197,30 @@ export default async function Home() {
       <section className="hero" id="top">
         <div className="hero-copy">
           <p className="kicker">
-            <span className="live-dot" /> On-chain succession · Live on Sui
+            <span className="live-dot" /> Programmable conditional transfers · Live on Sui
           </p>
           <h1>
-            <span>Inheritance</span>
-            <span>that works when</span>
-            <span className="grad">you no longer can.</span>
+            <span>Send assets</span>
+            <span>when conditions</span>
+            <span className="grad">are proven on-chain.</span>
           </h1>
           <p className="lede">
-            Bequest turns a Sui portfolio into an estate your heirs can receive
-            without your seed phrase: liquid SUI, transferable objects, native
-            stake positions, and the final letter. Assets stay escrowed
-            on-chain; the switch is Clock-gated; the letter stays encrypted
-            until the trigger.{" "}
+            Bequest turns a Sui portfolio into a conditional transfer object:
+            liquid SUI, transferable objects, native stake positions, and a
+            private letter stay escrowed on-chain until a trustless trigger
+            fires. The flagship flow is inheritance, but the primitive is
+            broader: hand assets to someone who is not crypto-native, with
+            Google sign-in and no owner key required after the trigger.{" "}
             {claimProven
-              ? "your heirs claim them with a Google sign-in: gasless, no owner key, no custodian, no seed phrase."
-              : "your heirs inherit through a Google-ready claim path after the trigger, with no owner key, no custodian, and no seed phrase."}
+              ? "Recipients claim with Google: gasless, no custodian, no seed phrase."
+              : "Recipients use a Google-ready claim path after the trigger, with no custodian and no seed phrase."}
           </p>
           <div className="hero-actions">
+            <Link href="/demo" className="button primary">
+              Try the judge demo
+            </Link>
             <Link href="/create" className="button primary">
-              Create an estate
+              Create a transfer
             </Link>
             <a href="#how" className="button secondary">
               See how it works
@@ -223,9 +228,9 @@ export default async function Home() {
           </div>
         </div>
 
-        <aside className="claim-card" aria-label="Heir claim preview">
+        <aside className="claim-card" aria-label="Recipient claim preview">
           <div className="claim-card-top">
-            <span>Heir notification</span>
+            <span>Recipient notification</span>
             <span className="status-pill">
               <span className="live-dot" style={{ marginRight: 8 }} />
               Trigger pending
@@ -234,7 +239,7 @@ export default async function Home() {
           <div className="heir-head">
             <span className="heir-avatar">{heirInitial}</span>
             <div>
-              <strong>You've inherited assets</strong>
+              <strong>Assets are ready to claim</strong>
               <br />
               <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
                 from {estate.ownerLabel}
@@ -244,7 +249,7 @@ export default async function Home() {
           <p>
             {claimProven
               ? "Sign in with Google to claim the SUI leg gaslessly; the keeper can push the object bundle after the same on-chain trigger. The letter unlocks only then."
-              : "Sign in with Google to trigger the SUI distribution path. The object bundle is keeper-distributed after the same on-chain trigger."}
+              : "Sign in with Google to start the SUI distribution path. The object bundle is keeper-distributed after the same on-chain trigger."}
           </p>
           <div className="claim-assets">
             {estate.assets.length > 0 ? (
@@ -302,7 +307,7 @@ export default async function Home() {
           <div className="section-heading">
             <div>
               <p className="kicker">How it works</p>
-              <h2>Three humane steps, from setup to inheritance.</h2>
+              <h2>Three humane steps, from setup to conditional release.</h2>
             </div>
           </div>
           <div className="flow-grid">
@@ -372,7 +377,7 @@ export default async function Home() {
           <div className="section-heading">
             <div>
               <p className="kicker">Not just an app — the layer</p>
-              <h2>One engine. Every kind of asset continuity.</h2>
+              <h2>One engine. Every kind of conditional asset handoff.</h2>
             </div>
           </div>
           <div className="flow-grid">
@@ -396,7 +401,7 @@ export default async function Home() {
             <p>
               This card reads the latest on-chain estate per request through the
               same SDK the product uses — falling back to a demo when none
-              exists yet. Owner, heirs, timers, and escrowed assets are all
+              exists yet. Owner, recipients, timers, and escrowed assets are all
               real.
             </p>
             <Link className="text-link" href="/estates">
@@ -460,21 +465,21 @@ export default async function Home() {
 
       <Reveal>
         <section className="cta-band">
-          <p className="kicker">Your keys shouldn't die with you</p>
-          <h2>Set up your estate in minutes.</h2>
+          <p className="kicker">Your keys should not be the only path</p>
+          <h2>Set up a conditional transfer in minutes.</h2>
           <p>
             Create a protected estate, deposit a Sui portfolio, and name the
-            people who inherit. Free on testnet today.
+            people who can receive it after the trigger. Free on testnet today.
           </p>
           <Link href="/create" className="button primary">
-            Create an estate
+            Create a transfer
           </Link>
         </section>
       </Reveal>
 
       <footer>
-        <span>Bequest · On-chain succession on Sui</span>
-        <span>Owner setup · Heir claim · Executor control</span>
+        <span>Bequest · Programmable conditional transfers on Sui</span>
+        <span>Owner setup · Recipient claim · Executor control</span>
       </footer>
     </main>
   );

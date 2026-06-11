@@ -16,6 +16,13 @@ export type Asset = {
   note?: string;
 };
 
+export type EstateVesting = {
+  cliffMs: number;
+  durationMs: number;
+  triggeredAtMs?: number;
+  vestedBps: number;
+};
+
 export type EstateView = {
   estateId: string;
   owner: string;
@@ -31,6 +38,7 @@ export type EstateView = {
   guardians: string[];
   recoveryThreshold: number;
   recovery?: { newOwner: string; approvals: string[] };
+  vesting?: EstateVesting;
   assets: Asset[];
   lastActive: string;
   pendingSince?: string;

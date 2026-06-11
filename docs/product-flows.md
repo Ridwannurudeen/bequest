@@ -33,7 +33,7 @@ readEstate(estateId) -> EstateView
 
 Acceptance:
 
-- No copy implies Bequest replaces a will, trust, attorney, tax advice, or probate.
+- No copy implies Bequest is legal, tax, fiduciary, or estate-planning advice.
 - Owner always sees that assets are escrowed into a shared Sui `Estate`.
 - Owner understands that heartbeat/deposit/withdraw activity keeps the estate active.
 
@@ -114,8 +114,8 @@ Use:
 
 Avoid:
 
-- "replaces probate"
-- "legally binding will"
+- "replaces legal estate planning"
+- "legally binding estate document"
 - "no lawyer needed"
 - "guaranteed inheritance"
 - "death verification"

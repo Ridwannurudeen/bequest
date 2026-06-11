@@ -15,6 +15,7 @@ import { ratioLabel } from "../../../lib/bequest-sdk";
 import { ClaimAction } from "../../../components/claim-action";
 import { WishesLetter } from "../../../components/wishes-letter";
 import { HeirGuide } from "../../../components/heir-guide";
+import { VestingProgress } from "../../../components/vesting-progress";
 
 const OBJECT_ID = /^0x[0-9a-fA-F]{64}$/;
 
@@ -29,9 +30,9 @@ export async function generateMetadata({
 }: ClaimPageProps): Promise<Metadata> {
   const { estateId } = await params;
   return {
-    title: `Bequest claim receipt | ${estateId}`,
+    title: `Bequest recipient receipt | ${estateId}`,
     description:
-      "A Bequest heir receipt showing estate status, claim target readiness, and Enoki sponsorship boundary.",
+      "A Bequest recipient receipt showing estate status, claim target readiness, and Enoki sponsorship boundary.",
   };
 }
 
@@ -69,18 +70,18 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
       <section className="receipt-hero">
         <div>
           <p className="kicker">
-            Heir claim receipt · {live ? "live testnet" : "demo preview"}
+            Recipient claim receipt · {live ? "live testnet" : "demo preview"}
           </p>
           <h1>
-            <span>Maya can inherit</span>
-            <span>without holding</span>
-            <span>the owner key.</span>
+            <span>Maya can receive</span>
+            <span>assets with Google,</span>
+            <span>not a seed phrase.</span>
           </h1>
           <p className="lede">
-            This page is the claim proof surface. It pins the estate, package,
-            distribution target, and sponsorship boundary. If a sponsored claim
-            lands, the Sui transaction digest appears here; until then, no fake
-            gasless heir claim is presented.
+            This page is the proof surface for a conditional transfer. It pins
+            the estate, package, distribution target, and sponsorship boundary.
+            If a sponsored claim lands, the Sui transaction digest appears
+            here; until then, no fake gasless recipient claim is presented.
           </p>
         </div>
 
@@ -125,9 +126,11 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
                 <dd>Seal-gated; unlocks after Triggered</dd>
               </div>
             </dl>
+            <VestingProgress vesting={live.vesting} />
             <ClaimAction
               estateId={estateId}
               claimable={live.status === "Triggered"}
+              vesting={Boolean(live.vesting)}
             />
             <WishesLetter
               estateId={estateId}
@@ -169,7 +172,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
 
       <section className="receipt-section" aria-label="Claim proof readiness">
         <div className="section-heading">
-          <p className="kicker">Sponsored claim boundary</p>
+          <p className="kicker">Sponsored recipient boundary</p>
           <h2>What is live, and what still needs credentials.</h2>
         </div>
 
@@ -191,10 +194,10 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             {typeArguments.length > 0 ? typeArguments.join(", ") : "none"}
           </p>
           <p>
-            The first sponsored heir proof should sponsor this existing deployed
+            The first sponsored recipient proof should sponsor this existing deployed
             Sui distribution call. It does not need a new contract: after the
-            estate is Triggered, the heir action triggers the SUI split for
-            every named heir in one PTB. Until sponsorship lands, the UI stays
+            estate is Triggered, the recipient action triggers the SUI split for
+            every named recipient in one PTB. Until sponsorship lands, the UI stays
             honest: no fake claim transaction, no fake sponsor digest.
           </p>
           <a href={explorerObjectUrl(packageId)}>
@@ -208,7 +211,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             <>
               <h3>{config.sponsoredClaimDigest}</h3>
               <p>
-                This digest is the V2 proof gate: a sponsored heir-side
+                This digest is the V2 proof gate: a sponsored recipient-side
                 execution of the deployed distribution path, verifiable on
                 SuiScan.
               </p>

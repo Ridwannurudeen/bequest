@@ -27,6 +27,8 @@ type RawEstateFields = {
   release_at_ms: string;
   last_active_ms: string;
   pending_since_ms: string;
+  triggered_at_ms?: string;
+  vesting?: { fields: { cliff_ms: string; duration_ms: string } } | null;
   heirs: RawHeir[];
   guardians: string[];
   recovery_threshold: string;
@@ -64,6 +66,19 @@ const STATUS_BY_CODE: Record<number, EstateStatus> = {
   1: "Pending",
   2: "Triggered",
 };
+
+function vestedBps(
+  status: EstateStatus,
+  triggeredAtMs: number,
+  cliffMs: number,
+  durationMs: number,
+): number {
+  if (status !== "Triggered" || triggeredAtMs <= 0) return 0;
+  const elapsed = Math.max(0, Date.now() - triggeredAtMs);
+  if (elapsed < cliffMs) return 0;
+  if (elapsed >= durationMs) return 10000;
+  return Math.floor((elapsed * 10000) / durationMs);
+}
 
 function rpc(config: PublicBequestConfig) {
   return new SuiJsonRpcClient({
@@ -176,6 +191,38 @@ function objectAsset(objectType: string, objectId?: string): Asset {
 
 type Rpc = ReturnType<typeof rpc>;
 
+type CoinMetadata = {
+  symbol?: string;
+  decimals?: number;
+};
+
+const coinMetadataCache = new Map<string, Promise<CoinMetadata | null>>();
+
+async function coinMetadata(
+  client: Rpc,
+  coinType: string,
+): Promise<CoinMetadata | null> {
+  const cached = coinMetadataCache.get(coinType);
+  if (cached) return cached;
+  const next = client
+    .getCoinMetadata({ coinType })
+    .then((m) => (m ? { symbol: m.symbol, decimals: m.decimals } : null))
+    .catch(() => null);
+  coinMetadataCache.set(coinType, next);
+  return next;
+}
+
+function formatBaseUnits(value: string, decimals: number): string {
+  const raw = BigInt(value);
+  const scale = BigInt(10) ** BigInt(decimals);
+  const whole = raw / scale;
+  const fraction = raw % scale;
+  if (fraction === BigInt(0)) return whole.toLocaleString("en-US");
+  const padded = fraction.toString().padStart(decimals, "0");
+  const trimmed = padded.replace(/0+$/, "");
+  return `${whole.toLocaleString("en-US")}.${trimmed}`;
+}
+
 // Escrowed coin balances: each is a `CoinKey<T>` dynamic field on the Estate whose value is a
 // `Balance<T>`. We page through all dynamic fields and read each balance amount.
 async function readCoinAssets(client: Rpc, estateId: string): Promise<Asset[]> {
@@ -199,11 +246,15 @@ async function readCoinAssets(client: Rpc, estateId: string): Promise<Asset[]> {
           ? (content.fields as unknown as RawBalanceField).value
           : "0";
       const sui = isSuiType(coinType);
+      const metadata = await coinMetadata(client, coinType);
+      const symbol = metadata?.symbol ?? (sui ? "SUI" : shortType(coinType));
+      const decimals = metadata?.decimals ?? (sui ? SUI_DECIMALS : 0);
       assets.push({
         type: sui ? "SUI" : "COIN",
-        label: sui ? "SUI balance" : `${shortType(coinType)} balance`,
-        value: sui ? `${Number(value) / 10 ** SUI_DECIMALS} SUI` : value,
+        label: `${symbol} balance`,
+        value: `${formatBaseUnits(value, decimals)} ${symbol}`,
         state: "escrowed",
+        note: sui ? undefined : shortType(coinType),
       });
     }
     cursor = page.hasNextPage ? page.nextCursor : null;
@@ -320,6 +371,22 @@ export async function readEstateOnChain(
 
   const pendingSinceMs = Number(fields.pending_since_ms);
   const releaseAtMs = Number(fields.release_at_ms);
+  const triggeredAtMs = Number(fields.triggered_at_ms ?? 0);
+  const status = STATUS_BY_CODE[fields.status] ?? "Active";
+  const vestingFields = fields.vesting?.fields;
+  const vesting = vestingFields
+    ? {
+        cliffMs: Number(vestingFields.cliff_ms),
+        durationMs: Number(vestingFields.duration_ms),
+        triggeredAtMs: triggeredAtMs > 0 ? triggeredAtMs : undefined,
+        vestedBps: vestedBps(
+          status,
+          triggeredAtMs,
+          Number(vestingFields.cliff_ms),
+          Number(vestingFields.duration_ms),
+        ),
+      }
+    : undefined;
 
   const [coinAssets, objectAssets] = await Promise.all([
     readCoinAssets(client, estateId),
@@ -330,7 +397,7 @@ export async function readEstateOnChain(
     estateId,
     owner: fields.owner,
     ownerLabel: shortAddress(fields.owner),
-    status: STATUS_BY_CODE[fields.status] ?? "Active",
+    status,
     triggerKind: fields.trigger_kind === 1 ? "scheduled" : "inactivity",
     inactivityMs: Number(fields.inactivity_ms),
     gracePeriodMs: Number(fields.grace_ms),
@@ -341,6 +408,7 @@ export async function readEstateOnChain(
     guardians: fields.guardians ?? [],
     recoveryThreshold: Number(fields.recovery_threshold ?? 0),
     recovery,
+    vesting,
     assets: [...coinAssets, ...objectAssets],
     lastActive: new Date(Number(fields.last_active_ms)).toISOString(),
     pendingSince:

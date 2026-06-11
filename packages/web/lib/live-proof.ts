@@ -10,9 +10,9 @@ export const proofCards = [
   {
     label: "Sponsored claim",
     status: "Proven live",
-    title: "A heir-side claim executed with sponsor-paid gas.",
+    title: "A recipient-side claim executed with sponsor-paid gas.",
     detail:
-      "The transaction calls estate::distribute_coin<SUI>; sender and gas sponsor differ, and payout routes to the recorded heir.",
+      "The transaction calls estate::distribute_coin<SUI>; sender and gas sponsor differ, and payout routes to the recorded recipient.",
     evidence: "DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5"
   },
   {
@@ -28,7 +28,7 @@ export const proofCards = [
     status: "Proven live",
     title: "Assets escrow into a shared Estate.",
     detail:
-      "Owner can withdraw while Active. After Triggered, heirs claim from on-chain state without the owner key.",
+      "Owner can withdraw while Active. After Triggered, recipients claim from on-chain state without the owner key.",
     evidence: "estate.move + testnet package"
   },
   {
@@ -52,12 +52,12 @@ export const proofCards = [
     status: "Proven live",
     title: "70/30 split delivered in one PTB.",
     detail:
-      "A keeper created, funded, triggered, and distributed a two-heir SUI estate on testnet.",
+      "A keeper created, funded, triggered, and distributed a two-recipient SUI estate on testnet.",
     evidence: "DISTRIBUTION PASSED"
   }
 ] as const;
 
-// zkLogin heir binding and Enoki sponsored distribution are proven live: sponsored claim digest
-// DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5, verified on testnet (sponsor pays gas, heir signs
+// zkLogin recipient binding and Enoki sponsored distribution are proven live: sponsored claim digest
+// DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5, verified on testnet (sponsor pays gas, recipient signs
 // with their zkLogin keypair). The public claim receipt is live at /claim/<estateId>. No open
-// gates remain for the gasless inheritance flow.
+// gates remain for the gasless flagship transfer flow.

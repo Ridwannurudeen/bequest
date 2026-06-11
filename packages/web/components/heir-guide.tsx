@@ -4,8 +4,8 @@ import { useZkLogin } from "@mysten/enoki/react";
 import { AuthButton } from "./auth-button";
 import { ratioLabel, type EstateView } from "../lib/bequest-sdk";
 
-// Plain-language, state-aware guidance derived from the live estate, so a non-crypto heir
-// understands what they inherit and exactly what to do. Deterministic by design (no LLM): the
+// Plain-language, state-aware guidance derived from the live estate, so a non-crypto recipient
+// understands what they can receive and exactly what to do. Deterministic by design (no LLM): the
 // guidance is read straight from on-chain state, so it can never mislead.
 function statusGuidance(status: EstateView["status"]): {
   headline: string;
@@ -31,7 +31,7 @@ function statusGuidance(status: EstateView["status"]): {
       return {
         headline: "Nothing to do yet.",
         detail:
-          "The owner is still active, so the estate has not triggered. You are named as an heir and will be able to claim if it ever does.",
+          "The owner is still active, so the estate has not triggered. You are named as a recipient and can claim if it ever does.",
         canClaim: false,
       };
   }
@@ -52,15 +52,15 @@ function HeirGuideInner({ estate }: { estate: EstateView }) {
       {!address ? (
         <>
           <p className="lede">
-            New to this? Sign in with Google to see whether you are a named heir and
-            what you would inherit. No seed phrase, no gas, no crypto experience needed.
+            New to this? Sign in with Google to see whether you are a named recipient and
+            what you can receive. No seed phrase, no gas, no crypto experience needed.
           </p>
           <AuthButton />
         </>
       ) : me ? (
         <>
           <p className="lede">
-            You are a named heir on this estate for{" "}
+            You are a named recipient on this estate for{" "}
             <strong>{ratioLabel(me.ratioBps)}</strong> of the SUI it holds, from{" "}
             {estate.ownerLabel}.
           </p>
@@ -87,7 +87,7 @@ function HeirGuideInner({ estate }: { estate: EstateView }) {
         </>
       ) : (
         <p className="lede">
-          This wallet is not a named heir on this estate. If you expected to inherit,
+          This wallet is not a named recipient on this estate. If you expected to receive assets,
           confirm with the owner that they used this exact address, or sign in with the
           account they named.
         </p>
