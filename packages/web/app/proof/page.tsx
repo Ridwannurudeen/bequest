@@ -6,7 +6,11 @@ import {
   explorerTxUrl,
   resolvedPackageId,
 } from "../../lib/claim-receipt";
-import { currentPackage, proofCards } from "../../lib/live-proof";
+import {
+  currentPackage,
+  proofCards,
+  featureProofs,
+} from "../../lib/live-proof";
 import { readEstateOnChain } from "../../lib/estate-onchain";
 import { ratioLabel, type EstateView } from "../../lib/bequest-sdk";
 
@@ -167,6 +171,28 @@ export default async function ProofBoardPage() {
               <p className="lede">
                 <code>{card.evidence}</code>
               </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        className="proof-section"
+        aria-label="Differentiators proven live"
+      >
+        <div className="section-heading">
+          <p className="kicker">Differentiators · proven live</p>
+          <h2>The features that set Bequest apart, each a real tx</h2>
+        </div>
+        <div className="proof-card-grid">
+          {featureProofs.map((card) => (
+            <article className="proof-card" key={card.label}>
+              <p className="kicker">{card.label} · Proven live</p>
+              <h3>{card.title}</h3>
+              <p className="lede">{card.detail}</p>
+              <div className="nav-links">
+                <a href={explorerTxUrl(card.digest)}>Transaction on SuiScan</a>
+              </div>
             </article>
           ))}
         </div>
