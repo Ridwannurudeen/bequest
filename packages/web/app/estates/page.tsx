@@ -11,6 +11,7 @@ import { DepositObjectAction } from "../../components/deposit-object-action";
 import { OwnerManage } from "../../components/owner-manage";
 import { SetWishes } from "../../components/set-wishes";
 import { RecoveryPanel } from "../../components/recovery-panel";
+import { StakeAction } from "../../components/stake-action";
 import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
@@ -93,10 +94,10 @@ export default async function EstatesPage() {
           <h1>
             <span>Every estate,</span>
             <span>its trigger state,</span>
-            <span>and who inherits.</span>
+            <span>and who can receive.</span>
           </h1>
           <p className="lede">
-            A live view of every Bequest estate on-chain — status, named heirs,
+            A live view of every Bequest estate on-chain — status, named recipients,
             escrowed assets, and how close each one is to triggering. The
             executor watches a pending trigger here before assets move.
           </p>
@@ -176,6 +177,12 @@ export default async function EstatesPage() {
                   estateId={id}
                   owner={view.owner}
                   status={view.status}
+                />
+                <StakeAction
+                  estateId={id}
+                  owner={view.owner}
+                  status={view.status}
+                  heirs={view.heirs}
                 />
                 <DepositObjectAction
                   estateId={id}

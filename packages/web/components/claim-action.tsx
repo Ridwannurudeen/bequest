@@ -31,9 +31,11 @@ function unwrap<T>(res: Record<string, unknown>): T {
 function ClaimActionInner({
   estateId,
   claimable,
+  vesting = false,
 }: {
   estateId: string;
   claimable: boolean;
+  vesting?: boolean;
 }) {
   const flow = useEnokiFlow();
   const { address } = useZkLogin();
@@ -112,7 +114,9 @@ function ClaimActionInner({
   if (state === "done") {
     return (
       <p className="lede">
-        ✓ SUI inheritance share distributed through the sponsored path. Tx{" "}
+        {vesting
+          ? "Unlocked claim transaction executed through the sponsored path. If nothing new was unlocked, the contract no-oped. Tx "
+          : "SUI share distributed through the sponsored path. Tx "}
         <a
           href={`https://suiscan.xyz/${NETWORK}/tx/${message}`}
           target="_blank"
@@ -132,7 +136,11 @@ function ClaimActionInner({
         onClick={claim}
         disabled={state === "working"}
       >
-        {state === "working" ? "Claiming…" : "Claim SUI share (sponsored)"}
+        {state === "working"
+          ? "Claiming…"
+          : vesting
+            ? "Claim unlocked assets (sponsored)"
+            : "Claim assets (sponsored)"}
       </button>
       {state === "error" && <p className="lede">Claim failed: {message}</p>}
     </div>
@@ -143,12 +151,20 @@ function ClaimActionInner({
 export function ClaimAction({
   estateId,
   claimable,
+  vesting = false,
 }: {
   estateId: string;
   claimable: boolean;
+  vesting?: boolean;
 }) {
   const apiKey = process.env.NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY;
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!apiKey || !clientId) return null;
-  return <ClaimActionInner estateId={estateId} claimable={claimable} />;
+  return (
+    <ClaimActionInner
+      estateId={estateId}
+      claimable={claimable}
+      vesting={vesting}
+    />
+  );
 }

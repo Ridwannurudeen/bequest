@@ -16,10 +16,10 @@ const flows = [
     id: "heir",
     label: "Heir claim",
     title: "Maya claims with Google",
-    action: "Claim inheritance",
+    action: "Claim assets",
     result: "Sponsored claim path ready: assets arrive, letter decrypts after trigger.",
     calls: ["readEstate", "claim", "decryptWishes"],
-    timeline: ["Inheritance banner", "Google sign-in", "Sponsored claim", "Letter unlock"]
+    timeline: ["Claim banner", "Google sign-in", "Sponsored claim", "Letter unlock"]
   },
   {
     id: "executor",

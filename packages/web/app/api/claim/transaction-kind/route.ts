@@ -46,6 +46,22 @@ async function objectBagId(
   return fields.objects?.fields?.id?.id ?? null;
 }
 
+async function estateHasVesting(
+  client: SuiJsonRpcClient,
+  estateId: string
+): Promise<boolean> {
+  const res = await client.getObject({
+    id: estateId,
+    options: { showContent: true }
+  });
+  const content = res.data?.content;
+  if (!content || content.dataType !== "moveObject") return false;
+  const fields = content.fields as {
+    vesting?: { fields?: { cliff_ms?: string; duration_ms?: string } } | null;
+  };
+  return Boolean(fields.vesting?.fields);
+}
+
 // Group escrowed objects by their Move type (one distribute_objects<T> call per type).
 async function escrowedObjectsByType(
   client: SuiJsonRpcClient,
@@ -90,6 +106,7 @@ export async function POST(request: Request) {
 
     const coinTypes = await escrowedCoinTypes(client, body.estateId);
     const bagId = await objectBagId(client, body.estateId);
+    const hasVesting = await estateHasVesting(client, body.estateId);
     const objectsByType = bagId
       ? await escrowedObjectsByType(client, bagId)
       : new Map<string, string[]>();
@@ -105,13 +122,18 @@ export async function POST(request: Request) {
     if (body.sender && OBJECT_ID_PATTERN.test(body.sender)) {
       tx.setSenderIfNotSet(body.sender);
     }
-    // One distribute_coin<T> per escrowed coin type (splits by heir bps),
-    // one distribute_objects<T> per object type (each object to its assigned heir).
+    // One distribute_coin<T> per escrowed coin type (or distribute_coin_vested<T>
+    // for a vested estate), plus one distribute_objects<T> per object type.
+    // Vested coin claims are repeatable and no-op when nothing new has unlocked.
     for (const coinType of coinTypes) {
       tx.moveCall({
-        target: `${pkg}::${moduleName}::distribute_coin`,
+        target: `${pkg}::${moduleName}::${
+          hasVesting ? "distribute_coin_vested" : "distribute_coin"
+        }`,
         typeArguments: [coinType],
-        arguments: [tx.object(body.estateId)]
+        arguments: hasVesting
+          ? [tx.object(body.estateId), tx.object.clock()]
+          : [tx.object(body.estateId)]
       });
     }
     for (const [objectType, ids] of objectsByType) {
@@ -129,6 +151,7 @@ export async function POST(request: Request) {
       packageId: pkg,
       estateId: body.estateId,
       distributions: {
+        vesting: hasVesting,
         coinTypes,
         objectTypes: [...objectsByType.keys()],
         objectCount: [...objectsByType.values()].reduce(

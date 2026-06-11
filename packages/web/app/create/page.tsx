@@ -3,9 +3,9 @@ import Link from "next/link";
 import { OwnerSetup } from "../../components/owner-setup";
 
 export const metadata: Metadata = {
-  title: "Bequest · create estate",
+  title: "Bequest · create transfer",
   description:
-    "Owner setup: sign in with Google, name your heirs and shares, set the inactivity window, and create your estate through the Enoki-sponsored path when configured.",
+    "Owner setup: sign in with Google, name recipients and shares, choose the release condition, and create a Sui estate through the Enoki-sponsored path when configured.",
 };
 
 export default function CreateEstatePage() {
@@ -26,16 +26,16 @@ export default function CreateEstatePage() {
         <div>
           <p className="kicker">Owner setup</p>
           <h1>
-            <span>Name your heirs.</span>
-            <span>Set the timer.</span>
-            <span>Create your estate.</span>
+            <span>Name recipients.</span>
+            <span>Set the condition.</span>
+            <span>Create the estate.</span>
           </h1>
           <p className="lede">
-            Sign in with Google, name the heirs who inherit and their shares,
-            and choose how long of inactivity triggers the hand-off. Creating
-            the estate uses the Enoki-sponsored path when credentials are
-            configured. Depositing assets into it is the next step once your
-            account holds them.
+            Sign in with Google, name the recipients and their shares, and
+            choose what on-chain condition releases the hand-off. Creating the
+            estate uses the Enoki-sponsored path when credentials are configured.
+            Depositing assets into it is the next step once your account holds
+            them.
           </p>
         </div>
 
@@ -73,11 +73,11 @@ export default function CreateEstatePage() {
             </p>
           </article>
           <article className="flow-card">
-            <h3>Heirs inherit gaslessly</h3>
+            <h3>Recipients claim gaslessly</h3>
             <p>
-              After the trigger, your heirs claim their shares with a Google
-              sign-in — no seed phrase, no gas — and the encrypted letter you
-              left unlocks for them.
+              After the trigger, recipients claim their shares with a Google
+              sign-in: no seed phrase, no gas, and the encrypted letter unlocks
+              for them.
             </p>
           </article>
         </div>

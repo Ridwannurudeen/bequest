@@ -82,7 +82,7 @@ export function claimReadiness(
     {
       label: "Heir claim target",
       state: "done",
-      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named heirs; object and stake bundles are pushed through the keeper's distribute_objects path.`,
+      detail: `${target}${typeArgumentLabel} is the first sponsored claim path. It distributes the triggered estate's SUI balance to all named recipients; object and stake bundles are pushed through the keeper's distribute_objects path.`,
     },
     {
       label: "Enoki sponsor",
@@ -96,7 +96,7 @@ export function claimReadiness(
       state: config.sponsoredClaimDigest ? "done" : "next",
       detail: config.sponsoredClaimDigest
         ? `Pinned Sui transaction ${config.sponsoredClaimDigest}; use SuiScan to verify the sponsored distribution.`
-        : "Not proven yet. Do not claim a gasless Google heir flow until a sponsored Sui tx digest is pinned here.",
+        : "Not proven yet. Do not claim a gasless Google recipient flow until a sponsored Sui tx digest is pinned here.",
     },
   ];
 }

@@ -1,11 +1,11 @@
 # Bequest
 
-**On-chain inheritance for crypto assets, built on Sui.** An owner sets inheritance rules and
-escrows assets into an `Estate`. If they go inactive (dead-man's switch), liquid SUI and assigned
-key+store objects distribute atomically to named heirs via a PTB. The heir path is built for Google zkLogin and Enoki
-sponsorship, so a non-crypto heir can claim without the owner key and without gas, a sponsored
-claim path proven on testnet. Encrypted last-wishes live on Walrus and decrypt via Seal only after the inheritance
-trigger fires.
+**Programmable conditional transfers for crypto assets, built on Sui.** An owner escrows assets
+into an `Estate` and names the recipients. When a trustless on-chain condition fires, liquid SUI
+and assigned key+store objects distribute atomically via a PTB. The flagship use case is
+inheritance, but the primitive is broader: a non-crypto recipient can claim with Google zkLogin and
+Enoki sponsorship, without the owner key and without gas. Encrypted letters live on Walrus and
+decrypt via Seal only after the trigger fires.
 
 > Sui Overflow 2026 — primary track: **DeFi & Payments**. Plan: `../../Music/Sui-Overflow-2026/BEQUEST-ROADMAP.md`.
 
@@ -34,7 +34,7 @@ Live testnet proof surface: the full gasless inheritance flow (create, heir clai
   estate creation, a gasless heir claim (sponsored tx `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`,
   sponsor-paid and verified on SuiScan), and heir-side Seal last-wishes decrypt in the browser, all
   from a Google sign-in with no wallet and no gas.
-- Limitation: Bequest is a Sui testnet technical succession primitive, not legal, probate, tax, or
+- Limitation: Bequest is a Sui testnet technical succession primitive, not legal, tax, or
   financial advice. The current proof demonstrates custody/distribution mechanics, not legal estate
   enforcement.
 

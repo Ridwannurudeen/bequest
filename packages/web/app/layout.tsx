@@ -3,21 +3,21 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Bequest | Sui-native inheritance",
+  title: "Bequest | Programmable conditional transfers on Sui",
   description:
-    "Sui-native on-chain inheritance with a Google-ready heir claim path and encrypted last-wishes that unlock only after the trigger.",
+    "Sui-native conditional transfers with Google-ready recipient claims and encrypted letters that unlock only after the trigger.",
   metadataBase: new URL("https://bequest.gudman.xyz"),
   openGraph: {
-    title: "Bequest | Inheritance that still works when the owner cannot sign",
+    title: "Bequest | Conditional asset handoffs for non-crypto recipients",
     description:
-      "A Sui estate flow for owners, heirs, and executors: zkLogin-ready onboarding, sponsored-claim proof surface, and Seal-gated encrypted letters.",
+      "A Sui estate flow for owners, recipients, and executors: zkLogin-ready onboarding, sponsored-claim proof surface, and Seal-gated encrypted letters.",
     images: ["/bequest-og.svg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bequest | Sui-native inheritance",
+    title: "Bequest | Programmable conditional transfers on Sui",
     description:
-      "Google-ready heir claims, Sui estate custody, and encrypted last-wishes on Sui.",
+      "Google-ready recipient claims, Sui estate custody, and encrypted letters on Sui.",
     images: ["/bequest-og.svg"],
   },
 };
@@ -39,7 +39,7 @@ export default function RootLayout({
             color: "var(--muted)",
           }}
         >
-          Sui testnet demo · no real funds · not legal, probate, or tax advice.
+          Sui testnet demo · no real funds · not legal, tax, or financial advice.
         </footer>
       </body>
     </html>
