@@ -45,28 +45,10 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
 
   return (
     <main>
-      <nav className="nav-shell" aria-label="Demo navigation">
-        <Link className="brand" href="/" aria-label="Back to Bequest home">
-          <span className="brand-mark">Bq</span>
-          <span>Bequest</span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/#proof">Proof</Link>
-          <Link href="/estates">Estates</Link>
-          <Link href="/create" className="button secondary">
-            Create manually
-          </Link>
-        </div>
-      </nav>
-
       <section className="receipt-hero">
         <div>
           <p className="kicker">Self-serve demo</p>
-          <h1>
-            <span>Become the recipient.</span>
-            <span>Claim the assets.</span>
-            <span>Read the sealed letter.</span>
-          </h1>
+          <h1>Become the recipient. Claim the assets. Read the letter.</h1>
           <p className="lede">
             The old shared judge receipt can be drained once. This page is built
             for one estate per visitor: sign in with Google, ask the funded demo
@@ -152,7 +134,9 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
             <aside className="receipt-card" aria-label="Demo letter reveal">
               <div className="receipt-card-top">
                 <span>Private letter</span>
-                <strong>{wishesBlobId && wishesInnerId ? "ready" : "pending"}</strong>
+                <strong>
+                  {wishesBlobId && wishesInnerId ? "ready" : "pending"}
+                </strong>
               </div>
               <p className="lede">
                 The letter stays encrypted on Walrus until Seal sees the estate

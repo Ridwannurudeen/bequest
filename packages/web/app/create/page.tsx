@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { OwnerSetup } from "../../components/owner-setup";
 
 export const metadata: Metadata = {
@@ -11,31 +10,16 @@ export const metadata: Metadata = {
 export default function CreateEstatePage() {
   return (
     <main>
-      <nav className="nav-shell" aria-label="Create estate navigation">
-        <Link className="brand" href="/" aria-label="Back to Bequest home">
-          <span className="brand-mark">Bq</span>
-          <span>Bequest</span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/estates">Estates</Link>
-          <Link href="/#proof">Proof</Link>
-        </div>
-      </nav>
-
       <section className="receipt-hero">
         <div>
           <p className="kicker">Owner setup</p>
-          <h1>
-            <span>Name recipients.</span>
-            <span>Set the condition.</span>
-            <span>Create the estate.</span>
-          </h1>
+          <h1>Name recipients. Set the condition. Create the estate.</h1>
           <p className="lede">
             Sign in with Google, name the recipients and their shares, and
             choose what on-chain condition releases the hand-off. Creating the
-            estate uses the Enoki-sponsored path when credentials are configured.
-            Depositing assets into it is the next step once your account holds
-            them.
+            estate uses the Enoki-sponsored path when credentials are
+            configured. Depositing assets into it is the next step once your
+            account holds them.
           </p>
         </div>
 

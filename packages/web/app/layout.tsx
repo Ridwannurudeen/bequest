@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { SiteHeader } from "../components/site-header";
+import { SiteFooter } from "../components/site-footer";
 
 export const metadata: Metadata = {
   title: "Bequest | Programmable conditional transfers on Sui",
@@ -30,17 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
-        <footer
-          style={{
-            textAlign: "center",
-            padding: "2rem 1rem",
-            fontSize: "0.8rem",
-            color: "var(--muted)",
-          }}
-        >
-          Sui testnet demo · no real funds · not legal, tax, or financial advice.
-        </footer>
+        <Providers>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </Providers>
       </body>
     </html>
   );

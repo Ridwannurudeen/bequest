@@ -12,7 +12,6 @@ import { OwnerManage } from "../../components/owner-manage";
 import { SetWishes } from "../../components/set-wishes";
 import { RecoveryPanel } from "../../components/recovery-panel";
 import { StakeAction } from "../../components/stake-action";
-import { AuthButton } from "../../components/auth-button";
 
 // Read every estate live per request; the executor view must reflect current on-chain state.
 export const dynamic = "force-dynamic";
@@ -76,30 +75,15 @@ export default async function EstatesPage() {
 
   return (
     <main>
-      <nav className="nav-shell" aria-label="Estates navigation">
-        <Link className="brand" href="/" aria-label="Back to Bequest home">
-          <span className="brand-mark">Bq</span>
-          <span>Bequest</span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/proof">Proof</Link>
-          <Link href="/#estate">Estate</Link>
-          <AuthButton />
-        </div>
-      </nav>
-
       <section className="receipt-hero">
         <div>
           <p className="kicker">Executor dashboard · {config.network}</p>
-          <h1>
-            <span>Every estate,</span>
-            <span>its trigger state,</span>
-            <span>and who can receive.</span>
-          </h1>
+          <h1>Every estate, its trigger state, and who can receive.</h1>
           <p className="lede">
-            A live view of every Bequest estate on-chain — status, named recipients,
-            escrowed assets, and how close each one is to triggering. The
-            executor watches a pending trigger here before assets move.
+            A live view of every Bequest estate on-chain — status, named
+            recipients, escrowed assets, and how close each one is to
+            triggering. The executor watches a pending trigger here before
+            assets move.
           </p>
         </div>
       </section>

@@ -48,26 +48,10 @@ export default async function ProofBoardPage() {
 
   return (
     <main>
-      <nav className="nav-shell" aria-label="Proof board navigation">
-        <Link className="brand" href="/" aria-label="Back to Bequest home">
-          <span className="brand-mark">Bq</span>
-          <span>Bequest</span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/estates">Estates</Link>
-          {estate && <Link href={`/claim/${estate.id}`}>Claim</Link>}
-          <a href={currentPackage.explorerUrl}>SuiScan</a>
-        </div>
-      </nav>
-
       <section className="receipt-hero">
         <div>
           <p className="kicker">Proof board · {config.network}</p>
-          <h1>
-            <span>Every claim,</span>
-            <span>every estate,</span>
-            <span>verifiable on-chain.</span>
-          </h1>
+          <h1>Every claim, every estate, verifiable on-chain.</h1>
           <p className="lede">
             One canonical surface pinning the package, the curated estate, and a
             real sponsored heir claim. Each row links to SuiScan — verify it

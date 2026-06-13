@@ -1,14 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 120" role="img" aria-labelledby="title">
-  <title id="title">Bequest logo</title>
-  <defs>
-    <linearGradient id="bq" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8b6dff"/>
-      <stop offset="1" stop-color="#2fe0c4"/>
-    </linearGradient>
-  </defs>
-  <rect x="6" y="6" width="108" height="108" rx="30" fill="#0b0b13"/>
-  <rect x="7.5" y="7.5" width="105" height="105" rx="28.5" fill="none" stroke="#ffffff" stroke-opacity="0.1"/>
-  <path d="M33 84V31h25c13 0 21 6 21 16 0 6-3 10-8 13 8 2 13 8 13 16 0 11-9 18-23 18H33Zm16-31h8c4 0 6-2 6-6s-3-6-7-6h-7v12Zm0 30h10c5 0 8-3 8-7s-3-7-8-7H49v14Z" fill="url(#bq)"/>
-  <path d="M83 84c-8 0-14-6-14-15s6-15 14-15 14 6 14 15-6 15-14 15Zm0-10c3 0 5-2 5-5s-2-5-5-5-5 2-5 5 2 5 5 5Z" fill="#f5f5fb"/>
-  <text x="140" y="76" fill="#f5f5fb" font-family="'Space Grotesk', Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="-2.5">Bequest</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" role="img" aria-label="Bequest">
+  <g fill="none" stroke="#4da2ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 6 9 10v10c0 7.6 5.6 12.7 11 14.7 5.4-2 11-7.1 11-14.7V10z" />
+    <path d="M14.5 20.5l4.2 4.2L26 17" />
+  </g>
+  <text x="44" y="31" fill="#f4f6fb" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="-0.6">Bequest</text>
 </svg>
