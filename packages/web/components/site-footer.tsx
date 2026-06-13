@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getPublicConfig } from "../lib/config";
+import { currentPackage } from "../lib/live-proof";
 
 // Official Sui droplet (simple-icons), used only for the "Built on Sui" badge.
 const SuiMark = (
@@ -8,6 +10,8 @@ const SuiMark = (
 );
 
 export function SiteFooter() {
+  const config = getPublicConfig();
+
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
@@ -33,9 +37,36 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-col">
-          <h4>Proof</h4>
-          <Link href="/proof">Proof board</Link>
+          <h4>Learn</h4>
           <Link href="/#how">How it works</Link>
+          <Link href="/proof">Proof board</Link>
+          {config.demoVideoUrl ? (
+            <a href={config.demoVideoUrl} target="_blank" rel="noreferrer">
+              Demo video
+            </a>
+          ) : null}
+        </div>
+
+        <div className="footer-col">
+          <h4>Resources</h4>
+          <a href={currentPackage.explorerUrl} target="_blank" rel="noreferrer">
+            Package on SuiScan
+          </a>
+          {config.githubUrl ? (
+            <a href={config.githubUrl} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          ) : null}
+          {config.docsUrl ? (
+            <a href={config.docsUrl} target="_blank" rel="noreferrer">
+              Docs
+            </a>
+          ) : null}
+          {config.xUrl ? (
+            <a href={config.xUrl} target="_blank" rel="noreferrer">
+              X / Twitter
+            </a>
+          ) : null}
         </div>
       </div>
       <div className="site-footer-base">

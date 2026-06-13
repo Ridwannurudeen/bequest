@@ -16,6 +16,12 @@ export type PublicBequestConfig = {
   demoEstateId?: string;
   enokiPublicApiKey?: string;
   enokiConnectAppSlug?: string;
+  // Optional external links surfaced in the footer; each renders only when set,
+  // so no dead link appears before it exists (repo is private until judging).
+  githubUrl?: string;
+  xUrl?: string;
+  docsUrl?: string;
+  demoVideoUrl?: string;
 };
 
 export type ServerEnokiConfig = {
@@ -60,6 +66,10 @@ export function getPublicConfig(): PublicBequestConfig {
     enokiConnectAppSlug: optional(
       process.env.NEXT_PUBLIC_ENOKI_CONNECT_APP_SLUG,
     ),
+    githubUrl: optional(process.env.NEXT_PUBLIC_GITHUB_URL),
+    xUrl: optional(process.env.NEXT_PUBLIC_X_URL),
+    docsUrl: optional(process.env.NEXT_PUBLIC_DOCS_URL),
+    demoVideoUrl: optional(process.env.NEXT_PUBLIC_DEMO_VIDEO_URL),
   };
 }
 

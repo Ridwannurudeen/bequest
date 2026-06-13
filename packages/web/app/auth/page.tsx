@@ -12,6 +12,10 @@ function AuthCallbackInner() {
   const router = useRouter();
 
   useEffect(() => {
+    document.title = "Signing in… · Bequest";
+  }, []);
+
+  useEffect(() => {
     if (handled) router.replace("/");
   }, [handled, router]);
 

@@ -1,15 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" font-family="Inter, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="Inter, Arial, sans-serif">
   <defs>
     <radialGradient id="glow" cx="50%" cy="0%" r="75%">
       <stop offset="0" stop-color="#4da2ff" stop-opacity="0.16" />
       <stop offset="1" stop-color="#4da2ff" stop-opacity="0" />
     </radialGradient>
   </defs>
-  <rect width="1200" height="675" fill="#0a0e16" />
-  <rect width="1200" height="675" fill="url(#glow)" />
+  <rect width="1200" height="630" fill="#0a0e16" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <!-- large decorative shield watermark (no text) -->
+  <g transform="translate(820,150) scale(15)" fill="none" stroke="#4da2ff" stroke-opacity="0.14" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2.5 4.5 5.5v6c0 4.4 3.2 7.6 7.5 9 4.3-1.4 7.5-4.6 7.5-9v-6z" />
+    <path d="M9 12l2.2 2.2L15.2 10" />
+  </g>
 
   <!-- brand lockup -->
-  <g transform="translate(80,74)">
+  <g transform="translate(80,76)">
     <g fill="none" stroke="#4da2ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M22 4 7 9v15c0 11 8.4 18.6 15 21.5 6.6-2.9 15-10.5 15-21.5V9z" />
       <path d="M15 23l6 6 11-13" />
@@ -18,37 +24,18 @@
   </g>
 
   <!-- headline -->
-  <text x="80" y="306" fill="#f4f6fb" font-size="76" font-weight="800" letter-spacing="-3.2">Programmable conditional</text>
-  <text x="80" y="392" fill="#f4f6fb" font-size="76" font-weight="800" letter-spacing="-3.2">transfers on Sui.</text>
+  <text x="80" y="312" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">Programmable</text>
+  <text x="80" y="400" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">conditional transfers</text>
+  <text x="80" y="488" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">on Sui.</text>
 
   <!-- sub -->
-  <text x="82" y="462" fill="#98a2b5" font-size="30" font-weight="500">Hand assets to anyone — released only when an</text>
-  <text x="82" y="504" fill="#98a2b5" font-size="30" font-weight="500">on-chain condition is proven.</text>
+  <text x="82" y="548" fill="#98a2b5" font-size="29" font-weight="500">Hand assets to anyone — released only when an on-chain condition is proven.</text>
 
   <!-- built on sui -->
-  <g transform="translate(82,572)">
-    <svg x="0" y="-17" width="24" height="24" viewBox="0 0 24 24" fill="#4da2ff">
+  <g transform="translate(82,592)">
+    <svg x="0" y="-16" width="22" height="22" viewBox="0 0 24 24" fill="#4da2ff">
       <path d="M17.636 10.009a7.16 7.16 0 0 1 1.565 4.474 7.2 7.2 0 0 1-1.608 4.53l-.087.106-.023-.135a7 7 0 0 0-.07-.349c-.502-2.21-2.142-4.106-4.84-5.642-1.823-1.034-2.866-2.278-3.14-3.693-.177-.915-.046-1.834.209-2.62.254-.787.631-1.446.953-1.843l1.05-1.284a.46.46 0 0 1 .713 0l5.28 6.456zm1.66-1.283L12.26.123a.336.336 0 0 0-.52 0L4.704 8.726l-.023.029a9.33 9.33 0 0 0-2.07 5.872C2.612 19.803 6.816 24 12 24s9.388-4.197 9.388-9.373a9.32 9.32 0 0 0-2.07-5.871zM6.389 9.981l.63-.77.018.142q.023.17.055.34c.408 2.136 1.862 3.917 4.294 5.297 2.114 1.203 3.345 2.586 3.7 4.103a5.3 5.3 0 0 1 .109 1.801l-.004.034-.03.014A7.2 7.2 0 0 1 12 21.67c-3.976 0-7.2-3.218-7.2-7.188 0-1.705.594-3.27 1.587-4.503z" />
     </svg>
-    <text x="34" y="2" fill="#98a2b5" font-size="23" font-weight="600">Built on Sui</text>
-  </g>
-
-  <!-- recipient card mock -->
-  <g transform="translate(760,150)">
-    <rect width="360" height="376" rx="22" fill="#ffffff" opacity="0.04" />
-    <rect x="0.5" y="0.5" width="359" height="375" rx="21.5" fill="none" stroke="#ffffff" stroke-opacity="0.12" />
-    <text x="32" y="52" fill="#6b7488" font-size="14" font-weight="700" letter-spacing="2">RECIPIENT NOTIFICATION</text>
-    <rect x="262" y="32" width="66" height="30" rx="15" fill="#4da2ff" fill-opacity="0.12" stroke="#4da2ff" stroke-opacity="0.32" />
-    <circle cx="284" cy="47" r="4" fill="#4da2ff" />
-    <text x="295" y="52" fill="#4da2ff" font-size="13" font-weight="600">pending</text>
-    <text x="32" y="118" fill="#f4f6fb" font-size="27" font-weight="700" letter-spacing="-0.5">Assets ready to claim</text>
-    <rect x="32" y="146" width="296" height="64" rx="14" fill="#ffffff" opacity="0.04" />
-    <text x="50" y="184" fill="#98a2b5" font-size="18">SUI balance</text>
-    <text x="310" y="184" fill="#f4f6fb" text-anchor="end" font-size="19" font-weight="700">split by share</text>
-    <rect x="32" y="222" width="296" height="64" rx="14" fill="#ffffff" opacity="0.04" />
-    <text x="50" y="260" fill="#98a2b5" font-size="18">Objects + letter</text>
-    <text x="310" y="260" fill="#f4f6fb" text-anchor="end" font-size="19" font-weight="700">on trigger</text>
-    <rect x="32" y="306" width="296" height="50" rx="12" fill="#4da2ff" />
-    <text x="180" y="338" fill="#04101f" text-anchor="middle" font-size="18" font-weight="700">Claim with Google</text>
+    <text x="32" y="1" fill="#98a2b5" font-size="22" font-weight="600">Built on Sui</text>
   </g>
 </svg>

@@ -19,6 +19,26 @@ const BrandMark = (
   </svg>
 );
 
+const MenuIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
+
+const links = [
+  { href: "/#how", label: "How it works" },
+  { href: "/demo", label: "Demo" },
+  { href: "/estates", label: "Estates" },
+  { href: "/proof", label: "Proof" },
+];
+
 export function SiteHeader() {
   return (
     <header className="site-header">
@@ -27,17 +47,36 @@ export function SiteHeader() {
           <span className="brand-mark">{BrandMark}</span>
           <span>Bequest</span>
         </Link>
+
+        {/* Desktop */}
         <div className="site-links">
-          <Link href="/#how">How it works</Link>
-          <Link href="/demo">Demo</Link>
-          <Link href="/estates">Estates</Link>
-          <Link href="/proof">Proof</Link>
+          {links.map((l) => (
+            <Link key={l.href} href={l.href}>
+              {l.label}
+            </Link>
+          ))}
           <span className="divider" aria-hidden="true" />
           <AuthButton />
           <Link href="/create" className="button primary">
             Launch app
           </Link>
         </div>
+
+        {/* Mobile */}
+        <details className="nav-mobile">
+          <summary aria-label="Toggle menu">{MenuIcon}</summary>
+          <div className="nav-mobile-panel">
+            {links.map((l) => (
+              <Link key={l.href} href={l.href}>
+                {l.label}
+              </Link>
+            ))}
+            <AuthButton />
+            <Link href="/create" className="button primary">
+              Launch app
+            </Link>
+          </div>
+        </details>
       </nav>
     </header>
   );

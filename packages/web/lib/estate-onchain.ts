@@ -112,7 +112,11 @@ function mistToSui(mist: number, dp = 4): string {
 // while held. `getStakesByIds` returns the live principal and (once Active) the estimatedReward,
 // both in MIST, keyed by StakedSui object id. Best-effort: on any RPC error we fall back to the
 // bare position so the asset still renders.
-type StakeValue = { principalMist: number; rewardMist: number; active: boolean };
+type StakeValue = {
+  principalMist: number;
+  rewardMist: number;
+  active: boolean;
+};
 
 async function stakeValuesByObjectId(
   client: Rpc,
@@ -331,6 +335,55 @@ export async function listEstates(
     cursor = page.hasNextPage ? page.nextCursor : null;
   } while (cursor);
   return ids;
+}
+
+export type LiveStats = {
+  estates: number;
+  suiUnderContinuity: string;
+  triggered: number;
+};
+
+/**
+ * Best-effort aggregate traction for the proof board: how many estates exist, how much SUI is
+ * escrowed across them ("under continuity"), and how many have triggered. Reads are capped and
+ * each is fault-tolerant; returns null if the whole sweep fails (flaky testnet RPC) so the caller
+ * can simply omit the panel rather than show a broken number.
+ */
+export async function liveStats(
+  config: PublicBequestConfig = getPublicConfig(),
+): Promise<LiveStats | null> {
+  try {
+    const ids = await listEstates(config);
+    // Cap the per-estate sweep so the judge-facing proof page stays fast; the headline
+    // "estates created" count is the full list, the SUI sum is across the read sample.
+    const views = await Promise.all(
+      ids
+        .slice(0, 24)
+        .map((id) => readEstateOnChain(id, config).catch(() => null)),
+    );
+    let sui = 0;
+    let triggered = 0;
+    for (const view of views) {
+      if (!view) continue;
+      if (view.status === "Triggered") triggered += 1;
+      for (const asset of view.assets) {
+        if (asset.type === "SUI") {
+          const amount = Number(asset.value.replace(/[^0-9.]/g, ""));
+          if (Number.isFinite(amount)) sui += amount;
+        }
+      }
+    }
+    return {
+      estates: ids.length,
+      suiUnderContinuity: sui.toLocaleString("en-US", {
+        maximumFractionDigits: 2,
+      }),
+      triggered,
+    };
+  } catch (error) {
+    console.warn("liveStats sweep failed:", error);
+    return null;
+  }
 }
 
 /**

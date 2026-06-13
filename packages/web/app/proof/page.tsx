@@ -11,7 +11,7 @@ import {
   proofCards,
   featureProofs,
 } from "../../lib/live-proof";
-import { readEstateOnChain } from "../../lib/estate-onchain";
+import { liveStats, readEstateOnChain } from "../../lib/estate-onchain";
 import { ratioLabel, type EstateView } from "../../lib/bequest-sdk";
 
 // One canonical, judge-facing proof surface. Reads the live package, the curated estate, and the
@@ -41,7 +41,10 @@ async function loadEstate(
 export default async function ProofBoardPage() {
   const config = getPublicConfig();
   const packageId = resolvedPackageId(config);
-  const estate = await loadEstate(config.demoEstateId);
+  const [estate, stats] = await Promise.all([
+    loadEstate(config.demoEstateId),
+    liveStats(config),
+  ]);
   const claimDigest = config.sponsoredClaimDigest;
   const escrowed =
     estate?.view.assets.filter((a) => a.state === "escrowed") ?? [];
@@ -59,6 +62,27 @@ export default async function ProofBoardPage() {
           </p>
         </div>
       </section>
+
+      {stats ? (
+        <section className="stat-band" aria-label="Live traction">
+          <div className="stat">
+            <b>{stats.estates}</b>
+            <span>estates created on-chain</span>
+          </div>
+          <div className="stat">
+            <b>{stats.suiUnderContinuity}</b>
+            <span>SUI under continuity (escrowed)</span>
+          </div>
+          <div className="stat">
+            <b>{stats.triggered}</b>
+            <span>transfers triggered</span>
+          </div>
+          <div className="stat">
+            <b>{config.network}</b>
+            <span>live Sui network</span>
+          </div>
+        </section>
+      ) : null}
 
       <section className="proof-section" aria-label="Canonical references">
         <div className="section-heading">

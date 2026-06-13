@@ -296,6 +296,25 @@ export default async function Home() {
         </section>
       </Reveal>
 
+      {config.demoVideoUrl ? (
+        <Reveal>
+          <section className="section" aria-label="Demo video">
+            <div className="section-heading">
+              <p className="kicker">See it in action</p>
+              <h2>Watch a conditional transfer, end to end.</h2>
+            </div>
+            <div className="video-embed">
+              <iframe
+                src={config.demoVideoUrl}
+                title="Bequest demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </section>
+        </Reveal>
+      ) : null}
+
       <Reveal>
         <section className="section">
           <div className="section-heading">

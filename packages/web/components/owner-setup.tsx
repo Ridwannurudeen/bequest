@@ -149,7 +149,7 @@ function OwnerSetupInner() {
             placeholder="Heir Sui address (0x…)"
             value={h.addr}
             onChange={(e) => setHeir(i, { addr: e.target.value })}
-            style={{ minWidth: "22rem" }}
+            style={{ flex: "1 1 16rem", minWidth: 0 }}
           />
           <input
             type="number"

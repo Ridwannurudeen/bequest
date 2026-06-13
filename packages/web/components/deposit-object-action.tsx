@@ -46,7 +46,8 @@ function DepositObjectActionInner({
     try {
       const id = objectId.trim();
       if (!OBJECT_ID.test(id)) throw new Error("Enter a valid object id (0x…)");
-      if (!recipient) throw new Error("Pick an heir to earmark this object for");
+      if (!recipient)
+        throw new Error("Pick an heir to earmark this object for");
 
       const config = getPublicConfig();
       const client = new SuiJsonRpcClient({
@@ -105,7 +106,7 @@ function DepositObjectActionInner({
         placeholder="Object / StakedSui id (0x…)"
         value={objectId}
         onChange={(e) => setObjectId(e.target.value)}
-        style={{ width: "12rem" }}
+        style={{ flex: "1 1 10rem", minWidth: 0 }}
       />
       <select
         aria-label="earmark to heir"
