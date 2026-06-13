@@ -10,7 +10,8 @@ import { useState } from "react";
 import type { SuiNetwork } from "../lib/config";
 import type { EstateView } from "../lib/bequest-sdk";
 
-const NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
+const NETWORK =
+  (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
 
 async function postJson(url: string, body: unknown) {
   const res = await fetch(url, {
@@ -120,7 +121,7 @@ function RecoveryInner({ estate }: { estate: EstateView }) {
               placeholder="Guardian addresses (0x…, comma-separated)"
               value={guardians}
               onChange={(e) => setGuardians(e.target.value)}
-              style={{ minWidth: "22rem" }}
+              style={{ flex: "1 1 16rem", minWidth: 0 }}
             />
             <label>
               threshold{" "}
@@ -183,7 +184,7 @@ function RecoveryInner({ estate }: { estate: EstateView }) {
               placeholder="New owner address (0x…)"
               value={newOwner}
               onChange={(e) => setNewOwner(e.target.value)}
-              style={{ minWidth: "22rem" }}
+              style={{ flex: "1 1 16rem", minWidth: 0 }}
             />
             <button
               type="button"

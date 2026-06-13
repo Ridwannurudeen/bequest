@@ -12,7 +12,8 @@ import { useState } from "react";
 import type { SuiNetwork } from "../lib/config";
 import type { EstateView } from "../lib/bequest-sdk";
 
-const NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
+const NETWORK =
+  (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
 const WALRUS_PUBLISHER =
   process.env.NEXT_PUBLIC_WALRUS_PUBLISHER ??
   "https://publisher.walrus-testnet.walrus.space";
@@ -166,7 +167,8 @@ function SetWishesInner({
         >
           {message.slice(0, 16)}…
         </a>{" "}
-        It stays encrypted until this estate triggers, then your heirs can read it.
+        It stays encrypted until this estate triggers, then your heirs can read
+        it.
       </p>
     );
   }
@@ -175,15 +177,16 @@ function SetWishesInner({
     <div className="owner-form" aria-label="Set last-wishes letter">
       <p className="kicker">Last-wishes letter</p>
       <p className="lede">
-        Write an encrypted letter to your heirs. It is sealed with Seal, stored on
-        Walrus, and unreadable until this estate triggers. Saving again replaces it.
+        Write an encrypted letter to your heirs. It is sealed with Seal, stored
+        on Walrus, and unreadable until this estate triggers. Saving again
+        replaces it.
       </p>
       <textarea
         value={letter}
         onChange={(e) => setLetter(e.target.value)}
         placeholder="My dearest…"
         rows={4}
-        style={{ width: "100%", minWidth: "22rem" }}
+        style={{ width: "100%" }}
       />
       <button
         type="button"

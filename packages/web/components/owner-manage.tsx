@@ -10,7 +10,8 @@ import { useState } from "react";
 import type { SuiNetwork } from "../lib/config";
 import type { EstateView } from "../lib/bequest-sdk";
 
-const NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
+const NETWORK =
+  (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork) ?? "testnet";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SUI_TYPE = "0x2::sui::SUI";
 const SUI_DECIMALS = 9;
@@ -76,7 +77,8 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
           transactionBlockKindBytes: kind.transactionBlockKindBytes,
         }),
       );
-      if (!sponsored?.bytes || !sponsored?.digest) throw new Error("Sponsor failed");
+      if (!sponsored?.bytes || !sponsored?.digest)
+        throw new Error("Sponsor failed");
       const keypair = await flow.getKeypair({ network: NETWORK });
       const { signature } = await keypair.signTransaction(
         fromBase64(sponsored.bytes),
@@ -107,7 +109,8 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
   if (estate.status === "Triggered") {
     return (
       <p className="lede">
-        This estate is Triggered. Owner controls are locked; heirs can now claim.
+        This estate is Triggered. Owner controls are locked; heirs can now
+        claim.
       </p>
     );
   }
@@ -122,8 +125,8 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
     <div className="owner-form" aria-label="Owner controls">
       {scheduled ? (
         <p className="lede">
-          Scheduled estate{releaseLabel ? ` · releases ${releaseLabel}` : ""}. No
-          check-ins needed; heirs can claim at the release time.
+          Scheduled estate{releaseLabel ? ` · releases ${releaseLabel}` : ""}.
+          No check-ins needed; heirs can claim at the release time.
         </p>
       ) : (
         <button
@@ -145,7 +148,7 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
               placeholder="Heir Sui address (0x…)"
               value={h.addr}
               onChange={(e) => setHeir(i, { addr: e.target.value })}
-              style={{ minWidth: "22rem" }}
+              style={{ flex: "1 1 16rem", minWidth: 0 }}
             />
             <input
               type="number"
@@ -280,7 +283,9 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
                   })
                 }
               >
-                {working(`withdraw-${a.objectId}`) ? "Withdrawing…" : "Withdraw"}
+                {working(`withdraw-${a.objectId}`)
+                  ? "Withdrawing…"
+                  : "Withdraw"}
               </button>
             </div>
           ))}
