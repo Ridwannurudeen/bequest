@@ -19,10 +19,7 @@ function AuthCallbackInner() {
     <main className="receipt-hero">
       <div>
         <p className="kicker">zkLogin</p>
-        <h1>
-          <span>Completing</span>
-          <span>your sign-in…</span>
-        </h1>
+        <h1>Completing your sign-in…</h1>
         <p className="lede">
           Finishing the Google zkLogin handshake and deriving your Sui address.
         </p>
@@ -37,10 +34,7 @@ export default function AuthPage() {
       <main className="receipt-hero">
         <div>
           <p className="kicker">zkLogin</p>
-          <h1>
-            <span>Sign-in not</span>
-            <span>configured.</span>
-          </h1>
+          <h1>Sign-in not configured.</h1>
           <p className="lede">
             Set NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY to enable Google sign-in.
           </p>

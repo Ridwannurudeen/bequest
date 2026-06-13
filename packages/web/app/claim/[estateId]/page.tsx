@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   claimReadiness,
   claimProofUrl,
@@ -55,33 +54,17 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
 
   return (
     <main>
-      <nav className="nav-shell" aria-label="Claim receipt navigation">
-        <Link className="brand" href="/" aria-label="Back to Bequest home">
-          <span className="brand-mark">Bq</span>
-          <span>Bequest</span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/proof">Proof</Link>
-          <Link href="/#spikes">Gates</Link>
-          <a href={explorerObjectUrl(packageId)}>SuiScan</a>
-        </div>
-      </nav>
-
       <section className="receipt-hero">
         <div>
           <p className="kicker">
             Recipient claim receipt · {live ? "live testnet" : "demo preview"}
           </p>
-          <h1>
-            <span>Maya can receive</span>
-            <span>assets with Google,</span>
-            <span>not a seed phrase.</span>
-          </h1>
+          <h1>Receive assets with Google, not a seed phrase.</h1>
           <p className="lede">
             This page is the proof surface for a conditional transfer. It pins
             the estate, package, distribution target, and sponsorship boundary.
-            If a sponsored claim lands, the Sui transaction digest appears
-            here; until then, no fake gasless recipient claim is presented.
+            If a sponsored claim lands, the Sui transaction digest appears here;
+            until then, no fake gasless recipient claim is presented.
           </p>
         </div>
 
@@ -194,11 +177,12 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             {typeArguments.length > 0 ? typeArguments.join(", ") : "none"}
           </p>
           <p>
-            The first sponsored recipient proof should sponsor this existing deployed
-            Sui distribution call. It does not need a new contract: after the
-            estate is Triggered, the recipient action triggers the SUI split for
-            every named recipient in one PTB. Until sponsorship lands, the UI stays
-            honest: no fake claim transaction, no fake sponsor digest.
+            The first sponsored recipient proof should sponsor this existing
+            deployed Sui distribution call. It does not need a new contract:
+            after the estate is Triggered, the recipient action triggers the SUI
+            split for every named recipient in one PTB. Until sponsorship lands,
+            the UI stays honest: no fake claim transaction, no fake sponsor
+            digest.
           </p>
           <a href={explorerObjectUrl(packageId)}>
             Open current package on SuiScan

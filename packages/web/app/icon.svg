@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
-  <defs>
-    <linearGradient id="bq" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8b6dff"/>
-      <stop offset="1" stop-color="#2fe0c4"/>
-    </linearGradient>
-  </defs>
-  <rect width="96" height="96" rx="28" fill="#0b0b13"/>
-  <rect x="1.5" y="1.5" width="93" height="93" rx="26.5" fill="none" stroke="#ffffff" stroke-opacity="0.1"/>
-  <path d="M24 68V22h21c11 0 18 5 18 14 0 5-2 9-7 11 7 2 11 7 11 14 0 10-8 16-20 16H24Zm14-27h7c3 0 5-2 5-5s-2-5-6-5h-6v10Zm0 26h8c4 0 7-2 7-6s-3-6-7-6h-8v12Z" fill="url(#bq)"/>
-  <path d="M66 68c-7 0-12-5-12-13s5-13 12-13 12 5 12 13-5 13-12 13Zm0-9c2 0 4-2 4-4s-2-4-4-4-4 2-4 4 2 4 4 4Z" fill="#f5f5fb"/>
+  <rect width="96" height="96" rx="24" fill="#0a0e16" />
+  <rect x="1.5" y="1.5" width="93" height="93" rx="22.5" fill="none" stroke="#ffffff" stroke-opacity="0.1" />
+  <g fill="none" stroke="#4da2ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M48 18 26 26v18c0 15.5 12 26 22 30 10-4 22-14.5 22-30V26z" />
+    <path d="M36 47l9 9 16-18" />
+  </g>
 </svg>
