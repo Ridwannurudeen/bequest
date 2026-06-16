@@ -57,6 +57,8 @@ export type EstateView = {
   lastActive: string;
   pendingSince?: string;
   wishesBlobId: string;
+  wishesInnerId?: string;
+  wishesDigest?: string;
 };
 
 export type CreateEstateConfig = {

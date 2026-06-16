@@ -683,7 +683,7 @@ public fun wishes_key_id(w: &Wishes): vector<u8> { w.key_id }
 public fun wishes_digest(w: &Wishes): vector<u8> { w.digest }
 
 /// Seal access policy for the encrypted last-wishes: the key servers release the decryption key
-/// ONLY when (1) the requested key-id is in this estate's namespace ([pkg id][estate id][nonce]),
+/// ONLY when (1) the requested key-id is in this estate's namespace ([estate id][nonce]),
 /// (2) the estate has been TRIGGERED, and (3) the requester (the Seal session-key address) is a
 /// named heir. Called read-only by Seal key servers via dry-run, so `ctx.sender()` is the requester.
 entry fun seal_approve(id: vector<u8>, estate: &Estate, ctx: &TxContext) {

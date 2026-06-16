@@ -156,8 +156,8 @@ function WishesLetterInner({
 
 /**
  * Heir-side last-wishes reveal. Renders nothing unless Enoki is configured and a
- * pinned letter exists for this estate (the package stores no wishes metadata
- * on-chain yet, so the Walrus blob id and the Seal inner id are pinned via env).
+ * letter pointer exists for this estate. The pointer can come from the on-chain
+ * `Estate.wishes` anchor, demo URL params, or an env-pinned judge estate.
  * The claim page keeps a static "Seal-gated" status line regardless.
  */
 export function WishesLetter({

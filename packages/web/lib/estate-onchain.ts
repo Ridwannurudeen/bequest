@@ -33,6 +33,7 @@ type RawEstateFields = {
   guardians: string[];
   recovery_threshold: string;
   recovery: { fields: { new_owner: string; approvals: string[] } } | null;
+  wishes?: unknown;
   objects: { fields: { id: { id: string }; size: string } };
 };
 
@@ -227,6 +228,61 @@ function formatBaseUnits(value: string, decimals: number): string {
   return `${whole.toLocaleString("en-US")}.${trimmed}`;
 }
 
+function field(value: unknown, key: string): unknown {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  const fields = record.fields;
+  if (fields && typeof fields === "object" && key in fields) {
+    return (fields as Record<string, unknown>)[key];
+  }
+  return record[key];
+}
+
+function optionValue(value: unknown): unknown {
+  if (!value) return undefined;
+  if (Array.isArray(value)) return value[0];
+  const direct = field(value, "vec");
+  return Array.isArray(direct) ? direct[0] : direct;
+}
+
+function byteVector(value: unknown): number[] | undefined {
+  if (Array.isArray(value) && value.every((b) => typeof b === "number")) {
+    return value;
+  }
+  const contents = field(value, "contents");
+  if (Array.isArray(contents) && contents.every((b) => typeof b === "number")) {
+    return contents;
+  }
+  return undefined;
+}
+
+function bytesToUtf8(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  const bytes = byteVector(value);
+  return bytes ? new TextDecoder().decode(Uint8Array.from(bytes)) : undefined;
+}
+
+function bytesToHex(value: unknown): string | undefined {
+  const bytes = byteVector(value);
+  return bytes
+    ? Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
+    : typeof value === "string"
+      ? value.replace(/^0x/, "")
+      : undefined;
+}
+
+function wishesFields(raw: unknown):
+  | { blobId?: string; innerId?: string; digest?: string }
+  | undefined {
+  const w = optionValue(raw);
+  if (!w) return undefined;
+  return {
+    blobId: bytesToUtf8(field(w, "blob_id")),
+    innerId: bytesToHex(field(w, "key_id")),
+    digest: bytesToHex(field(w, "digest")),
+  };
+}
+
 // Escrowed coin balances: each is a `CoinKey<T>` dynamic field on the Estate whose value is a
 // `Balance<T>`. We page through all dynamic fields and read each balance amount.
 async function readCoinAssets(client: Rpc, estateId: string): Promise<Asset[]> {
@@ -388,8 +444,8 @@ export async function liveStats(
 
 /**
  * Read an on-chain Estate into the EstateView the UI consumes: core fields (owner, status, timers,
- * heirs) plus escrowed assets (coin balances via `CoinKey<T>` dynamic fields + ObjectBag objects).
- * `wishesBlobId` (off-chain on Walrus) is left blank — there is no on-chain source for it.
+ * heirs), on-chain wishes anchor, and escrowed assets (coin balances via `CoinKey<T>` dynamic fields
+ * + ObjectBag objects).
  */
 export async function readEstateOnChain(
   estateId: string,
@@ -408,6 +464,7 @@ export async function readEstateOnChain(
     throw new Error(`Object ${estateId} is not a Bequest Estate`);
   }
   const fields = data.content.fields as unknown as RawEstateFields;
+  const wishes = wishesFields(fields.wishes);
 
   const heirs: HeirBinding[] = fields.heirs.map((heir) => ({
     label: shortAddress(heir.fields.addr),
@@ -466,6 +523,8 @@ export async function readEstateOnChain(
     lastActive: new Date(Number(fields.last_active_ms)).toISOString(),
     pendingSince:
       pendingSinceMs > 0 ? new Date(pendingSinceMs).toISOString() : undefined,
-    wishesBlobId: "",
+    wishesBlobId: wishes?.blobId ?? "",
+    wishesInnerId: wishes?.innerId,
+    wishesDigest: wishes?.digest,
   };
 }

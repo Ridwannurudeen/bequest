@@ -139,7 +139,7 @@ const stats = [
   { big: "1 live", small: "sponsored claim receipt" },
   { big: "key+store", small: "object transfer path" },
   { big: "1 PTB", small: "atomic multi-recipient distribution" },
-  { big: "11/11", small: "Move tests passing" },
+  { big: "32/32", small: "Move tests passing" },
 ];
 
 const faqs = [

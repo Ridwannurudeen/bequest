@@ -26,6 +26,7 @@ export const demoEstate: EstateView = {
   lastActive: "2026-02-24T09:30:00.000Z",
   pendingSince: "2026-05-24T09:30:00.000Z",
   wishesBlobId: "walrus://grandma-sarah-letter",
+  wishesInnerId: "grandma-sarah-inner-id",
 };
 
 /**

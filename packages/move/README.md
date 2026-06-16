@@ -14,7 +14,7 @@ is excluded from testnet/mainnet builds.
 sui move test
 sui move build
 ```
-Status: **11/11 tests passing** on Sui CLI 1.72.2 (testnet).
+Status: **32/32 tests passing** on Sui CLI 1.73.1 (testnet).
 
 Current testnet package:
 `0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`

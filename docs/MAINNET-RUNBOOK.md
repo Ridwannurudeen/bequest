@@ -21,8 +21,8 @@ Closes roadmap item #31. Ratified decisions (2026-06-02): **publish `estate.move
 
 ## 1. Pre-publish code prep (one PR, on `lane-a/mainnet-prep`)
 
-1. **Exclude `gate.move`** from the published package: move `packages/move/sources/gate.move` → `packages/move/spikes/gate.move` (or `docs/spikes/`). It is redundant (real `seal_approve` lives in `estate.move:269`) and ships an owner-flippable trigger. Mainnet package = **`estate.move` only**.
-2. `sui move test` → expect **11/11** (was 12; `gate::test_status_flip` leaves with the file). Update the count in `packages/move/README.md` and the CI `move` job assertion.
+1. **Confirm the estate-only package shape:** `packages/move/sources/` should contain `estate.move` only. The earlier `gate.move` spike is archived at `docs/spikes/gate.move`; production Seal gating lives in `estate::seal_approve`.
+2. `sui move test` → expect **32/32**. Update the count in `packages/move/README.md` if the suite changes.
 3. **Network-aware explorer URLs (mainnet-readiness bug):** `packages/web/lib/claim-receipt.ts` hardcodes `https://suiscan.xyz/testnet/…` in `explorerObjectUrl`/`explorerTxUrl`. Make them take the network from config (mirror the components, which already use `suiscan.xyz/${NETWORK}/…`). Otherwise every estate/tx link breaks on mainnet.
 4. Keep `Move.toml` clean (no pinned deps — implicit system framework). `bequest = "0x0"` stays; Sui sets the address at publish.
 5. CI green (web/keeper/move). Merge.

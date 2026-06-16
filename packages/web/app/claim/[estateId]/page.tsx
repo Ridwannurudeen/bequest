@@ -117,9 +117,9 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
             />
             <WishesLetter
               estateId={estateId}
-              packageId={config.packageId}
-              blobId={config.wishesBlobId}
-              innerIdHex={config.wishesInnerId}
+              packageId={packageId}
+              blobId={live.wishesBlobId || config.wishesBlobId}
+              innerIdHex={live.wishesInnerId || config.wishesInnerId}
               triggered={live.status === "Triggered"}
             />
             <HeirGuide estate={live} />

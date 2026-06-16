@@ -40,8 +40,10 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
           return null;
         })
       : null;
-  const wishesBlobId = params.wishesBlobId ?? config.wishesBlobId;
-  const wishesInnerId = params.wishesInnerId ?? config.wishesInnerId;
+  const wishesBlobId =
+    params.wishesBlobId ?? live?.wishesBlobId ?? config.wishesBlobId;
+  const wishesInnerId =
+    params.wishesInnerId ?? live?.wishesInnerId ?? config.wishesInnerId;
 
   return (
     <main>

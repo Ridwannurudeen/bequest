@@ -29,7 +29,7 @@ npm run typecheck
 
 ## Verify the live package
 This check needs no private key. It reads the published package from Sui RPC and confirms the
-`estate` and `gate` modules still expose the Move surface claimed by the web app.
+estate-only Move surface claimed by the web app.
 
 ```
 npm run verify:proof
