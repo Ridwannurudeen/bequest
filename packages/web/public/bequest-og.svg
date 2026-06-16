@@ -1,41 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="Inter, Arial, sans-serif">
-  <defs>
-    <radialGradient id="glow" cx="50%" cy="0%" r="75%">
-      <stop offset="0" stop-color="#4da2ff" stop-opacity="0.16" />
-      <stop offset="1" stop-color="#4da2ff" stop-opacity="0" />
-    </radialGradient>
-  </defs>
-  <rect width="1200" height="630" fill="#0a0e16" />
-  <rect width="1200" height="630" fill="url(#glow)" />
-
-  <!-- large decorative shield watermark (no text) -->
-  <g transform="translate(820,150) scale(15)" fill="none" stroke="#4da2ff" stroke-opacity="0.14" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2.5 4.5 5.5v6c0 4.4 3.2 7.6 7.5 9 4.3-1.4 7.5-4.6 7.5-9v-6z" />
-    <path d="M9 12l2.2 2.2L15.2 10" />
+  <rect width="1200" height="630" fill="#07090d" />
+  <g stroke="#ffffff" stroke-opacity="0.05" stroke-width="1">
+    <path d="M0 72h1200M0 144h1200M0 216h1200M0 288h1200M0 360h1200M0 432h1200M0 504h1200M0 576h1200" />
+    <path d="M72 0v630M144 0v630M216 0v630M288 0v630M360 0v630M432 0v630M504 0v630M576 0v630M648 0v630M720 0v630M792 0v630M864 0v630M936 0v630M1008 0v630M1080 0v630" />
   </g>
 
-  <!-- brand lockup -->
-  <g transform="translate(80,76)">
-    <g fill="none" stroke="#4da2ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(82,76)">
+    <g fill="none" stroke="#58a6ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M22 4 7 9v15c0 11 8.4 18.6 15 21.5 6.6-2.9 15-10.5 15-21.5V9z" />
       <path d="M15 23l6 6 11-13" />
     </g>
-    <text x="58" y="35" fill="#f4f6fb" font-size="32" font-weight="700" letter-spacing="-0.8">Bequest</text>
+    <text x="58" y="35" fill="#f7f4ec" font-size="32" font-weight="760">Bequest</text>
   </g>
 
-  <!-- headline -->
-  <text x="80" y="312" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">Programmable</text>
-  <text x="80" y="400" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">conditional transfers</text>
-  <text x="80" y="488" fill="#f4f6fb" font-size="78" font-weight="800" letter-spacing="-3.4">on Sui.</text>
+  <g transform="translate(735,158)">
+    <rect x="0" y="0" width="382" height="310" rx="16" fill="#0d1118" stroke="#ffffff" stroke-opacity="0.18" />
+    <rect x="18" y="18" width="346" height="274" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.09" />
+    <text x="36" y="58" fill="#f7f4ec" font-size="23" font-weight="760">Estate console</text>
+    <rect x="250" y="34" width="92" height="32" rx="16" fill="#0f2945" stroke="#58a6ff" stroke-opacity="0.55" />
+    <circle cx="269" cy="50" r="5" fill="#58a6ff" />
+    <text x="281" y="56" fill="#58a6ff" font-size="14" font-weight="700">Triggered</text>
 
-  <!-- sub -->
-  <text x="82" y="548" fill="#98a2b5" font-size="29" font-weight="500">Hand assets to anyone — released only when an on-chain condition is proven.</text>
+    <rect x="36" y="92" width="208" height="82" rx="8" fill="#171d26" stroke="#ffffff" stroke-opacity="0.12" />
+    <text x="52" y="126" fill="#a9b0bd" font-size="14" font-weight="800">ESTATE OBJECT</text>
+    <text x="52" y="154" fill="#f7f4ec" font-size="21" font-weight="760">0xfd9880...15c6d0</text>
 
-  <!-- built on sui -->
-  <g transform="translate(82,592)">
-    <svg x="0" y="-16" width="22" height="22" viewBox="0 0 24 24" fill="#4da2ff">
-      <path d="M17.636 10.009a7.16 7.16 0 0 1 1.565 4.474 7.2 7.2 0 0 1-1.608 4.53l-.087.106-.023-.135a7 7 0 0 0-.07-.349c-.502-2.21-2.142-4.106-4.84-5.642-1.823-1.034-2.866-2.278-3.14-3.693-.177-.915-.046-1.834.209-2.62.254-.787.631-1.446.953-1.843l1.05-1.284a.46.46 0 0 1 .713 0l5.28 6.456zm1.66-1.283L12.26.123a.336.336 0 0 0-.52 0L4.704 8.726l-.023.029a9.33 9.33 0 0 0-2.07 5.872C2.612 19.803 6.816 24 12 24s9.388-4.197 9.388-9.373a9.32 9.32 0 0 0-2.07-5.871zM6.389 9.981l.63-.77.018.142q.023.17.055.34c.408 2.136 1.862 3.917 4.294 5.297 2.114 1.203 3.345 2.586 3.7 4.103a5.3 5.3 0 0 1 .109 1.801l-.004.034-.03.014A7.2 7.2 0 0 1 12 21.67c-3.976 0-7.2-3.218-7.2-7.188 0-1.705.594-3.27 1.587-4.503z" />
-    </svg>
-    <text x="32" y="1" fill="#98a2b5" font-size="22" font-weight="600">Built on Sui</text>
+    <rect x="258" y="92" width="84" height="82" rx="8" fill="#171d26" stroke="#ffffff" stroke-opacity="0.12" />
+    <circle cx="286" cy="134" r="18" fill="#102742" stroke="#58a6ff" stroke-opacity="0.6" />
+    <text x="280" y="141" fill="#58a6ff" font-size="17" font-weight="760">0</text>
+    <text x="313" y="128" fill="#a9b0bd" font-size="12" font-weight="800">OWNER</text>
+    <text x="313" y="151" fill="#f7f4ec" font-size="17" font-weight="760">zk</text>
+
+    <rect x="36" y="190" width="306" height="54" rx="8" fill="#1b2029" stroke="#ffffff" stroke-opacity="0.12" />
+    <text x="52" y="213" fill="#58a6ff" font-size="12" font-weight="800">SUI + OBJECTS</text>
+    <text x="52" y="235" fill="#a9b0bd" font-size="17" font-weight="500">Escrowed portfolio</text>
+    <text x="246" y="230" fill="#f7f4ec" font-size="18" font-weight="760">ready</text>
+
+    <g fill="#0e2d27" stroke="#69d7ae" stroke-opacity="0.45">
+      <rect x="36" y="260" width="88" height="30" rx="6" />
+      <rect x="134" y="260" width="88" height="30" rx="6" />
+      <rect x="232" y="260" width="88" height="30" rx="6" />
+    </g>
+    <g fill="#69d7ae" font-size="13" font-weight="760">
+      <text x="58" y="280">Active</text>
+      <text x="154" y="280">Pending</text>
+      <text x="251" y="280">Claim</text>
+    </g>
   </g>
+
+  <text x="82" y="262" fill="#58a6ff" font-size="18" font-weight="800">LIVE ON SUI TESTNET</text>
+  <text x="80" y="342" fill="#f7f4ec" font-size="76" font-weight="850">The succession</text>
+  <text x="80" y="426" fill="#f7f4ec" font-size="76" font-weight="850">layer for Sui</text>
+  <text x="80" y="510" fill="#f7f4ec" font-size="76" font-weight="850">portfolios.</text>
+  <text x="84" y="570" fill="#a9b0bd" font-size="27" font-weight="520">Google-ready heirs. Seal-gated letters. Verifiable triggers.</text>
 </svg>
