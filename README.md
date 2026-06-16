@@ -19,7 +19,7 @@ Live app: <https://bequest.gudman.xyz>
 
 Live testnet proof surface: the full gasless inheritance flow (create, heir claim, Seal last-wishes decrypt) is proven on Sui testnet.
 
-- Move package published on Sui testnet with `estate` and `gate` modules.
+- Move package published on Sui testnet as an estate-only package.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
   distribution.
 - Full-portfolio V2 path is contract-backed without redeploy: the package exposes
@@ -89,10 +89,9 @@ npm install
 npm run verify:proof
 ```
 
-The live package includes an unused `gate` module from an earlier Seal spike. The production Seal
-path is `estate::seal_approve`; an estate-only package publish is reserved for the mainnet step in
-[`docs/MAINNET-RUNBOOK.md`](docs/MAINNET-RUNBOOK.md). We are not redeploying for submission because
-the current package already carries the valid lifecycle proof.
+The live package is estate-only. The earlier `gate` Seal spike is archived under
+[`docs/spikes/gate.move`](docs/spikes/gate.move); the production Seal policy is
+`estate::seal_approve`, and the current package carries the valid lifecycle proof.
 
 ### Submission proof table
 
@@ -125,9 +124,10 @@ decryptWishes(estateId)            // only resolves after status == Triggered
 ```
 
 Implementation boundary: the current testnet Move package backs estate creation, escrow,
-heartbeat/trigger transitions, SUI distribution, executor pause, and `seal_approve`. `setHeirs`
-and `uploadWishes` remain SDK/product-surface methods for the next on-chain metadata pass; do not
-present them as already stored on-chain in the submitted package.
+heartbeat/trigger transitions, SUI and key+store object distribution, heir updates, timer/executor
+updates, on-chain last-wishes anchoring, vesting, recovery, and `seal_approve`. The SDK keeps
+product-facing `setHeirs` and `uploadWishes` names; the live Move entrypoints are
+`update_heirs` and `set_wishes`, with browser flows wired where credentials are configured.
 
 ## Architecture decisions (locked)
 - **Custody:** assets are escrowed into the shared `Estate` object (NOT left in the owner's
@@ -136,8 +136,9 @@ present them as already stored on-chain in the submitted package.
   trigger, `claim` is authorized purely from on-chain state.
 - **State machine:** `Active → Pending (grace + warnings) → Triggered → Claimed`. Any
   deposit/withdraw or `heartbeat()` resets to `Active`; executor can `pause`/`cancel` `Pending`.
-- **Seal policy:** `seal_approve(id, gate/estate)` releases the key only when status is
-  `Triggered` and the key-id is in the object's namespace `[pkg id][object id][nonce]`.
+- **Seal policy:** `estate::seal_approve(id, estate)` releases the key only when status is
+  `Triggered`, the requester is a named heir, and the key-id is in the estate namespace
+  `[estate id][nonce]`.
 
 ## Core checks
 

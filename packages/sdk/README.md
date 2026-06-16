@@ -53,8 +53,8 @@ Lane A / Lane B contract. Do not describe every method as on-chain-backed yet.
 | --- | --- |
 | `createEstate`, `deposit`, `heartbeat`, `armTrigger`, `executorOverride`, `claim`, `readEstate` | Backed by the deployed `estate` package or live read-model flow. |
 | `claim` gas sponsorship | Enoki-ready path; only call it proven after a sponsored Sui digest is pinned. |
-| `setHeirs` after creation | Roadmap. The current package stores heirs at creation but does not expose a beneficiary-update entrypoint. |
-| `uploadWishes` / `decryptWishes` metadata binding | Roadmap/product surface. Seal/Walrus conditional decrypt is proven, but the current package does not store a wishes blob id on-chain. |
+| `setHeirs` after creation | Backed on-chain by `estate::update_heirs`; product clients may expose it under the SDK name. |
+| `uploadWishes` / `decryptWishes` metadata binding | `estate::set_wishes` anchors the Walrus blob id, Seal key id, and digest on-chain; Seal decrypt remains heir-side and status-gated. |
 
 ## Status
 

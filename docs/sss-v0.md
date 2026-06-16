@@ -118,13 +118,14 @@ If a policy carries `wishes`, the implementation MUST gate Seal decryption on st
 ```
 public fun seal_approve(key_id: vector<u8>, policy: &Policy, ...) {
     assert!(status(policy) == 2 /* TRIGGERED */, ENotTriggered);
-    assert!(key_id_in_namespace(key_id, policy));  // namespace = [pkg id][object id][nonce]
+    assert!(key_id_in_namespace(key_id, policy));  // Move policy checks [object id][nonce]
 }
 ```
 
-The key-id MUST live in the policy's namespace `[package id][object id][nonce]` so a Seal key
-server releases the decryption key only after the policy is `TRIGGERED`. Decryption is bound to
-on-chain status, not to a key shared in advance.
+The key-id MUST live in the policy's namespace. In the reference implementation, Seal binds the
+package through the `seal_approve` target and the Move policy checks the estate-scoped inner id
+`[object id][nonce]`, so a Seal key server releases the decryption key only after the policy is
+`TRIGGERED`. Decryption is bound to on-chain status, not to a key shared in advance.
 
 Implementations MAY further restrict decryption to named beneficiaries. The reference impl does:
 `estate::seal_approve` additionally asserts the requesting Seal session-key address `is_heir`, so a

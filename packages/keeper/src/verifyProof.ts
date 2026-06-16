@@ -2,8 +2,8 @@
  * No-secret live proof verifier.
  *
  * Confirms the published Sui package exists on the selected network and still exposes the
- * Bequest Move surface the web app and README claim: estate custody/dead-man distribution plus
- * Seal-gated wishes.
+ * Bequest Move surface the web app and README claim: estate custody, conditional triggers,
+ * full-portfolio distribution, recovery, and Seal-gated wishes.
  */
 import "dotenv/config";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
@@ -15,21 +15,26 @@ const PACKAGE_ID =
   process.env.PACKAGE_ID ??
   "0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1";
 
-const EXPECTED_MODULES = ["estate", "gate"] as const;
+const EXPECTED_MODULES = ["estate"] as const;
 const EXPECTED_SYMBOLS: Record<(typeof EXPECTED_MODULES)[number], string[]> = {
   estate: [
-    "public create_estate(",
-    "public deposit_coin<",
-    "public arm(",
-    "public finalize(",
-    "public distribute_coin<",
-    "entry seal_approve(",
-  ],
-  gate: [
-    "public create_gate(",
-    "entry create_gate_entry(",
-    "public trigger(",
-    "entry seal_approve(",
+    "create_estate(",
+    "create_scheduled_estate(",
+    "deposit_coin<",
+    "deposit_object<",
+    "update_heirs(",
+    "set_wishes(",
+    "set_vesting(",
+    "set_guardians(",
+    "set_attester(",
+    "arm(",
+    "finalize(",
+    "finalize_scheduled(",
+    "attest_trigger(",
+    "distribute_coin<",
+    "distribute_coin_vested<",
+    "distribute_objects<",
+    "seal_approve(",
   ],
 };
 

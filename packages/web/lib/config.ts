@@ -6,9 +6,10 @@ export type PublicBequestConfig = {
   estateModule: string;
   claimTarget?: string;
   sponsoredClaimDigest?: string;
-  // Pinned last-wishes pointer for the judge estate (the package stores no wishes
-  // metadata on-chain yet). wishesInnerId = hex of [estate id bytes][nonce] used at
-  // Seal-encryption time; wishesBlobId = the Walrus blob holding the ciphertext.
+  // Optional last-wishes pointer fallback for a curated judge estate. Live estate
+  // reads prefer the on-chain `Estate.wishes` anchor when one is present.
+  // wishesInnerId = hex of [estate id bytes][nonce] used at Seal-encryption time;
+  // wishesBlobId = the Walrus blob holding the ciphertext.
   wishesBlobId?: string;
   wishesInnerId?: string;
   // Curated estate the homepage pins for the live demo (Triggered, with the Seal letter).
