@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "../components/reveal";
-import type { EstateView } from "../lib/bequest-sdk";
+import type { EstateStatus, EstateView } from "../lib/bequest-sdk";
 import { bequestSdkMock, formatDuration, ratioLabel } from "../lib/bequest-sdk";
 import { getPublicConfig, type PublicBequestConfig } from "../lib/config";
 import { findLatestEstate, readEstateOnChain } from "../lib/estate-onchain";
@@ -34,6 +34,7 @@ const LockIcon = (
     <path d="M8 10V7a4 4 0 0 1 8 0v3" />
   </svg>
 );
+
 const SwitchIcon = (
   <svg
     viewBox="0 0 24 24"
@@ -47,6 +48,7 @@ const SwitchIcon = (
     <path d="M12 8.5V12l2.2 1.5" />
   </svg>
 );
+
 const ClaimIcon = (
   <svg
     viewBox="0 0 24 24"
@@ -61,70 +63,93 @@ const ClaimIcon = (
   </svg>
 );
 
-const trust = [
-  {
-    label: "Estate custody",
-    detail: "SUI, stake positions, and key+store objects escrow together",
-  },
-  {
-    label: "Google-ready heirs",
-    detail: "Recipients can claim without a seed phrase",
-  },
-  { label: "Private letters", detail: "Seal + Walrus unlock only after trigger" },
-  { label: "Live proof", detail: "Published package, sponsored claim, CI checks" },
+const LetterIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M5 6.5h14v11H5z" />
+    <path d="m5 8 7 5 7-5" />
+  </svg>
+);
+
+const stages: Array<{ label: EstateStatus | "Claim"; note: string }> = [
+  { label: "Active", note: "Owner can edit or withdraw" },
+  { label: "Pending", note: "Grace window is running" },
+  { label: "Triggered", note: "Recipients are unlocked" },
+  { label: "Claim", note: "Gasless claim path" },
 ];
 
-const steps = [
+const workspaceNav = [
+  { label: "Estate", href: "#estate" },
+  { label: "Trigger", href: "#workflow" },
+  { label: "Recipient", href: "#recipient" },
+  { label: "Proof", href: "#proof" },
+];
+
+const quickActions = [
   {
-    n: "01",
-    icon: LockIcon,
-    eyebrow: "Compose",
-    title: "Create a protected estate from a normal sign-in.",
-    body: "Name recipients, set shares, choose the release condition, and attach the encrypted letter. The owner can still withdraw or revise while the estate is Active.",
-    checks: [
-      "Google sign-in",
-      "Recipient ratios",
-      "Full-portfolio escrow",
-      "Encrypted letter",
-    ],
-  },
-  {
-    n: "02",
+    label: "Heartbeat",
+    detail: "Reset inactivity before trigger",
     icon: SwitchIcon,
-    eyebrow: "Monitor",
-    title: "The condition advances on-chain, not by trust.",
-    body: "A keeper can arm and finalize once the Clock says the rule is eligible. Any owner activity resets the timer, and an executor can pause a false alarm.",
-    checks: [
-      "Inactivity timer",
-      "Grace window",
-      "Executor pause",
-      "Clock-gated",
-    ],
   },
   {
-    n: "03",
-    icon: ClaimIcon,
-    eyebrow: "Release",
-    title: "Recipients receive the assets and the letter.",
-    body: "After Triggered, SUI splits by shares, objects route to assigned recipients, and the private letter decrypts only for named heirs.",
-    checks: [
-      "Claim banner",
-      "Sponsored SUI claim",
-      "Keeper bundle payout",
-      "Letter unlocks",
-    ],
+    label: "Deposit",
+    detail: "Add SUI, stake, or objects",
+    icon: LockIcon,
+  },
+  {
+    label: "Letter",
+    detail: "Seal-gated final message",
+    icon: LetterIcon,
   },
 ];
 
-const products = [
+const journeys = [
+  {
+    label: "Owner setup",
+    title: "Compose a portfolio handoff without leaving the app.",
+    body:
+      "Name heirs, set shares, deposit assets, attach the private letter, and keep control while the estate is Active.",
+    checks: ["zkLogin owner", "SUI + objects", "Editable while Active"],
+  },
+  {
+    label: "Trigger monitor",
+    title: "The release condition is visible and time-gated.",
+    body:
+      "The keeper can arm the estate only when the Clock says it is eligible. Grace and executor pause keep false alarms reversible.",
+    checks: ["Clock-gated", "Grace window", "Executor pause"],
+  },
+  {
+    label: "Recipient claim",
+    title: "The heir receives assets without becoming a crypto operator.",
+    body:
+      "After Triggered, recipients open a claim receipt, sign with Google, and receive the SUI leg through the sponsored path.",
+    checks: ["Google-ready", "Sponsored digest", "Receipt link"],
+  },
+  {
+    label: "Private unlock",
+    title: "The letter stays encrypted until the estate state changes.",
+    body:
+      "Walrus stores the encrypted letter and Seal releases access only after the on-chain estate is Triggered.",
+    checks: ["Walrus", "Seal policy", "State-bound access"],
+  },
+];
+
+const useCases = [
   {
     label: "Family inheritance",
     detail:
       "The flagship flow: inactivity releases assets and the private letter to named heirs.",
   },
   {
-    label: "Founder / keyholder continuity",
-    detail: "Move treasury access or operational assets to successors if a keyholder disappears.",
+    label: "Founder continuity",
+    detail:
+      "Move treasury access or operational assets to successors if a keyholder disappears.",
   },
   {
     label: "Guardian recovery",
@@ -136,46 +161,50 @@ const products = [
   },
 ];
 
-const stats = [
-  { big: "32/32", small: "Move tests passing" },
-  { big: "1", small: "estate-only package" },
-  { big: "zkLogin", small: "Google-ready recipients" },
-  { big: "Seal", small: "trigger-gated letters" },
-];
-
 const faqs = [
   {
     q: "Do recipients need a crypto wallet?",
-    a: "No. The product path is built for Google zkLogin plus Enoki sponsorship, so recipients don't need a seed phrase. The submission only claims gasless execution once a sponsored Sui digest is pinned.",
+    a: "No. The product path is built for Google zkLogin plus Enoki sponsorship, so recipients do not need a seed phrase. The public copy claims gasless execution only when the sponsored digest is pinned.",
   },
   {
-    q: "What if I'm just away for a while?",
-    a: "Any activity — a heartbeat, deposit, or withdrawal — resets the timer, and a trusted executor can pause a false trigger during the grace window.",
+    q: "What if I am just away for a while?",
+    a: "Any activity, including heartbeat, deposit, or withdrawal, resets the timer. A trusted executor can pause a false trigger during the grace window.",
   },
   {
-    q: "Can someone take my assets early?",
-    a: "No. The trigger is permissionless but time-gated by the on-chain Clock. While active only you can withdraw, and after the trigger funds route only to your named recipients.",
+    q: "Can someone take assets early?",
+    a: "No. The trigger is permissionless but time-gated by the on-chain Clock. While Active only the owner can withdraw; after Triggered assets route only to named recipients.",
   },
   {
-    q: "Is the letter I leave really private?",
-    a: "Yes. It's encrypted with Seal and stored on Walrus; the decryption key is released only once the estate is Triggered.",
+    q: "Is the letter private?",
+    a: "Yes. It is encrypted with Seal and stored on Walrus. The decryption path opens only after the estate is Triggered.",
   },
 ];
 
+function shortId(value: string, fallback = "demo estate") {
+  if (!value || value === "demo") return fallback;
+  if (!value.startsWith("0x") || value.length < 18) return value;
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+}
+
+function statusIndex(status: EstateStatus) {
+  if (status === "Claimed") return 3;
+  return Math.max(
+    0,
+    stages.findIndex((stage) => stage.label === status),
+  );
+}
+
 export default async function Home() {
   const config = getPublicConfig();
-  // Restore the strong "gasless" claim only when a real sponsored claim digest is pinned.
   const claimProven = Boolean(config.sponsoredClaimDigest);
   const estate = await loadEstate(config);
+  const activeStage = statusIndex(estate.status);
   const claimHref =
     estate.estateId && estate.estateId !== "demo"
       ? `/claim/${estate.estateId}`
       : "/claim/demo";
-  const heirInitial = estate.ownerLabel?.trim()?.[0]?.toUpperCase() ?? "B";
-  const estateIdLabel =
-    estate.estateId && estate.estateId !== "demo"
-      ? `${estate.estateId.slice(0, 8)}…${estate.estateId.slice(-6)}`
-      : "demo estate";
+  const estateIdLabel = shortId(estate.estateId);
+  const ownerInitial = estate.ownerLabel?.trim()?.[0]?.toUpperCase() ?? "B";
   const consoleAssets: EstateView["assets"] =
     estate.assets.length > 0
       ? estate.assets.slice(0, 4)
@@ -188,164 +217,254 @@ export default async function Home() {
           },
         ];
   const proofSample = proofCards.slice(0, 4);
+  const liveSnapshot = [
+    {
+      label: "Estate state",
+      value: estate.status,
+      detail: estateIdLabel,
+    },
+    {
+      label: "Recipients",
+      value: `${estate.heirs.length} ${estate.heirs.length === 1 ? "heir" : "heirs"}`,
+      detail: estate.heirs
+        .map((heir) => `${heir.label} ${ratioLabel(heir.ratioBps)}`)
+        .join(" / "),
+    },
+    {
+      label: "Trigger window",
+      value: formatDuration(estate.inactivityMs),
+      detail: `${formatDuration(estate.gracePeriodMs)} grace period`,
+    },
+    {
+      label: "Proof pack",
+      value: `${proofCards.length} checks`,
+      detail: claimProven ? "Sponsored claim digest pinned" : "Move + SuiScan evidence",
+    },
+  ];
 
   return (
     <main>
-      <section className="command-hero">
-        <div className="command-copy">
+      <section className="ops-hero" aria-labelledby="product-console-title">
+        <div className="ops-intro">
           <p className="kicker">
-            <span className="live-dot" /> Live on Sui · {config.network}
+            <span className="live-dot" /> Live on Sui {config.network}
           </p>
-          <h1>The succession layer for Sui portfolios.</h1>
+          <h1 id="product-console-title">
+            A live succession workspace for Sui assets.
+          </h1>
           <p className="lede">
-            Bequest turns a portfolio into a conditional transfer account:
-            assets stay escrowed on-chain, the trigger is verifiable, and
-            recipients can receive without becoming crypto operators first.
-            {claimProven
-              ? " The live proof includes a sponsored Google-ready claim."
-              : " The product path is Google-ready while the public copy stays honest about live sponsorship proof."}
+            Bequest gives a Sui portfolio a verified second path: assets stay in
+            an estate object, the trigger is clock-gated, and heirs can claim
+            without managing seed phrases.
           </p>
-          <div className="hero-actions command-actions">
-            <Link href="/demo" className="button primary">
-              Run the recipient demo
-            </Link>
-            <Link href="/proof" className="button secondary">
-              Review proof
-            </Link>
-          </div>
-          <div className="hero-proofline" aria-label="Launch proof">
-            <span>Published package</span>
-            <span>Sponsored claim digest</span>
-            <span>32 Move tests</span>
-          </div>
-        </div>
-
-        <aside className="estate-console" aria-label="Live estate console">
-          <div className="console-topbar">
-            <span className="console-brand">
-              <Image
-                src="/logo-1024.png"
-                width={34}
-                height={34}
-                alt=""
-                priority
-              />
-              Bequest console
-            </span>
-            <span className="status-pill">
-              <span className="live-dot" />
-              {estate.status}
-            </span>
-          </div>
-          <div className="console-grid">
-            <div className="console-main">
-              <span className="console-label">Estate object</span>
-              <strong>{estateIdLabel}</strong>
-              <p>
-                {estate.triggerKind === "scheduled"
-                  ? "Scheduled release"
-                  : "Dead-man switch"}{" "}
-                · {formatDuration(estate.inactivityMs)} inactivity ·{" "}
-                {formatDuration(estate.gracePeriodMs)} grace
-              </p>
-            </div>
-            <div className="console-recipient">
-              <span className="heir-avatar">{heirInitial}</span>
-              <span>
-                <small>Owner</small>
-                <strong>{estate.ownerLabel}</strong>
-              </span>
-            </div>
-          </div>
-
-          <div className="asset-ledger" aria-label="Escrowed assets">
-            {consoleAssets.map((asset, i) => (
-              <div className="asset-row" key={`${asset.label}-${i}`}>
-                <span>
-                  <b>{asset.type}</b>
-                  {asset.label}
-                  {asset.note ? <small>{asset.note}</small> : null}
-                </span>
-                <strong>{asset.value}</strong>
+          <div className="ops-stat-grid" aria-label="Live Bequest snapshot">
+            {liveSnapshot.map((item) => (
+              <div className="ops-stat" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <small>{item.detail}</small>
               </div>
             ))}
           </div>
-
-          <div className="console-timeline" aria-label="Estate lifecycle">
-            <span className="done">Active</span>
-            <span className={estate.status !== "Active" ? "done" : ""}>
-              Pending
-            </span>
-            <span className={estate.status === "Triggered" ? "done" : ""}>
-              Triggered
-            </span>
-            <span>Claim</span>
+          <div className="ops-reviewer-panel" aria-label="Reviewer path">
+            <span>Reviewer path</span>
+            <a href="#estate">Estate object</a>
+            <a href={claimHref}>Claim receipt</a>
+            <a href="#proof">Proof board</a>
           </div>
-
-          <div className="console-claim">
-            <div>
-              <small>Recipient route</small>
-              <strong>
-                {claimProven ? "Sponsored claim proven" : "Google-ready path"}
-              </strong>
-            </div>
-            <Link className="claim-button" href={claimHref}>
-              Open receipt
+          <div className="hero-actions command-actions">
+            <Link href="/demo" className="button primary">
+              Run recipient demo
+            </Link>
+            <Link href="/create" className="button secondary">
+              Open owner console
             </Link>
           </div>
-        </aside>
+        </div>
+
+        <div className="ops-shell" aria-label="Bequest product workspace">
+          <aside className="ops-rail" aria-label="Workspace navigation">
+            <div className="ops-rail-brand">
+              <Image src="/logo-1024.png" width={40} height={40} alt="" />
+              <span>Bequest</span>
+            </div>
+            <nav>
+              {workspaceNav.map((item) => (
+                <a key={item.href} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <div className="ops-rail-proof">
+              <span>Package</span>
+              <strong>{shortId(currentPackage.packageId, "package")}</strong>
+              <small>32 Move checks</small>
+            </div>
+          </aside>
+
+          <section className="estate-workspace" id="estate">
+            <div className="workspace-topbar">
+              <div>
+                <span className="console-label">Estate object</span>
+                <strong>{estateIdLabel}</strong>
+              </div>
+              <span className="status-pill">
+                <span className="live-dot" />
+                {estate.status}
+              </span>
+            </div>
+
+            <div className="workspace-summary">
+              <div>
+                <span className="console-label">Owner</span>
+                <div className="identity-line">
+                  <span className="heir-avatar">{ownerInitial}</span>
+                  <strong>{estate.ownerLabel}</strong>
+                </div>
+              </div>
+              <div>
+                <span className="console-label">Rule</span>
+                <strong>
+                  {estate.triggerKind === "scheduled"
+                    ? "Scheduled release"
+                    : "Dead-man switch"}
+                </strong>
+                <small>
+                  {formatDuration(estate.inactivityMs)} inactivity,{" "}
+                  {formatDuration(estate.gracePeriodMs)} grace
+                </small>
+              </div>
+              <div>
+                <span className="console-label">Recipient path</span>
+                <strong>
+                  {claimProven ? "Sponsored claim proven" : "Google-ready path"}
+                </strong>
+                <small>Receipt first, wallet second</small>
+              </div>
+            </div>
+
+            <div className="stage-track" aria-label="Estate lifecycle">
+              {stages.map((stage, index) => (
+                <div
+                  className={index <= activeStage ? "stage-item active" : "stage-item"}
+                  key={stage.label}
+                >
+                  <span>{index + 1}</span>
+                  <strong>{stage.label}</strong>
+                  <small>{stage.note}</small>
+                </div>
+              ))}
+            </div>
+
+            <div className="workspace-lower">
+              <div className="asset-ledger rich-ledger" aria-label="Escrowed assets">
+                <div className="ledger-head">
+                  <span className="console-label">Escrowed portfolio</span>
+                  <strong>{consoleAssets.length} assets visible</strong>
+                </div>
+                {consoleAssets.map((asset, i) => (
+                  <div className="asset-row" key={`${asset.label}-${i}`}>
+                    <span>
+                      <b>{asset.type}</b>
+                      {asset.label}
+                      {asset.note ? <small>{asset.note}</small> : null}
+                    </span>
+                    <strong>{asset.value}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className="action-stack" aria-label="Owner actions">
+                {quickActions.map((action) => (
+                  <Link className="action-tile" href="/create" key={action.label}>
+                    <span className="flow-icon">{action.icon}</span>
+                    <span>
+                      <strong>{action.label}</strong>
+                      <small>{action.detail}</small>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="recipient-panel" id="recipient">
+            <div className="recipient-card">
+              <span className="console-label">Recipient claim</span>
+              <h2>Assets are ready when the estate turns Triggered.</h2>
+              <p>
+                Heirs open a receipt, sign with Google, and receive their share
+                after the same on-chain trigger unlocks the encrypted letter.
+              </p>
+              <Link className="claim-button" href={claimHref}>
+                Open claim receipt
+              </Link>
+            </div>
+
+            <div className="recipient-list" aria-label="Named heirs">
+              {estate.heirs.map((heir) => (
+                <div className="heir-row" key={heir.binding}>
+                  <span>
+                    <strong>{heir.label}</strong>
+                    <small>{shortId(heir.binding, heir.binding)}</small>
+                  </span>
+                  <b>{ratioLabel(heir.ratioBps)}</b>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
       </section>
 
       <Reveal>
-        <section className="signal-rail" aria-label="Trust points">
-          {trust.map((t) => (
-            <div key={t.label}>
-              <strong>{t.label}</strong>
-              <span>{t.detail}</span>
-            </div>
-          ))}
+        <section className="signal-rail ops-signal" aria-label="Trust points">
+          <div>
+            <strong>Estate object first</strong>
+            <span>SUI, stake positions, objects, and letters share one state.</span>
+          </div>
+          <div>
+            <strong>Trigger is visible</strong>
+            <span>Clock-gated Pending and Triggered states are user-facing.</span>
+          </div>
+          <div>
+            <strong>Recipient UX is simple</strong>
+            <span>Google-ready claim path for heirs who are not crypto-native.</span>
+          </div>
+          <div>
+            <strong>Proof is one click away</strong>
+            <span>Package, claim digest, Seal, and keeper proof stay accessible.</span>
+          </div>
         </section>
       </Reveal>
 
       <Reveal>
-        <section className="section workflow-section" id="how">
+        <section className="section workflow-section" id="workflow">
           <div className="section-heading split-heading">
             <div>
-              <p className="kicker">Workflow</p>
-              <h2>Designed for the moment when the owner cannot sign.</h2>
+              <p className="kicker">Product flow</p>
+              <h2>The core action is visible before the proof packet.</h2>
             </div>
             <p>
-              Bequest separates custody, trigger verification, recipient claim,
-              and private messaging into one auditable Sui estate object.
+              A judge should not infer the product from hashes. The interface
+              shows the owner state, trigger state, recipient path, and privacy
+              unlock as one flow.
             </p>
           </div>
-          <div className="workflow-grid">
-            {steps.map((step) => (
-              <article className="workflow-card" key={step.n}>
-                <span className="step-n">{step.n}</span>
-                <span className="flow-icon">{step.icon}</span>
-                <p className="card-eyebrow">{step.eyebrow}</p>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
+          <div className="journey-board">
+            {journeys.map((journey, index) => (
+              <article className="journey-card" key={journey.label}>
+                <span className="step-n">{String(index + 1).padStart(2, "0")}</span>
+                <p className="card-eyebrow">{journey.label}</p>
+                <h3>{journey.title}</h3>
+                <p>{journey.body}</p>
                 <ul>
-                  {step.checks.map((c) => (
-                    <li key={c}>{c}</li>
+                  {journey.checks.map((check) => (
+                    <li key={check}>{check}</li>
                   ))}
                 </ul>
               </article>
             ))}
           </div>
-        </section>
-      </Reveal>
-
-      <Reveal>
-        <section className="stat-band elevated-band" aria-label="At a glance">
-          {stats.map((s) => (
-            <div className="stat" key={s.small}>
-              <b>{s.big}</b>
-              <span>{s.small}</span>
-            </div>
-          ))}
         </section>
       </Reveal>
 
@@ -372,11 +491,11 @@ export default async function Home() {
         <section className="section proof-ledger" id="proof">
           <div className="section-heading split-heading">
             <div>
-              <p className="kicker">Proof surface</p>
-              <h2>Judge the deployed system, not the promise.</h2>
+              <p className="kicker">Verification layer</p>
+              <h2>Proof supports the product instead of replacing it.</h2>
             </div>
             <Link className="text-link" href="/proof">
-              Open full proof board →
+              Open full proof board
             </Link>
           </div>
           <div className="proof-ledger-grid">
@@ -398,13 +517,13 @@ export default async function Home() {
       </Reveal>
 
       <Reveal>
-        <section className="section estate-section" id="estate">
+        <section className="section estate-section">
           <div className="section-heading split-heading">
             <div>
               <p className="kicker">
                 <span className="live-dot" /> Live testnet estate
               </p>
-              <h2>Read the estate like a reviewer would.</h2>
+              <h2>Readable enough for a user, exact enough for a reviewer.</h2>
             </div>
             <p>
               The homepage reads a real Sui estate per request, then falls back
@@ -433,7 +552,7 @@ export default async function Home() {
                 </div>
               </dl>
               <Link className="text-link" href="/estates">
-                Open dashboard →
+                Open dashboard
               </Link>
             </aside>
 
@@ -456,16 +575,16 @@ export default async function Home() {
         <section className="section">
           <div className="section-heading split-heading">
             <div>
-              <p className="kicker">Use cases</p>
+              <p className="kicker">Product wedge</p>
               <h2>One primitive, multiple succession patterns.</h2>
             </div>
             <p>
-              The same package supports inheritance, operational continuity,
-              recovery, and scheduled transfer products.
+              The same estate model supports inheritance, continuity, recovery,
+              and scheduled transfer products.
             </p>
           </div>
           <div className="usecase-grid">
-            {products.map((p) => (
+            {useCases.map((p) => (
               <article className="usecase-card" key={p.label}>
                 <h3>{p.label}</h3>
                 <p>{p.detail}</p>
@@ -512,7 +631,7 @@ export default async function Home() {
 
       <Reveal>
         <section className="cta-band">
-          <p className="kicker">Your keys shouldn't be the only path</p>
+          <p className="kicker">Your keys should not be the only path</p>
           <h2>Give a Sui portfolio a verified second path.</h2>
           <p>
             Create a protected estate, deposit a Sui portfolio, and name the
