@@ -496,6 +496,508 @@ label {
 /* =====================================================================
    Homepage command surface
    ===================================================================== */
+.ops-hero {
+  display: grid;
+  align-items: stretch;
+  gap: clamp(22px, 2.6vw, 38px);
+  grid-template-columns: minmax(380px, 0.42fr) minmax(0, 1fr);
+  margin: 0 calc(var(--pad) * -1);
+  padding:
+    clamp(26px, 4.6vw, 58px)
+    max(var(--pad), calc((100vw - 1280px) / 2 + var(--pad)))
+    clamp(34px, 4.8vw, 62px);
+  position: relative;
+}
+
+.ops-hero::before {
+  background:
+    linear-gradient(120deg, rgba(88, 166, 255, 0.1), transparent 34%),
+    linear-gradient(300deg, rgba(105, 215, 174, 0.08), transparent 42%),
+    linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: auto, auto, 56px 56px, 56px 56px;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ops-intro,
+.ops-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.ops-intro {
+  align-content: center;
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  max-width: 430px;
+  width: 100%;
+}
+
+.ops-intro h1 {
+  font-size: clamp(2.75rem, 4.15vw, 4rem);
+  line-height: 0.98;
+  max-width: 10.5ch;
+}
+
+.ops-intro .lede {
+  color: #c7cdd8;
+  margin-top: 0;
+  max-width: 39ch;
+}
+
+.ops-intro .command-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: flex-start;
+  margin: 6px 0 0;
+  width: 100%;
+}
+
+.ops-intro .command-actions .button {
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.ops-stat-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 4px;
+}
+
+.ops-stat,
+.ops-reviewer-panel {
+  background: rgba(255, 255, 255, 0.048);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.ops-stat {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 13px;
+}
+
+.ops-stat span,
+.ops-reviewer-panel span {
+  color: var(--faint);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.ops-stat strong {
+  font-size: 1.05rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.ops-stat small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.ops-reviewer-panel {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+}
+
+.ops-reviewer-panel span {
+  flex-basis: 100%;
+}
+
+.ops-reviewer-panel a {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  color: #d5dbe5;
+  font-size: 0.8rem;
+  font-weight: 650;
+  padding: 7px 10px;
+}
+
+.ops-reviewer-panel a:hover,
+.ops-reviewer-panel a:focus-visible {
+  border-color: var(--accent-line);
+  color: var(--text);
+  outline: none;
+}
+
+.ops-shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 0;
+  grid-template-columns: 132px minmax(0, 1fr) minmax(220px, 0.32fr);
+  margin: 0;
+  min-height: 620px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.ops-rail,
+.estate-workspace,
+.recipient-panel {
+  min-width: 0;
+}
+
+.ops-rail {
+  background: rgba(0, 0, 0, 0.18);
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 18px;
+  grid-template-rows: auto 1fr auto;
+  padding: 14px;
+}
+
+.ops-rail-brand {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.ops-rail-brand img {
+  border-radius: var(--radius-sm);
+}
+
+.ops-rail nav {
+  align-content: flex-start;
+  display: grid;
+  gap: 6px;
+}
+
+.ops-rail nav a {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 650;
+  padding: 9px 10px;
+}
+
+.ops-rail nav a:hover,
+.ops-rail nav a:focus-visible {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--text);
+  outline: none;
+}
+
+.ops-rail-proof {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+
+.ops-rail-proof span,
+.ops-rail-proof small {
+  color: var(--faint);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ops-rail-proof strong {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.estate-workspace {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.workspace-topbar,
+.workspace-summary,
+.workspace-lower {
+  min-width: 0;
+}
+
+.workspace-topbar {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding-bottom: 16px;
+}
+
+.workspace-topbar strong {
+  display: block;
+  font-family: var(--mono);
+  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.workspace-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 0.9fr);
+}
+
+.workspace-summary > div,
+.recipient-card,
+.rich-ledger,
+.action-tile,
+.journey-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.workspace-summary > div {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.workspace-summary strong {
+  display: block;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.workspace-summary small {
+  color: var(--muted);
+}
+
+.identity-line {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stage-track {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stage-item {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 5px;
+  min-height: 102px;
+  padding: 11px;
+}
+
+.stage-item span {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--faint);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 800;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.stage-item strong {
+  font-size: 0.98rem;
+}
+
+.stage-item small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.stage-item.active {
+  background: var(--mint-soft);
+  border-color: var(--mint-line);
+}
+
+.stage-item.active span {
+  background: rgba(105, 215, 174, 0.18);
+  border-color: var(--mint-line);
+  color: var(--mint);
+}
+
+.workspace-lower {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+.rich-ledger {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+}
+
+.ledger-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.ledger-head strong {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.action-stack {
+  align-content: flex-start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.action-tile {
+  align-items: flex-start;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.action-tile .flow-icon {
+  flex: none;
+  margin: 0;
+}
+
+.action-tile span:last-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.action-tile small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.action-tile:hover,
+.action-tile:focus-visible {
+  background: var(--surface-2);
+  border-color: var(--accent-line);
+  outline: none;
+}
+
+.recipient-panel {
+  background: rgba(0, 0, 0, 0.14);
+  border-left: 1px solid var(--line);
+  display: grid;
+  gap: 14px;
+  grid-template-rows: auto 1fr;
+  padding: 16px;
+}
+
+.recipient-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.recipient-card h2 {
+  font-size: clamp(1.28rem, 2.1vw, 1.75rem);
+}
+
+.recipient-card p {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.recipient-card .claim-button {
+  justify-self: start;
+}
+
+.recipient-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.recipient-list .heir-row {
+  background: rgba(255, 255, 255, 0.035);
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 13px;
+}
+
+.recipient-list .heir-row:last-child {
+  border-bottom: 0;
+}
+
+.ops-signal {
+  margin-top: clamp(34px, 4vw, 52px);
+}
+
+.journey-board {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.journey-card {
+  display: grid;
+  gap: 12px;
+  min-height: 310px;
+  padding: 24px;
+  position: relative;
+}
+
+.journey-card h3 {
+  font-size: clamp(1.12rem, 1.5vw, 1.32rem);
+}
+
+.journey-card p:not(.card-eyebrow) {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.journey-card ul {
+  align-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.journey-card li {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  color: #c3c9d3;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 7px 10px;
+}
+
 .command-hero {
   align-items: center;
   display: flex;
@@ -737,7 +1239,7 @@ label {
 }
 
 .split-heading {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   grid-template-columns: minmax(0, 0.86fr) minmax(240px, 0.48fr);
   max-width: none;
@@ -1200,7 +1702,7 @@ button.status-pill {
    Live estate section
    ===================================================================== */
 .estate-section {
-  align-items: start;
+  align-items: flex-start;
   display: grid;
   gap: 40px;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
@@ -1272,16 +1774,19 @@ dd {
 .heir-row span {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .heir-row b {
   color: var(--accent);
+  flex: none;
   font-variant-numeric: tabular-nums;
 }
 
 .heir-row small {
   font-family: var(--mono);
   font-size: 0.74rem;
+  overflow-wrap: anywhere;
 }
 
 code {
@@ -1396,7 +1901,7 @@ code {
    Receipt / claim / estates pages
    ===================================================================== */
 .receipt-hero {
-  align-items: start;
+  align-items: flex-start;
   display: grid;
   gap: 40px;
   grid-template-columns: minmax(0, 1fr) minmax(330px, 0.6fr);
@@ -1621,7 +2126,7 @@ code {
 .footer-col {
   display: grid;
   gap: 12px;
-  align-content: start;
+  align-content: flex-start;
 }
 
 .footer-col h4 {
@@ -1694,8 +2199,42 @@ code {
    Responsive
    ===================================================================== */
 @media (max-width: 1120px) {
+  .ops-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-intro {
+    align-items: flex-start;
+    max-width: 720px;
+  }
+
+  .ops-intro h1 {
+    max-width: 13ch;
+  }
+
+  .ops-intro .command-actions {
+    justify-content: flex-start;
+  }
+
+  .ops-shell {
+    grid-template-columns: 150px minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .recipient-panel {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 0.72fr) minmax(300px, 0.4fr);
+    grid-template-rows: auto;
+  }
+
+  .journey-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .command-hero {
-    align-items: start;
+    align-items: flex-start;
     display: grid;
     gap: 34px;
     min-height: auto;
@@ -1729,6 +2268,38 @@ code {
 }
 
 @media (max-width: 980px) {
+  .ops-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-rail {
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+    gap: 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  .ops-rail nav {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .ops-rail-proof {
+    grid-column: 1 / -1;
+  }
+
+  .recipient-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-summary,
+  .workspace-lower {
+    grid-template-columns: 1fr;
+  }
+
   .hero,
   .receipt-hero,
   .proof-header,
@@ -1740,6 +2311,7 @@ code {
   .proof-card-grid,
   .workflow-grid,
   .proof-ledger-grid,
+  .journey-board,
   .usecase-grid,
   .estate-review-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1757,7 +2329,7 @@ code {
   }
 
   .split-heading {
-    align-items: start;
+    align-items: flex-start;
     grid-template-columns: 1fr;
   }
 
@@ -1774,6 +2346,72 @@ code {
 @media (max-width: 640px) {
   :root {
     --pad: 16px;
+  }
+
+  .ops-hero {
+    gap: 22px;
+    padding-top: 30px;
+  }
+
+  .ops-intro h1 {
+    font-size: clamp(2.35rem, 11.5vw, 3.35rem);
+  }
+
+  .ops-intro .command-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-reviewer-panel a {
+    flex: 1 1 120px;
+    text-align: center;
+  }
+
+  .ops-shell {
+    border-left: 0;
+    border-right: 0;
+    margin-left: calc(var(--pad) * -1);
+    margin-right: calc(var(--pad) * -1);
+    width: calc(100% + var(--pad) * 2);
+  }
+
+  .ops-rail {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .ops-rail nav {
+    justify-content: start;
+  }
+
+  .estate-workspace,
+  .recipient-panel {
+    padding: 14px;
+  }
+
+  .workspace-topbar,
+  .ledger-head {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .workspace-summary,
+  .workspace-lower,
+  .stage-track,
+  .journey-board,
+  .action-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-item {
+    min-height: auto;
+  }
+
+  .recipient-card .claim-button {
+    justify-self: stretch;
   }
 
   .site-links {
