@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   EstateStage,
+  FeatureProofGrid,
+  JudgeProofStrip,
   MiniProof,
   RecipientSplit,
   StatusPill,
@@ -17,12 +19,12 @@ export default function Home() {
           <div className="hero-copy">
             <span className="live-badge">Live on Sui testnet</span>
             <h1 id="home-title">
-              A trusted path for <span>what comes next.</span>
+              Succession layer for <span>Sui portfolios.</span>
             </h1>
             <p>
-              Create a Sui estate, name the people you trust, set an inactivity
-              trigger, and leave an encrypted letter without giving up control
-              while you are active.
+              Bequest turns inheritance into a verifiable Sui workflow:
+              escrowed assets, inactivity triggers, Google-ready recipient
+              claims, and Seal-gated letters without handing over seed phrases.
             </p>
             <div className="hero-actions">
               <Link className="button dark" href="/create">
@@ -82,15 +84,33 @@ export default function Home() {
           </article>
         </section>
 
+        <JudgeProofStrip />
+
+        <section className="section-block proof-section" id="proof">
+          <div className="section-heading-row">
+            <div>
+              <p className="eyebrow">Submission proof</p>
+              <h2>Judge the proof, not a promise.</h2>
+            </div>
+            <Link className="button light" href="/proof">
+              Open receipt
+            </Link>
+          </div>
+          <FeatureProofGrid />
+        </section>
+
         <section className="section-block" id="how">
-          <h2>Built around the people who will need it.</h2>
-          <p>The interface leads with continuity, not cryptography.</p>
+          <h2>Designed for the failure modes that hurt real families.</h2>
+          <p>
+            The product removes the weakest handoff points while keeping the
+            owner in control until the estate is actually triggered.
+          </p>
           <div className="how-grid">
             {[
-              ["01", "Set the estate", "Choose assets, recipients, and the inactivity rule."],
-              ["02", "Stay in control", "Heartbeat, update, or cancel while Active."],
-              ["03", "Trigger safely", "Grace period and executor pause reduce false alarms."],
-              ["04", "Claim simply", "Recipients sign in with Google and receive their share."],
+              ["01", "No seed phrase handoff", "Recipients claim with Google-backed identity after trigger."],
+              ["02", "False-trigger protection", "Heartbeat, grace period, and executor pause guard the release."],
+              ["03", "Private until eligible", "Walrus letters stay encrypted until Seal approves access."],
+              ["04", "Auditable payout", "Distribution routes through one visible Sui proof packet."],
             ].map(([n, title, body]) => (
               <article className="how-card" key={title}>
                 <small>{n}</small>

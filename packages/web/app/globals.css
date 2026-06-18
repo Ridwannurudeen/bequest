@@ -54,6 +54,12 @@ a {
   text-decoration: none;
 }
 
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(54, 136, 199, 0.36);
+  outline-offset: 3px;
+}
+
 button,
 input {
   font: inherit;
@@ -522,6 +528,53 @@ main {
   font-weight: 800;
 }
 
+.judge-proof-strip {
+  background: rgba(13, 49, 77, 0.97);
+  border: 1px solid rgba(125, 190, 231, 0.28);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, 1fr);
+  margin: -18px auto 56px;
+  max-width: 1410px;
+  overflow: hidden;
+}
+
+.judge-proof-strip a {
+  background: rgba(255, 255, 255, 0.035);
+  color: #fff;
+  display: grid;
+  gap: 4px;
+  min-height: 94px;
+  padding: 18px 20px;
+}
+
+.judge-proof-strip a:hover,
+.judge-proof-strip a:focus-visible {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.judge-proof-strip small {
+  color: #9fc4de;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.judge-proof-strip strong {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+}
+
+.judge-proof-strip span {
+  color: #73bdf0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
 .section-block {
   margin: 42px auto 0;
   max-width: 1410px;
@@ -533,6 +586,66 @@ main {
 
 .section-block > p {
   color: var(--ink-soft);
+}
+
+.section-heading-row {
+  align-items: flex-end;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.proof-section {
+  margin-top: 0;
+}
+
+.feature-proof-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 28px;
+}
+
+.feature-proof-card {
+  background: rgba(255, 254, 250, 0.92);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  min-height: 238px;
+  padding: 24px;
+}
+
+.feature-proof-card > span {
+  background: var(--blue-soft);
+  border-radius: 999px;
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  justify-self: start;
+  padding: 7px 11px;
+}
+
+.feature-proof-card h3 {
+  font-family: var(--sans);
+  font-size: 1.08rem;
+  font-weight: 900;
+  margin-top: 20px;
+}
+
+.feature-proof-card p {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+.feature-proof-card small {
+  align-self: end;
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-top: 22px;
 }
 
 .how-grid {
@@ -1198,8 +1311,25 @@ main {
   .proof-mini-row,
   .how-grid,
   .metric-grid,
-  .next-grid {
+  .next-grid,
+  .judge-proof-strip,
+  .feature-proof-grid {
     grid-template-columns: 1fr;
+  }
+
+  .judge-proof-strip {
+    margin: 0 auto 38px;
+  }
+
+  .section-heading-row {
+    align-items: flex-start;
+    display: grid;
+  }
+
+  .card-head {
+    align-items: flex-start;
+    display: grid;
+    gap: 14px;
   }
 
   .console-shell {
@@ -1263,6 +1393,13 @@ main {
   .form-card,
   .letter-card {
     padding: 22px;
+  }
+
+  .card-head h2,
+  .form-card h2,
+  .panel-card h2,
+  .soft-card h2 {
+    font-size: 1.45rem;
   }
 
   .summary-strip {

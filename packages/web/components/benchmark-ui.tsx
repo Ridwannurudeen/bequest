@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { explorerObjectUrl, explorerTxUrl } from "../lib/claim-receipt";
 import { getPublicConfig } from "../lib/config";
-import { currentPackage, proofCards } from "../lib/live-proof";
+import { currentPackage, featureProofs, proofCards } from "../lib/live-proof";
 
 export const estate = {
   id: "0x99c44f...3a723d",
@@ -30,6 +30,12 @@ export const recipients = [
     color: "gold",
   },
 ] as const;
+
+function shortEvidence(value: string, front = 8, back = 6) {
+  return value.length > front + back + 3
+    ? `${value.slice(0, front)}...${value.slice(-back)}`
+    : value;
+}
 
 const ownerNavItems = [
   { label: "Estate overview", href: "/estates", key: "estate" },
@@ -250,6 +256,83 @@ export function MiniProof({
       <h3>{title}</h3>
       <p>{body}</p>
     </article>
+  );
+}
+
+export function JudgeProofStrip() {
+  const sponsoredClaim = proofCards.find(
+    (card) => card.label === "Sponsored claim",
+  );
+  const rows = [
+    {
+      label: "Package",
+      value: shortEvidence(currentPackage.packageId),
+      href: currentPackage.explorerUrl,
+      external: true,
+    },
+    {
+      label: "Sponsored claim",
+      value: sponsoredClaim?.evidence
+        ? shortEvidence(sponsoredClaim.evidence, 7, 5)
+        : "Proof pinned",
+      href: sponsoredClaim?.evidence
+        ? explorerTxUrl(sponsoredClaim.evidence)
+        : "/proof",
+      external: Boolean(sponsoredClaim?.evidence),
+    },
+    {
+      label: "Walrus + Seal",
+      value: "Letter release proven",
+      href: "/letter",
+      external: false,
+    },
+    {
+      label: "Receipt",
+      value: "6 checks visible",
+      href: "/proof",
+      external: false,
+    },
+  ];
+
+  return (
+    <section className="judge-proof-strip" aria-label="Judge proof shortcuts">
+      {rows.map((row) =>
+        row.external ? (
+          <a href={row.href} key={row.label} target="_blank" rel="noreferrer">
+            <small>{row.label}</small>
+            <strong>{row.value}</strong>
+            <span>Open</span>
+          </a>
+        ) : (
+          <Link href={row.href} key={row.label}>
+            <small>{row.label}</small>
+            <strong>{row.value}</strong>
+            <span>Open</span>
+          </Link>
+        ),
+      )}
+    </section>
+  );
+}
+
+export function FeatureProofGrid() {
+  return (
+    <div className="feature-proof-grid">
+      {featureProofs.map((proof) => (
+        <a
+          className="feature-proof-card"
+          href={explorerTxUrl(proof.digest)}
+          key={proof.label}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span>{proof.label}</span>
+          <h3>{proof.title}</h3>
+          <p>{proof.detail}</p>
+          <small>{shortEvidence(proof.digest, 7, 5)}</small>
+        </a>
+      ))}
+    </div>
   );
 }
 
