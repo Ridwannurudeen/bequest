@@ -11,10 +11,33 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  applicationName: "Bequest",
   title: "Bequest | Succession layer for Sui portfolios",
   description:
     "Sui-native estate custody with Google-ready recipients, Seal-gated letters, and verifiable trigger conditions.",
   metadataBase: new URL("https://bequest.gudman.xyz"),
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "Bequest",
+    "Sui",
+    "Sui inheritance",
+    "digital estate planning",
+    "Walrus",
+    "Seal",
+    "zkLogin",
+    "Enoki",
+  ],
+  creator: "Bequest",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/logo-1024.png", sizes: "1024x1024", type: "image/png" },
+    ],
+    apple: [{ url: "/logo-1024.png", sizes: "1024x1024", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     url: "https://bequest.gudman.xyz",

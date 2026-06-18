@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { explorerObjectUrl, explorerTxUrl } from "../lib/claim-receipt";
 import { getPublicConfig } from "../lib/config";
-import { currentPackage, proofCards } from "../lib/live-proof";
+import { currentPackage, featureProofs, proofCards } from "../lib/live-proof";
 
 export const estate = {
   id: "0x99c44f...3a723d",
@@ -31,6 +31,12 @@ export const recipients = [
   },
 ] as const;
 
+function shortEvidence(value: string, front = 8, back = 6) {
+  return value.length > front + back + 3
+    ? `${value.slice(0, front)}...${value.slice(-back)}`
+    : value;
+}
+
 const ownerNavItems = [
   { label: "Estate overview", href: "/estates", key: "estate" },
   { label: "Recipients", href: "/create", key: "recipients" },
@@ -42,7 +48,11 @@ const ownerNavItems = [
 const claimNavItems = [
   { label: "Claim overview", href: "/claim/demo", key: "claim" },
   { label: "Identity", href: "/claim/demo#identity", key: "identity" },
-  { label: "Distribution", href: "/claim/demo#distribution", key: "distribution" },
+  {
+    label: "Distribution",
+    href: "/claim/demo#distribution",
+    key: "distribution",
+  },
   { label: "Private letter", href: "/letter", key: "letter" },
   { label: "Proof & receipt", href: "/proof", key: "proof" },
 ] as const;
@@ -253,12 +263,86 @@ export function MiniProof({
   );
 }
 
+export function JudgeProofStrip() {
+  const config = getPublicConfig();
+  const sponsoredDigest = config.sponsoredClaimDigest;
+  const rows = [
+    {
+      label: "Package",
+      value: shortEvidence(currentPackage.packageId),
+      href: currentPackage.explorerUrl,
+      external: true,
+    },
+    {
+      label: sponsoredDigest ? "Sponsored claim" : "Claim bytes",
+      value: sponsoredDigest
+        ? shortEvidence(sponsoredDigest, 7, 5)
+        : "verify:claim-kind",
+      href: sponsoredDigest ? explorerTxUrl(sponsoredDigest) : "/proof",
+      external: Boolean(sponsoredDigest),
+    },
+    {
+      label: "Walrus + Seal",
+      value: "Letter release proven",
+      href: "/letter",
+      external: false,
+    },
+    {
+      label: "Receipt",
+      value: "6 checks visible",
+      href: "/proof",
+      external: false,
+    },
+  ];
+
+  return (
+    <section className="judge-proof-strip" aria-label="Judge proof shortcuts">
+      {rows.map((row) =>
+        row.external ? (
+          <a href={row.href} key={row.label} target="_blank" rel="noreferrer">
+            <small>{row.label}</small>
+            <strong>{row.value}</strong>
+            <span>Open</span>
+          </a>
+        ) : (
+          <Link href={row.href} key={row.label}>
+            <small>{row.label}</small>
+            <strong>{row.value}</strong>
+            <span>Open</span>
+          </Link>
+        ),
+      )}
+    </section>
+  );
+}
+
+export function FeatureProofGrid() {
+  return (
+    <div className="feature-proof-grid">
+      {featureProofs.map((proof) => (
+        <a
+          className="feature-proof-card"
+          href={explorerTxUrl(proof.digest)}
+          key={proof.label}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span>{proof.label}</span>
+          <h3>{proof.title}</h3>
+          <p>{proof.detail}</p>
+          <small>{shortEvidence(proof.digest, 7, 5)}</small>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export function ProofTimeline() {
   const rows = [
     ["Estate created", "Shared Estate object published", "Sui"],
     ["Assets escrowed", "0.02 SUI held by the estate", "Sui"],
     ["Trigger finalized", "Active -> Pending -> Triggered", "Keeper"],
-    ["Sponsored claim", "Recipient authenticated with Google", "Enoki"],
+    ["Claim bytes built", "Sponsor-ready transaction kind verified", "Enoki"],
     ["Atomic distribution", "70/30 split delivered in one PTB", "Sui"],
     ["Letter release", "Seal policy approved the Walrus blob", "Walrus + Seal"],
   ];
@@ -280,9 +364,6 @@ export function ProofTimeline() {
 
 export function VerificationPacket() {
   const config = getPublicConfig();
-  const sponsoredClaim = proofCards.find(
-    (card) => card.label === "Sponsored claim",
-  );
   const privateWishes = proofCards.find(
     (card) => card.label === "Private wishes",
   );
@@ -304,11 +385,11 @@ export function VerificationPacket() {
     },
     {
       label: "Claim transaction",
-      value: sponsoredClaim?.evidence
-        ? `${sponsoredClaim.evidence.slice(0, 7)}...${sponsoredClaim.evidence.slice(-5)}`
-        : "Sponsored proof",
-      href: sponsoredClaim?.evidence
-        ? explorerTxUrl(sponsoredClaim.evidence)
+      value: config.sponsoredClaimDigest
+        ? `${config.sponsoredClaimDigest.slice(0, 7)}...${config.sponsoredClaimDigest.slice(-5)}`
+        : "verify:claim-kind",
+      href: config.sponsoredClaimDigest
+        ? explorerTxUrl(config.sponsoredClaimDigest)
         : currentPackage.explorerUrl,
     },
     {

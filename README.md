@@ -15,9 +15,11 @@ The system diagram, the dead-man's-switch lifecycle, the component breakdown, th
 trigger, and the deployed package IDs are in [`docs/architecture.md`](docs/architecture.md).
 
 ## Status
+
 Live app: <https://bequest.gudman.xyz>
 
-Live testnet proof surface: the full gasless inheritance flow (create, heir claim, Seal last-wishes decrypt) is proven on Sui testnet.
+Live testnet proof surface: the inheritance core is proven on Sui testnet, and the Google/Enoki
+claim path is implemented with sponsor-ready transaction bytes.
 
 - Move package published on Sui testnet as an estate-only package.
 - Core estate lifecycle proven: custody, dead-man trigger, Seal-gated wishes, and atomic coin
@@ -30,15 +32,16 @@ Live testnet proof surface: the full gasless inheritance flow (create, heir clai
 - CI (`.github/workflows/ci.yml`) typechecks/builds the web + keeper packages and runs
   `sui move test` on every push and PR.
 - Keeper package includes a no-secret verifier (`npm run verify:proof`) for judges.
-- The Enoki zkLogin signing and sponsored-execution flow is live and verified in prod: gasless owner
-  estate creation, a gasless heir claim (sponsored tx `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`,
-  sponsor-paid and verified on SuiScan), and heir-side Seal last-wishes decrypt in the browser, all
-  from a Google sign-in with no wallet and no gas.
+- The Enoki zkLogin signing and sponsored-execution flow is wired in the app: owner setup, heir
+  claim, and heir-side Seal last-wishes decrypt run from a Google sign-in when runtime credentials
+  are configured. The public proof gate is the claim transaction-kind verifier until a fresh
+  sponsored claim digest is pinned.
 - Limitation: Bequest is a Sui testnet technical succession primitive, not legal, tax, or
   financial advice. The current proof demonstrates custody/distribution mechanics, not legal estate
   enforcement.
 
 ## Repo layout
+
 ```
 bequest/
 ├── packages/
@@ -52,6 +55,7 @@ bequest/
 ```
 
 ## Lane B frontend
+
 The product surface lives in `packages/web`. The read path is wired to the live testnet package
 (the homepage reads a real `Estate`), and the write path is implemented end to end against Enoki
 zkLogin: owner estate creation, heir claim, and last-wishes decrypt each sign with the owner/heir
@@ -79,6 +83,7 @@ Required runtime env for the live flows: `NEXT_PUBLIC_ENOKI_PUBLIC_API_KEY`,
 server-side Enoki sponsor key. See `.env.example`.
 
 ## Live testnet proof
+
 The current Sui testnet package is published at
 `0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`. Judges can verify the
 package surface without private keys:
@@ -95,18 +100,19 @@ The live package is estate-only. The earlier `gate` Seal spike is archived under
 
 ### Submission proof table
 
-| Proof | Status | Link / command |
-| --- | --- | --- |
-| Package publish | Live | [`47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB`](https://suiscan.xyz/testnet/tx/47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB) |
-| Package object | Live | [`0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`](https://suiscan.xyz/testnet/object/0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1) |
-| Claim transaction-kind builder | Live | `cd packages/web && npm run verify:claim-kind` |
-| Keeper/lifecycle proof verifier | Live | `cd packages/keeper && npm run verify:proof` |
-| Sponsored heir claim | Live | Gasless [`DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5`](https://suiscan.xyz/testnet/tx/DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5): sponsor-paid `estate::distribute_coin<SUI>`, the gas owner differs from the sender so the heir paid no gas, status success. Verify via the transaction gas data on SuiScan, not an event log. |
-| Full-portfolio validation | Script ready | `cd packages/keeper && npm run full-portfolio` creates a live estate, escrows liquid SUI plus a native `StakedSui` object and optional caller-owned object, triggers, distributes, and verifies final heir ownership. Requires `PACKAGE_ID` + funded `SUI_SECRET_KEY`; do not claim a live bundle digest until this command prints `BEQUEST_FULL_PORTFOLIO_PASSED` or `BEQUEST_YIELD_BUNDLE_PASSED`. |
-| Seal/Walrus last-wishes policy | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`. |
-| Real testnet estate usage | Tooling live | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`. |
+| Proof                           | Status                 | Link / command                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package publish                 | Live                   | [`47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB`](https://suiscan.xyz/testnet/tx/47o4DCh8Dun4iYCkHajf849eH9yVmWQMsJfES6qNwEeB)                                                                                                                                                                                                                                                                        |
+| Package object                  | Live                   | [`0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1`](https://suiscan.xyz/testnet/object/0x5224dd7dad3ae82c3d31f9c1569f5e1f4328a5bb6acd0b5b07228ef4b35c49d1)                                                                                                                                                                                                                        |
+| Claim transaction-kind builder  | Live                   | `cd packages/web && npm run verify:claim-kind`                                                                                                                                                                                                                                                                                                                                                       |
+| Keeper/lifecycle proof verifier | Live                   | `cd packages/keeper && npm run verify:proof`                                                                                                                                                                                                                                                                                                                                                         |
+| Sponsored heir claim            | Ready to pin           | The app builds sponsor-ready `estate::distribute_coin<SUI>` transaction-kind bytes with `cd packages/web && npm run verify:claim-kind`. Pin `BEQUEST_SPONSORED_CLAIM_DIGEST` only after a fresh Enoki-sponsored browser claim succeeds against the current package.                                                                                                                                  |
+| Full-portfolio validation       | Script ready           | `cd packages/keeper && npm run full-portfolio` creates a live estate, escrows liquid SUI plus a native `StakedSui` object and optional caller-owned object, triggers, distributes, and verifies final heir ownership. Requires `PACKAGE_ID` + funded `SUI_SECRET_KEY`; do not claim a live bundle digest until this command prints `BEQUEST_FULL_PORTFOLIO_PASSED` or `BEQUEST_YIELD_BUNDLE_PASSED`. |
+| Seal/Walrus last-wishes policy  | Proven (CLI + browser) | `LAST-WISHES PASSED` (CLI spike), plus heir-side browser decrypt verified on the triggered judge estate via `components/wishes-letter.tsx` (zkLogin `SessionKey`); the sealed letter renders only after `Triggered`.                                                                                                                                                                                 |
+| Real testnet estate usage       | Tooling live           | `cd packages/keeper && npm run traction` counts distinct non-team owners from `EstateCreated`.                                                                                                                                                                                                                                                                                                       |
 
 ## The interface (frozen by May 24 — the contract between Lane A and Lane B)
+
 Lane B builds the entire frontend against this typed `bequest-sdk`. Once frozen, signatures are
 a contract; bump the version if a spike forces a change.
 
@@ -130,6 +136,7 @@ product-facing `setHeirs` and `uploadWishes` names; the live Move entrypoints ar
 `update_heirs` and `set_wishes`, with browser flows wired where credentials are configured.
 
 ## Architecture decisions (locked)
+
 - **Custody:** assets are escrowed into the shared `Estate` object (NOT left in the owner's
   address, since there is no owner signature at trigger time). The owner can withdraw and reset the
   timer while `Active`; cancellation applies in the `Pending` grace window (`cancel_pending`). After
@@ -149,9 +156,11 @@ cd ../keeper && npm install && npm run typecheck && npm run verify:proof
 ```
 
 ## Verified toolchain (2026-05-22)
+
 `@mysten/seal@1.1.3`, `@mysten/sui@2.17.0` (peer `^2.16.2`), Seal mainnet-live with Move
 `seal_approve` time-locked/conditional policies. Move: edition `2024.beta`, `rev = framework/testnet`.
 
 ## Why inheritance on Sui
+
 The thesis behind Bequest, and why this category belongs on Sui specifically:
 [`docs/why-inheritance.md`](docs/why-inheritance.md).

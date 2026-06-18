@@ -10,11 +10,11 @@ export const currentPackage = {
 export const proofCards = [
   {
     label: "Sponsored claim",
-    status: "Proven live",
-    title: "A recipient-side claim executed with sponsor-paid gas.",
+    status: "Ready to pin",
+    title: "Recipient claim bytes are ready for sponsor-paid execution.",
     detail:
-      "The transaction calls estate::distribute_coin<SUI>; sender and gas sponsor differ, and payout routes to the recorded recipient.",
-    evidence: "DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5",
+      "The verifier builds transaction-kind bytes for estate::distribute_coin<SUI>; pin a fresh Enoki-sponsored digest after a browser claim succeeds.",
+    evidence: "npm run verify:claim-kind",
   },
   {
     label: "Full-portfolio estate",
@@ -84,7 +84,6 @@ export const featureProofs = [
   },
 ] as const;
 
-// zkLogin recipient binding and Enoki sponsored distribution are proven live: sponsored claim digest
-// DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5, verified on testnet (sponsor pays gas, recipient signs
-// with their zkLogin keypair). The public claim receipt is live at /claim/<estateId>. No open
-// gates remain for the gasless flagship transfer flow.
+// zkLogin recipient binding and Enoki sponsored execution are wired in the app. The public proof
+// gate stays on verify:claim-kind until BEQUEST_SPONSORED_CLAIM_DIGEST is set from a fresh
+// successful browser claim against the current package.
