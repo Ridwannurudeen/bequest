@@ -7,31 +7,31 @@ export const estate = {
   id: "0x99c44f...3a723d",
   fullId: "0x99c44f3a723d",
   balance: "0.02 SUI",
-  amina: "0.014 SUI",
-  yusuf: "0.006 SUI",
+  adam: "0.014 SUI",
+  eve: "0.006 SUI",
   network: "Sui testnet",
 };
 
 export const recipients = [
   {
-    name: "Amina",
-    email: "amina@example.com",
+    name: "Adam",
+    email: "adam@example.com",
     address: "0xd78d...1f89",
     share: 70,
-    amount: estate.amina,
+    amount: estate.adam,
     color: "blue",
   },
   {
-    name: "Yusuf",
-    email: "yusuf@example.com",
+    name: "Eve",
+    email: "eve@example.com",
     address: "0xd45d...7571",
     share: 30,
-    amount: estate.yusuf,
+    amount: estate.eve,
     color: "gold",
   },
 ] as const;
 
-const navItems = [
+const ownerNavItems = [
   { label: "Estate overview", href: "/estates", key: "estate" },
   { label: "Recipients", href: "/create", key: "recipients" },
   { label: "Trigger & heartbeat", href: "/estates#trigger", key: "trigger" },
@@ -39,7 +39,17 @@ const navItems = [
   { label: "Proof & receipt", href: "/proof", key: "proof" },
 ] as const;
 
-export type ConsoleKey = (typeof navItems)[number]["key"] | "claim";
+const claimNavItems = [
+  { label: "Claim overview", href: "/claim/demo", key: "claim" },
+  { label: "Identity", href: "/claim/demo#identity", key: "identity" },
+  { label: "Distribution", href: "/claim/demo#distribution", key: "distribution" },
+  { label: "Private letter", href: "/letter", key: "letter" },
+  { label: "Proof & receipt", href: "/proof", key: "proof" },
+] as const;
+
+export type ConsoleKey =
+  | (typeof ownerNavItems)[number]["key"]
+  | (typeof claimNavItems)[number]["key"];
 
 export function BrandMark() {
   return (
@@ -72,7 +82,6 @@ export function TopNav() {
         <Link className="active" href="/">
           Home
         </Link>
-        <Link href="/#how">How it works</Link>
         <Link href="/estates">Estates</Link>
         <Link href="/proof">Proof</Link>
       </nav>
@@ -103,6 +112,13 @@ export function ConsoleShell({
   active: ConsoleKey;
   children: React.ReactNode;
 }) {
+  const navItems =
+    active === "claim" || active === "identity" || active === "distribution"
+      ? claimNavItems
+      : active === "letter" || active === "proof"
+        ? claimNavItems
+        : ownerNavItems;
+
   return (
     <main className="console-shell">
       <aside className="side-rail" aria-label="Estate workspace">
@@ -116,8 +132,7 @@ export function ConsoleShell({
 
         <nav className="rail-nav">
           {navItems.map((item) => {
-            const isActive =
-              active === item.key || (active === "claim" && item.key === "estate");
+            const isActive = active === item.key;
             return (
               <Link
                 className={isActive ? "rail-item active" : "rail-item"}

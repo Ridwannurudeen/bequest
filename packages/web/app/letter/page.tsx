@@ -24,7 +24,7 @@ export default function PrivateLetterPage() {
         <div className="workspace-grid">
           <section className="letter-card" aria-label="Private letter">
             <p className="eyebrow">Private letter</p>
-            <h2>For Amina and Yusuf</h2>
+            <h2>For Adam and Eve</h2>
             <small>Released from estate {estate.id}</small>
             <div className="rule" />
             <p>
@@ -39,11 +39,11 @@ export default function PrivateLetterPage() {
               <p>Estate status: Triggered - namespace matches estate object</p>
             </div>
             <div className="hero-actions">
-              <Link className="button dark" href="#">
-                Download letter
+              <Link className="button dark" href="/proof">
+                Open proof receipt
               </Link>
-              <Link className="button ghost" href="#">
-                View Walrus blob
+              <Link className="button ghost" href="/proof">
+                View Walrus proof
               </Link>
             </div>
           </section>
