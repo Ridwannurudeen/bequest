@@ -7,6 +7,7 @@ import {
   estate,
   recipients,
 } from "../../components/benchmark-ui";
+import { currentPackage } from "../../lib/live-proof";
 
 export const metadata: Metadata = {
   title: "Bequest · proof receipt",
@@ -52,8 +53,8 @@ export default function ProofBoardPage() {
           <h2>Verification packet</h2>
           <VerificationPacket />
           <div className="hero-actions">
-            <a className="button dark" href="#">
-              Download proof packet
+            <a className="button dark" href={currentPackage.explorerUrl}>
+              Open SuiScan proof packet
             </a>
           </div>
         </section>
