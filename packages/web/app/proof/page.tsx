@@ -11,25 +11,29 @@ import {
 export const metadata: Metadata = {
   title: "Bequest · proof receipt",
   description:
-    "A canonical receipt for the Sui estate, sponsored claim, 70/30 distribution, and private-letter release.",
+    "A canonical receipt for the Sui estate, claim target, 70/30 distribution, and private-letter release.",
 };
 
 export default function ProofBoardPage() {
   return (
     <ConsoleShell active="proof">
       <WorkspaceHeader
-        title="Distribution receipt"
-        body="One canonical record of the claim, the payout split, and the private-letter release."
+        title="Distribution proof packet"
+        body="One canonical record of the estate package, claim target, payout split, and private-letter release."
         pill="Verified"
       />
 
-      <section className="panel-card receipt-hero-card" aria-label="Distribution receipt">
+      <section
+        className="panel-card receipt-hero-card"
+        aria-label="Distribution receipt"
+      >
         <div className="receipt-total">
-          <small className="eyebrow">Claim complete</small>
+          <small className="eyebrow">Claim path ready</small>
           <strong>{estate.balance} distributed in one PTB.</strong>
           <p>
-            A non-owner recipient claimed with sponsored gas. Funds routed to
-            the two recorded recipients.
+            The current package exposes the claim target and verified
+            transaction-kind bytes. Pin the sponsored claim digest after a fresh
+            browser claim succeeds.
           </p>
         </div>
         {recipients.map((recipient) => (

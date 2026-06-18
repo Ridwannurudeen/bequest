@@ -117,7 +117,8 @@ export function ConsoleShell({
         <nav className="rail-nav">
           {navItems.map((item) => {
             const isActive =
-              active === item.key || (active === "claim" && item.key === "estate");
+              active === item.key ||
+              (active === "claim" && item.key === "estate");
             return (
               <Link
                 className={isActive ? "rail-item active" : "rail-item"}
@@ -243,7 +244,7 @@ export function ProofTimeline() {
     ["Estate created", "Shared Estate object published", "Sui"],
     ["Assets escrowed", "0.02 SUI held by the estate", "Sui"],
     ["Trigger finalized", "Active -> Pending -> Triggered", "Keeper"],
-    ["Sponsored claim", "Recipient authenticated with Google", "Enoki"],
+    ["Claim bytes built", "Sponsor-ready transaction kind verified", "Enoki"],
     ["Atomic distribution", "70/30 split delivered in one PTB", "Sui"],
     ["Letter release", "Seal policy approved the Walrus blob", "Walrus + Seal"],
   ];
@@ -265,9 +266,6 @@ export function ProofTimeline() {
 
 export function VerificationPacket() {
   const config = getPublicConfig();
-  const sponsoredClaim = proofCards.find(
-    (card) => card.label === "Sponsored claim",
-  );
   const privateWishes = proofCards.find(
     (card) => card.label === "Private wishes",
   );
@@ -289,11 +287,11 @@ export function VerificationPacket() {
     },
     {
       label: "Claim transaction",
-      value: sponsoredClaim?.evidence
-        ? `${sponsoredClaim.evidence.slice(0, 7)}...${sponsoredClaim.evidence.slice(-5)}`
-        : "Sponsored proof",
-      href: sponsoredClaim?.evidence
-        ? explorerTxUrl(sponsoredClaim.evidence)
+      value: config.sponsoredClaimDigest
+        ? `${config.sponsoredClaimDigest.slice(0, 7)}...${config.sponsoredClaimDigest.slice(-5)}`
+        : "verify:claim-kind",
+      href: config.sponsoredClaimDigest
+        ? explorerTxUrl(config.sponsoredClaimDigest)
         : currentPackage.explorerUrl,
     },
     {
