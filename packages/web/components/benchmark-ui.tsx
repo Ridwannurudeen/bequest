@@ -48,7 +48,11 @@ const ownerNavItems = [
 const claimNavItems = [
   { label: "Claim overview", href: "/claim/demo", key: "claim" },
   { label: "Identity", href: "/claim/demo#identity", key: "identity" },
-  { label: "Distribution", href: "/claim/demo#distribution", key: "distribution" },
+  {
+    label: "Distribution",
+    href: "/claim/demo#distribution",
+    key: "distribution",
+  },
   { label: "Private letter", href: "/letter", key: "letter" },
   { label: "Proof & receipt", href: "/proof", key: "proof" },
 ] as const;
@@ -260,9 +264,8 @@ export function MiniProof({
 }
 
 export function JudgeProofStrip() {
-  const sponsoredClaim = proofCards.find(
-    (card) => card.label === "Sponsored claim",
-  );
+  const config = getPublicConfig();
+  const sponsoredDigest = config.sponsoredClaimDigest;
   const rows = [
     {
       label: "Package",
@@ -271,14 +274,12 @@ export function JudgeProofStrip() {
       external: true,
     },
     {
-      label: "Sponsored claim",
-      value: sponsoredClaim?.evidence
-        ? shortEvidence(sponsoredClaim.evidence, 7, 5)
-        : "Proof pinned",
-      href: sponsoredClaim?.evidence
-        ? explorerTxUrl(sponsoredClaim.evidence)
-        : "/proof",
-      external: Boolean(sponsoredClaim?.evidence),
+      label: sponsoredDigest ? "Sponsored claim" : "Claim bytes",
+      value: sponsoredDigest
+        ? shortEvidence(sponsoredDigest, 7, 5)
+        : "verify:claim-kind",
+      href: sponsoredDigest ? explorerTxUrl(sponsoredDigest) : "/proof",
+      external: Boolean(sponsoredDigest),
     },
     {
       label: "Walrus + Seal",
@@ -341,7 +342,7 @@ export function ProofTimeline() {
     ["Estate created", "Shared Estate object published", "Sui"],
     ["Assets escrowed", "0.02 SUI held by the estate", "Sui"],
     ["Trigger finalized", "Active -> Pending -> Triggered", "Keeper"],
-    ["Sponsored claim", "Recipient authenticated with Google", "Enoki"],
+    ["Claim bytes built", "Sponsor-ready transaction kind verified", "Enoki"],
     ["Atomic distribution", "70/30 split delivered in one PTB", "Sui"],
     ["Letter release", "Seal policy approved the Walrus blob", "Walrus + Seal"],
   ];
@@ -363,9 +364,6 @@ export function ProofTimeline() {
 
 export function VerificationPacket() {
   const config = getPublicConfig();
-  const sponsoredClaim = proofCards.find(
-    (card) => card.label === "Sponsored claim",
-  );
   const privateWishes = proofCards.find(
     (card) => card.label === "Private wishes",
   );
@@ -387,11 +385,11 @@ export function VerificationPacket() {
     },
     {
       label: "Claim transaction",
-      value: sponsoredClaim?.evidence
-        ? `${sponsoredClaim.evidence.slice(0, 7)}...${sponsoredClaim.evidence.slice(-5)}`
-        : "Sponsored proof",
-      href: sponsoredClaim?.evidence
-        ? explorerTxUrl(sponsoredClaim.evidence)
+      value: config.sponsoredClaimDigest
+        ? `${config.sponsoredClaimDigest.slice(0, 7)}...${config.sponsoredClaimDigest.slice(-5)}`
+        : "verify:claim-kind",
+      href: config.sponsoredClaimDigest
+        ? explorerTxUrl(config.sponsoredClaimDigest)
         : currentPackage.explorerUrl,
     },
     {

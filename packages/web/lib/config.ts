@@ -57,9 +57,7 @@ export function getPublicConfig(): PublicBequestConfig {
     estateModule:
       process.env.NEXT_PUBLIC_BEQUEST_ESTATE_MODULE?.trim() || "estate",
     claimTarget: optional(process.env.NEXT_PUBLIC_BEQUEST_CLAIM_TARGET),
-    sponsoredClaimDigest: optional(
-      process.env.NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST,
-    ),
+    sponsoredClaimDigest: optional(process.env.BEQUEST_SPONSORED_CLAIM_DIGEST),
     wishesBlobId: optional(process.env.NEXT_PUBLIC_BEQUEST_WISHES_BLOB_ID),
     wishesInnerId: optional(process.env.NEXT_PUBLIC_BEQUEST_WISHES_INNER_ID),
     demoEstateId: optional(process.env.NEXT_PUBLIC_BEQUEST_DEMO_ESTATE_ID),

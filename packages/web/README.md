@@ -9,8 +9,8 @@ The flows are gated on the Enoki credentials at runtime, so without them the com
 gracefully and CI still typechecks and builds.
 
 The public claim receipt surface lives at `/claim/demo` and at `/claim/<estateId>` for a live
-estate. It pins the testnet package, the distribution target, the sponsor boundary, and the live
-sponsored claim digest (`NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST`).
+estate. It pins the testnet package, the distribution target, the sponsor boundary, and, once
+available, the fresh sponsored claim digest (`BEQUEST_SPONSORED_CLAIM_DIGEST`).
 
 ## Run
 
@@ -44,10 +44,10 @@ npm run verify:claim-kind
 
 - Real Enoki zkLogin sign-in.
 - Sponsored transaction wiring: the sponsor pays gas, the heir or owner signs with their zkLogin
-  keypair, and execution runs through the Enoki routes.
-- A live Enoki-sponsored claim/distribution digest:
-  `DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5` (sponsor-paid `distribute_coin<SUI>`, the gas owner
-  differs from the sender, status success), verifiable on SuiScan.
+  keypair, and execution runs through the Enoki routes when runtime credentials are configured.
+- Sponsor-ready claim bytes for `distribute_coin<SUI>` are verified by `npm run verify:claim-kind`.
+  Pin a live Enoki-sponsored claim digest only after a fresh browser claim succeeds against the
+  current package.
 - The object/yield leg is contract-backed through `deposit_object<T>` / `distribute_objects<T>`.
   Pin a live bundle digest only after `cd ../keeper && npm run full-portfolio` succeeds with a
   funded testnet key.
@@ -77,8 +77,8 @@ NEXT_PUBLIC_BEQUEST_CLAIM_TARGET=0xPACKAGE::estate::claim
 ENOKI_ALLOWED_MOVE_TARGETS=0xPACKAGE::estate::claim
 ```
 
-The pinned sponsored claim digest is published via:
+The pinned sponsored claim digest is published after a fresh successful browser claim:
 
 ```
-NEXT_PUBLIC_BEQUEST_SPONSORED_CLAIM_DIGEST=DV7eZduJmAzsW9vHzRSjXt8GgDWaQifp1vbXV1MBf7t5
+BEQUEST_SPONSORED_CLAIM_DIGEST=<fresh-sui-transaction-digest>
 ```
