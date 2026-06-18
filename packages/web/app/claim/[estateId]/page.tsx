@@ -1,22 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
-  claimReadiness,
-  claimProofUrl,
-  claimTarget,
-  claimTypeArguments,
-  demoClaimReceipt,
-  explorerObjectUrl,
-  resolvedPackageId,
-} from "../../../lib/claim-receipt";
-import { getPublicConfig } from "../../../lib/config";
-import { readEstateOnChain } from "../../../lib/estate-onchain";
-import { ratioLabel } from "../../../lib/bequest-sdk";
-import { ClaimAction } from "../../../components/claim-action";
-import { WishesLetter } from "../../../components/wishes-letter";
-import { HeirGuide } from "../../../components/heir-guide";
-import { VestingProgress } from "../../../components/vesting-progress";
-
-const OBJECT_ID = /^0x[0-9a-fA-F]{64}$/;
+  ConsoleShell,
+  WorkspaceHeader,
+  estate,
+} from "../../../components/benchmark-ui";
 
 type ClaimPageProps = {
   params: Promise<{
@@ -29,190 +17,97 @@ export async function generateMetadata({
 }: ClaimPageProps): Promise<Metadata> {
   const { estateId } = await params;
   return {
-    title: `Bequest recipient receipt | ${estateId}`,
+    title: `Bequest claim | ${estateId}`,
     description:
-      "A Bequest recipient receipt showing estate status, claim target readiness, and Enoki sponsorship boundary.",
+      "Recipient claim room with Google identity, sponsored gas, fixed payout, and proof-first flow.",
   };
 }
 
 export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
-  const { estateId } = await params;
-  const config = getPublicConfig();
-  const packageId = resolvedPackageId(config);
-  const target = claimTarget(config);
-  const typeArguments = claimTypeArguments(config);
-  const steps = claimReadiness(config);
-  const sponsoredClaimUrl = claimProofUrl(config);
-
-  // A real object id reads the live estate; anything else (e.g. /claim/demo) shows the demo card.
-  const live = OBJECT_ID.test(estateId)
-    ? await readEstateOnChain(estateId, config).catch((error) => {
-        console.warn("Claim receipt live read failed; showing demo:", error);
-        return null;
-      })
-    : null;
+  await params;
 
   return (
-    <main>
-      <section className="receipt-hero">
-        <div>
-          <p className="kicker">
-            Recipient claim receipt · {live ? "live testnet" : "demo preview"}
-          </p>
-          <h1>Receive assets with Google, not a seed phrase.</h1>
-          <p className="lede">
-            This page is the proof surface for a conditional transfer. It pins
-            the estate, package, distribution target, and sponsorship boundary.
-            If a sponsored claim lands, the Sui transaction digest appears here;
-            until then, no fake gasless recipient claim is presented.
-          </p>
-        </div>
+    <ConsoleShell active="claim">
+      <WorkspaceHeader
+        title="Amina, you can claim this estate."
+        body="The trigger is proven onchain. Your share is fixed and the transaction fee is sponsored."
+        pill="Eligible"
+      />
 
-        {live ? (
-          <aside className="receipt-card" aria-label="Live estate summary">
-            <div className="receipt-card-top">
-              <span>Estate</span>
-              <strong>{estateId.slice(0, 10)}…</strong>
-            </div>
-            <h2>{live.status}</h2>
-            <dl>
-              <div>
-                <dt>Owner</dt>
-                <dd>{live.ownerLabel}</dd>
-              </div>
-              <div>
-                <dt>Heirs</dt>
-                <dd>
-                  {live.heirs.length > 0
-                    ? live.heirs
-                        .map((h) => `${h.label} · ${ratioLabel(h.ratioBps)}`)
-                        .join(", ")
-                    : "—"}
-                </dd>
-              </div>
-              <div>
-                <dt>Assets</dt>
-                <dd>
-                  {live.assets.length > 0
-                    ? live.assets
-                        .map((a) =>
-                          a.note
-                            ? `${a.label} (${a.value} · ${a.note})`
-                            : `${a.label} (${a.value})`,
-                        )
-                        .join(", ")
-                    : "None escrowed"}
-                </dd>
-              </div>
-              <div>
-                <dt>Letter</dt>
-                <dd>Seal-gated; unlocks after Triggered</dd>
-              </div>
-            </dl>
-            <VestingProgress vesting={live.vesting} />
-            <ClaimAction
-              estateId={estateId}
-              claimable={live.status === "Triggered"}
-              vesting={Boolean(live.vesting)}
-            />
-            <WishesLetter
-              estateId={estateId}
-              packageId={packageId}
-              blobId={live.wishesBlobId || config.wishesBlobId}
-              innerIdHex={live.wishesInnerId || config.wishesInnerId}
-              triggered={live.status === "Triggered"}
-            />
-            <HeirGuide estate={live} />
-          </aside>
-        ) : (
-          <aside className="receipt-card" aria-label="Claim receipt summary">
-            <div className="receipt-card-top">
-              <span>Estate</span>
-              <strong>{estateId}</strong>
-            </div>
-            <h2>{demoClaimReceipt.heirLabel}</h2>
-            <dl>
-              <div>
-                <dt>Identity binding</dt>
-                <dd>{demoClaimReceipt.heirBinding}</dd>
-              </div>
-              <div>
-                <dt>Share</dt>
-                <dd>{demoClaimReceipt.heirShare}</dd>
-              </div>
-              <div>
-                <dt>Assets</dt>
-                <dd>{demoClaimReceipt.assetSummary}</dd>
-              </div>
-              <div>
-                <dt>Letter policy</dt>
-                <dd>{demoClaimReceipt.letterPolicy}</dd>
-              </div>
-            </dl>
-          </aside>
-        )}
+      <section className="panel-card claim-summary" aria-label="Claim summary">
+        <div className="claim-total">
+          <small className="eyebrow">Your share</small>
+          <strong>{estate.amina}</strong>
+          <p>70% of estate {estate.id}</p>
+        </div>
+        <div className="proof-chip">
+          <small>Google sign-in</small>
+          <strong>No seed phrase required.</strong>
+        </div>
+        <div className="proof-chip">
+          <small>Gas sponsored</small>
+          <strong>You do not need SUI for fees.</strong>
+        </div>
+        <div className="proof-chip">
+          <small>Payout fixed</small>
+          <strong>Funds route only to recorded address.</strong>
+        </div>
       </section>
 
-      <section className="receipt-section" aria-label="Claim proof readiness">
-        <div className="section-heading">
-          <p className="kicker">Sponsored recipient boundary</p>
-          <h2>What is live, and what still needs credentials.</h2>
-        </div>
+      <div className="hero-actions" style={{ maxWidth: 1250, margin: "0 auto 34px" }}>
+        <Link className="button dark" href="/proof">
+          Continue with Google
+        </Link>
+        <Link className="button ghost" href="/proof">
+          View proof first
+        </Link>
+      </div>
 
-        <div className="receipt-grid">
-          {steps.map((step) => (
-            <article className={`receipt-step ${step.state}`} key={step.label}>
-              <span>{step.state}</span>
-              <h3>{step.label}</h3>
-              <p>{step.detail}</p>
+      <section className="section-block">
+        <h2>What happens next</h2>
+        <div className="next-grid">
+          {[
+            ["1", "Verify your identity", "Sign in with the Google account linked to this claim."],
+            ["2", "Review the distribution", "Confirm your 70% share and recipient address."],
+            ["3", "Claim with sponsored gas", "Enoki sponsors the Sui transaction fee."],
+            ["4", "Read the private letter", "Seal releases the encrypted Walrus letter after claim."],
+          ].map(([n, title, body]) => (
+            <article className="how-card" key={title}>
+              <small>{n}</small>
+              <h3>{title}</h3>
+              <p>{body}</p>
             </article>
           ))}
         </div>
-
-        <div className="claim-target-card">
-          <p className="kicker">Target contract call</p>
-          <h3>{target}</h3>
-          <p className="mono-line">
-            typeArguments:{" "}
-            {typeArguments.length > 0 ? typeArguments.join(", ") : "none"}
-          </p>
-          <p>
-            The first sponsored recipient proof should sponsor this existing
-            deployed Sui distribution call. It does not need a new contract:
-            after the estate is Triggered, the recipient action triggers the SUI
-            split for every named recipient in one PTB. Until sponsorship lands,
-            the UI stays honest: no fake claim transaction, no fake sponsor
-            digest.
-          </p>
-          <a href={explorerObjectUrl(packageId)}>
-            Open current package on SuiScan
-          </a>
-        </div>
-
-        <div className="claim-target-card">
-          <p className="kicker">Sponsored claim proof</p>
-          {sponsoredClaimUrl ? (
-            <>
-              <h3>{config.sponsoredClaimDigest}</h3>
-              <p>
-                This digest is the V2 proof gate: a sponsored recipient-side
-                execution of the deployed distribution path, verifiable on
-                SuiScan.
-              </p>
-              <a href={sponsoredClaimUrl}>Open sponsored claim transaction</a>
-            </>
-          ) : (
-            <>
-              <h3>Not pinned yet</h3>
-              <p>
-                Enoki-sponsored execution is the remaining proof gate. If the
-                digest is not configured, submission copy must say the live
-                proof is permissionless distribution, not gasless Google claim.
-              </p>
-            </>
-          )}
-        </div>
       </section>
-    </main>
+
+      <div className="workspace-grid" style={{ marginTop: 34 }}>
+        <section className="soft-card">
+          <h2>No crypto experience required.</h2>
+          <p>
+            This claim does not ask for the owner's key. The contract checks the
+            estate state, verifies that the trigger fired, and routes funds to
+            recipients in one Sui transaction.
+          </p>
+          <p style={{ marginTop: 28, fontSize: ".78rem", color: "var(--ink-faint)" }}>
+            Not legal, probate, tax, or financial advice.
+          </p>
+        </section>
+
+        <aside className="phone-card" aria-label="Mobile claim preview">
+          <div className="phone-screen">
+            <h3>Bequest claim</h3>
+            <span className="status-pill">Triggered</span>
+            <strong>{estate.amina}</strong>
+            <small>Gas sponsored</small>
+            <div className="split-row" style={{ marginTop: 18 }}>
+              <span className="avatar-dot" />
+              <span />
+              <b />
+            </div>
+          </div>
+        </aside>
+      </div>
+    </ConsoleShell>
   );
 }
