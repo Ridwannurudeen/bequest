@@ -29,7 +29,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
   return (
     <ConsoleShell active="claim">
       <WorkspaceHeader
-        title="Amina, you can claim this estate."
+        title="Adam, you can claim this estate."
         body="The trigger is proven onchain. Your share is fixed and the transaction fee is sponsored."
         pill="Eligible"
       />
@@ -37,7 +37,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
       <section className="panel-card claim-summary" aria-label="Claim summary">
         <div className="claim-total">
           <small className="eyebrow">Your share</small>
-          <strong>{estate.amina}</strong>
+          <strong>{estate.adam}</strong>
           <p>70% of estate {estate.id}</p>
         </div>
         <div className="proof-chip">
@@ -98,7 +98,7 @@ export default async function ClaimReceiptPage({ params }: ClaimPageProps) {
           <div className="phone-screen">
             <h3>Bequest claim</h3>
             <span className="status-pill">Triggered</span>
-            <strong>{estate.amina}</strong>
+            <strong>{estate.adam}</strong>
             <small>Gas sponsored</small>
             <div className="split-row" style={{ marginTop: 18 }}>
               <span className="avatar-dot" />

@@ -182,8 +182,8 @@ main {
 .toplinks {
   align-items: center;
   display: flex;
-  gap: 44px;
-  justify-content: center;
+  gap: 38px;
+  justify-content: flex-end;
 }
 
 .toplinks a {

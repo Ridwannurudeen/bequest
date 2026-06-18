@@ -45,9 +45,9 @@ export default function CreateEstatePage() {
             </article>
           ))}
 
-          <Link className="add-row" href="#">
+          <div className="add-row">
             + Add another recipient
-          </Link>
+          </div>
 
           <div className="total-line">
             <span>Distribution total</span>
@@ -77,8 +77,8 @@ export default function CreateEstatePage() {
 
           <div className="preview-box">
             <small>Then distribute</small>
-            <h3>70% to Amina</h3>
-            <h3>30% to Yusuf</h3>
+            <h3>70% to Adam</h3>
+            <h3>30% to Eve</h3>
           </div>
 
           <div className="preview-box violet">
