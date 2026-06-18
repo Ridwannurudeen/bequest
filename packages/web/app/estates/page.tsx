@@ -1,187 +1,98 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { EstateView } from "../../lib/bequest-sdk";
-import { ratioLabel } from "../../lib/bequest-sdk";
-import { getPublicConfig } from "../../lib/config";
-import { explorerObjectUrl, resolvedPackageId } from "../../lib/claim-receipt";
-import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
-import { ExecutorAction } from "../../components/executor-action";
-import { DepositAction } from "../../components/deposit-action";
-import { DepositObjectAction } from "../../components/deposit-object-action";
-import { OwnerManage } from "../../components/owner-manage";
-import { SetWishes } from "../../components/set-wishes";
-import { RecoveryPanel } from "../../components/recovery-panel";
-import { StakeAction } from "../../components/stake-action";
-
-// Read every estate live per request; the executor view must reflect current on-chain state.
-export const dynamic = "force-dynamic";
+import {
+  ConsoleShell,
+  EstateStage,
+  MiniProof,
+  RecipientSplit,
+  WorkspaceHeader,
+  estate,
+} from "../../components/benchmark-ui";
 
 export const metadata: Metadata = {
-  title: "Bequest · estates",
+  title: "Bequest · estate dashboard",
   description:
-    "Executor dashboard: every Bequest estate with its status, heirs, escrowed assets, and trigger timing.",
+    "Estate overview showing the trigger state, recipient split, encrypted letter, and verifiable proof packet.",
 };
 
-function fmtDuration(ms: number): string {
-  const minutes = Math.round(ms / 60000);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours}h`;
-  return `${Math.round(hours / 24)}d`;
-}
-
-// Human timing for the dead-man's switch, computed from the estate's clock fields.
-function timing(estate: EstateView, now: number): string {
-  if (estate.status === "Triggered") return "claimable by heirs";
-  if (estate.triggerKind === "scheduled") {
-    if (!estate.releaseAtMs) return "scheduled";
-    const ms = estate.releaseAtMs - now;
-    return ms > 0 ? `releases in ${fmtDuration(ms)}` : "release due";
-  }
-  if (estate.status === "Active") {
-    const armsAt = Date.parse(estate.lastActive) + estate.inactivityMs;
-    const ms = armsAt - now;
-    return ms > 0 ? `arms in ${fmtDuration(ms)}` : "arming due";
-  }
-  if (estate.status === "Pending" && estate.pendingSince) {
-    const triggersAt = Date.parse(estate.pendingSince) + estate.gracePeriodMs;
-    const ms = triggersAt - now;
-    return ms > 0 ? `triggers in ${fmtDuration(ms)}` : "trigger due";
-  }
-  return "";
-}
-
-export default async function EstatesPage() {
-  const config = getPublicConfig();
-  const pkg = resolvedPackageId(config);
-  let estates: { id: string; view: EstateView }[] = [];
-  try {
-    const ids = await listEstates(config);
-    const views = await Promise.all(
-      ids.map((id) =>
-        readEstateOnChain(id, config)
-          .then((view) => ({ id, view }))
-          .catch(() => null),
-      ),
-    );
-    estates = views.filter(
-      (e): e is { id: string; view: EstateView } => e !== null,
-    );
-  } catch (error) {
-    console.warn("Estates dashboard live read failed:", error);
-  }
-
-  const now = Date.now();
-
+export default function EstatesPage() {
   return (
-    <main>
-      <section className="receipt-hero">
+    <ConsoleShell active="estate">
+      <WorkspaceHeader
+        title="Estate overview"
+        body="Demo estate - Sui testnet"
+      />
+
+      <section className="panel-card dashboard-hero" aria-label="Estate state">
         <div>
-          <p className="kicker">Executor dashboard · {config.network}</p>
-          <h1>Every estate, its trigger state, and who can receive.</h1>
-          <p className="lede">
-            A live view of every Bequest estate on-chain — status, named
-            recipients, escrowed assets, and how close each one is to
-            triggering. The executor watches a pending trigger here before
-            assets move.
+          <small className="eyebrow">Estate {estate.id}</small>
+          <h2>The release condition is met.</h2>
+          <p>
+            Recipients can now claim. Payout routing is fixed to the recorded
+            70/30 distribution.
           </p>
+          <EstateStage compact />
         </div>
+        <aside className="portfolio-box">
+          <small>Escrowed portfolio</small>
+          <strong>{estate.balance}</strong>
+          <p>2 recipients</p>
+          <p>70% / 30%</p>
+        </aside>
       </section>
 
-      <section className="receipt-section" aria-label="Estates">
-        <div className="section-heading">
-          <p className="kicker">{estates.length} estate(s)</p>
-          <h2>On-chain estates</h2>
-        </div>
+      <section className="metric-grid" aria-label="Estate proof states">
+        <MiniProof
+          title="Heartbeat"
+          body="Reset the inactivity clock"
+        />
+        <MiniProof
+          tone="green"
+          title="Recipients"
+          body="2 recipients recorded - 70% / 30% split"
+        />
+        <MiniProof
+          tone="violet"
+          title="Private letter"
+          body="Encrypted on Walrus - ready after claim"
+        />
+        <MiniProof
+          tone="gold"
+          title="Proof packet"
+          body="6 checks passed - open receipt"
+        />
+      </section>
 
-        {estates.length === 0 ? (
-          <p className="lede">No estates found on {config.network} yet.</p>
-        ) : (
-          <div className="receipt-grid">
-            {estates.map(({ id, view }) => (
-              <aside className="receipt-card" key={id} aria-label="Estate">
-                <div className="receipt-card-top">
-                  <span>Estate</span>
-                  <strong>{id.slice(0, 10)}…</strong>
-                </div>
-                <h2>
-                  <span className="status-pill">{view.status}</span> ·{" "}
-                  {timing(view, now)}
-                </h2>
-                <dl>
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>{view.ownerLabel}</dd>
-                  </div>
-                  <div>
-                    <dt>Heirs</dt>
-                    <dd>
-                      {view.heirs.length > 0
-                        ? view.heirs
-                            .map(
-                              (h) => `${h.label} · ${ratioLabel(h.ratioBps)}`,
-                            )
-                            .join(", ")
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Assets</dt>
-                    <dd>
-                      {view.assets.length > 0
-                        ? view.assets
-                            .map((a) =>
-                              a.note
-                                ? `${a.label} (${a.value} · ${a.note})`
-                                : `${a.label} (${a.value})`,
-                            )
-                            .join(", ")
-                        : "None escrowed"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Recovery</dt>
-                    <dd>
-                      {view.guardians.length > 0
-                        ? `${view.recoveryThreshold}-of-${view.guardians.length} guardians${view.recovery ? ` · pending → ${view.recovery.newOwner.slice(0, 6)}… (${view.recovery.approvals.length}/${view.recoveryThreshold})` : ""}`
-                        : "No guardians set"}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="nav-links">
-                  <Link href={`/claim/${id}`}>Claim receipt</Link>
-                  <a href={explorerObjectUrl(id)}>SuiScan</a>
-                </div>
-                <ExecutorAction
-                  estateId={id}
-                  status={view.status}
-                  executorAddress={view.executorAddress}
-                />
-                <DepositAction
-                  estateId={id}
-                  owner={view.owner}
-                  status={view.status}
-                />
-                <StakeAction
-                  estateId={id}
-                  owner={view.owner}
-                  status={view.status}
-                  heirs={view.heirs}
-                />
-                <DepositObjectAction
-                  estateId={id}
-                  owner={view.owner}
-                  status={view.status}
-                  heirs={view.heirs}
-                />
-                <OwnerManage estate={view} />
-                <SetWishes estate={view} packageId={pkg} />
-                <RecoveryPanel estate={view} />
-              </aside>
-            ))}
+      <div className="workspace-grid equal">
+        <section className="panel-card">
+          <h2>Recipient distribution</h2>
+          <RecipientSplit />
+          <div className="hero-actions">
+            <Link className="button dark" href="/claim/demo">
+              Open recipient claim room
+            </Link>
           </div>
-        )}
-      </section>
-    </main>
+        </section>
+
+        <section className="panel-card timeline-card" id="trigger">
+          <h2>Trigger history</h2>
+          {[
+            ["Estate created", "Assets deposited and recipients recorded.", "May 24"],
+            ["Heartbeat missed", "Inactivity window completed.", "Jun 16"],
+            ["Grace period closed", "No executor pause was submitted.", "Jun 17"],
+            ["Estate triggered", "Recipient claim path unlocked.", "Jun 17"],
+          ].map(([title, detail, date]) => (
+            <div className="timeline-row" key={title}>
+              <span className="timeline-dot" />
+              <div>
+                <strong>{title}</strong>
+                <p>{detail}</p>
+              </div>
+              <em>{date}</em>
+            </div>
+          ))}
+        </section>
+      </div>
+    </ConsoleShell>
   );
 }
