@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/prepare-standalone.mjs",
+    "start": "node .next/standalone/server.js",
     "typecheck": "tsc --noEmit",
     "verify:claim-kind": "node scripts/verify-claim-kind.mjs",
     "check": "npm run typecheck && npm run build"
