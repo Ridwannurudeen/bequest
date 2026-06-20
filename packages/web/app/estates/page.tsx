@@ -2,12 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ConsoleShell,
-  EstateStage,
-  MiniProof,
-  RecipientSplit,
+  StatusPill,
   WorkspaceHeader,
-  estate,
 } from "../../components/benchmark-ui";
+import { DepositAction } from "../../components/deposit-action";
+import { DepositObjectAction } from "../../components/deposit-object-action";
+import { ExecutorAction } from "../../components/executor-action";
+import { OwnerManage } from "../../components/owner-manage";
+import { RecoveryPanel } from "../../components/recovery-panel";
+import { SetWishes } from "../../components/set-wishes";
+import { StakeAction } from "../../components/stake-action";
+import { type EstateView, ratioLabel } from "../../lib/bequest-sdk";
+import { resolvedPackageId } from "../../lib/claim-receipt";
+import { getPublicConfig } from "../../lib/config";
+import { listEstates, readEstateOnChain } from "../../lib/estate-onchain";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Bequest · estate dashboard",
@@ -15,84 +25,105 @@ export const metadata: Metadata = {
     "Estate overview showing the trigger state, recipient split, encrypted letter, and verifiable proof packet.",
 };
 
-export default function EstatesPage() {
+function toneFor(status: EstateView["status"]): "green" | "blue" | "violet" {
+  if (status === "Triggered") return "green";
+  if (status === "Pending") return "violet";
+  return "blue";
+}
+
+export default async function EstatesPage() {
+  const config = getPublicConfig();
+  const pkg = resolvedPackageId(config);
+
+  let estates: { id: string; view: EstateView }[] = [];
+  try {
+    const ids = await listEstates(config);
+    const views = await Promise.all(
+      ids.map((id) =>
+        readEstateOnChain(id, config)
+          .then((view) => ({ id, view }))
+          .catch(() => null),
+      ),
+    );
+    estates = views.filter(
+      (e): e is { id: string; view: EstateView } => e !== null,
+    );
+  } catch (error) {
+    console.warn("Estates dashboard live read failed:", error);
+  }
+
   return (
     <ConsoleShell active="estate">
       <WorkspaceHeader
         title="Estate overview"
-        body="Demo estate - Sui testnet"
+        body={`Live estates on ${config.network}. Sign in with Google to manage an estate you own, or to act as a guardian or executor.`}
+        pill={estates.length ? `${estates.length} live` : "None yet"}
       />
 
-      <section className="panel-card dashboard-hero" aria-label="Estate state">
-        <div>
-          <small className="eyebrow">Estate {estate.id}</small>
-          <h2>The release condition is met.</h2>
+      {estates.length === 0 ? (
+        <section className="panel-card" aria-label="No estates">
+          <h2>No estates found on {config.network} yet.</h2>
           <p>
-            Recipients can now claim. Payout routing is fixed to the recorded
-            70/30 distribution.
+            Create the first estate to see it appear here with live status,
+            recipients, escrowed assets, and owner actions.
           </p>
-          <EstateStage compact />
-        </div>
-        <aside className="portfolio-box">
-          <small>Escrowed portfolio</small>
-          <strong>{estate.balance}</strong>
-          <p>2 recipients</p>
-          <p>70% / 30%</p>
-        </aside>
-      </section>
-
-      <section className="metric-grid" aria-label="Estate proof states">
-        <MiniProof
-          title="Heartbeat"
-          body="Reset the inactivity clock"
-        />
-        <MiniProof
-          tone="green"
-          title="Recipients"
-          body="2 recipients recorded - 70% / 30% split"
-        />
-        <MiniProof
-          tone="violet"
-          title="Private letter"
-          body="Encrypted on Walrus - ready after claim"
-        />
-        <MiniProof
-          tone="gold"
-          title="Proof packet"
-          body="6 checks passed - open receipt"
-        />
-      </section>
-
-      <div className="workspace-grid equal">
-        <section className="panel-card">
-          <h2>Recipient distribution</h2>
-          <RecipientSplit />
           <div className="hero-actions">
-            <Link className="button dark" href="/claim/demo">
-              Open recipient claim room
+            <Link className="button dark" href="/create">
+              Create an estate
             </Link>
           </div>
         </section>
-
-        <section className="panel-card timeline-card" id="trigger">
-          <h2>Trigger history</h2>
-          {[
-            ["Estate created", "Assets deposited and recipients recorded.", "May 24"],
-            ["Heartbeat missed", "Inactivity window completed.", "Jun 16"],
-            ["Grace period closed", "No executor pause was submitted.", "Jun 17"],
-            ["Estate triggered", "Recipient claim path unlocked.", "Jun 17"],
-          ].map(([title, detail, date]) => (
-            <div className="timeline-row" key={title}>
-              <span className="timeline-dot" />
+      ) : (
+        estates.map(({ id, view }) => (
+          <section className="panel-card" key={id} aria-label={`Estate ${id}`}>
+            <header className="estate-card-head">
               <div>
-                <strong>{title}</strong>
-                <p>{detail}</p>
+                <small className="eyebrow">
+                  Estate {id.slice(0, 8)}…{id.slice(-6)}
+                </small>
+                <h2>{view.ownerLabel || view.owner}</h2>
+                <p>
+                  {view.heirs
+                    .map(
+                      (heir) =>
+                        `${heir.label || "Recipient"} ${ratioLabel(heir.ratioBps)}`,
+                    )
+                    .join(" · ") || "No recipients recorded"}
+                </p>
               </div>
-              <em>{date}</em>
+              <StatusPill tone={toneFor(view.status)}>{view.status}</StatusPill>
+            </header>
+
+            <div className="estate-actions">
+              <ExecutorAction
+                estateId={id}
+                status={view.status}
+                executorAddress={view.executorAddress}
+              />
+              <DepositAction
+                estateId={id}
+                owner={view.owner}
+                status={view.status}
+              />
+              <StakeAction
+                estateId={id}
+                owner={view.owner}
+                status={view.status}
+                heirs={view.heirs}
+              />
+              <DepositObjectAction
+                estateId={id}
+                owner={view.owner}
+                status={view.status}
+                heirs={view.heirs}
+              />
+              <OwnerManage estate={view} />
+              <SetWishes estate={view} packageId={pkg} />
+              <RecoveryPanel estate={view} />
             </div>
-          ))}
-        </section>
-      </div>
+          </section>
+        ))
+      )}
     </ConsoleShell>
   );
 }

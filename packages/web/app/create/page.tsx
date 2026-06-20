@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   ConsoleShell,
   Stepper,
   WorkspaceHeader,
-  recipients,
 } from "../../components/benchmark-ui";
+import { OwnerSetup } from "../../components/owner-setup";
 
 export const metadata: Metadata = {
   title: "Bequest · create estate",
@@ -19,6 +18,7 @@ export default function CreateEstatePage() {
       <WorkspaceHeader
         title="Create your estate"
         body="A guided setup. You can change or cancel everything while the estate is Active."
+        pill="Active"
       />
       <Stepper active={2} />
 
@@ -27,41 +27,10 @@ export default function CreateEstatePage() {
           <h2 id="recipients-title">Name the people you trust</h2>
           <p>
             Recipients can claim with Google sign-in after the estate becomes
-            Triggered.
+            Triggered. Sign in above, then set inactivity timers and the
+            recipient split — Bequest creates the estate gaslessly.
           </p>
-
-          {recipients.map((recipient) => (
-            <article
-              className={`recipient-card ${recipient.color === "gold" ? "gold" : ""}`}
-              key={recipient.name}
-            >
-              <div className="avatar">{recipient.name.slice(0, 1)}</div>
-              <div>
-                <h3>{recipient.name}</h3>
-                <p>{recipient.email}</p>
-                <small>Claim path: Google zkLogin - sponsored gas</small>
-              </div>
-              <span className="share-chip">{recipient.share}%</span>
-            </article>
-          ))}
-
-          <div className="add-row">
-            + Add another recipient
-          </div>
-
-          <div className="total-line">
-            <span>Distribution total</span>
-            <strong>100%</strong>
-          </div>
-
-          <div className="hero-actions">
-            <Link className="button dark" href="/estates">
-              Continue
-            </Link>
-            <Link className="button ghost" href="/">
-              Save draft
-            </Link>
-          </div>
+          <OwnerSetup />
         </section>
 
         <aside className="soft-card preview-stack" aria-label="Estate preview">
@@ -72,13 +41,12 @@ export default function CreateEstatePage() {
 
           <div className="preview-box">
             <small>If I am inactive for</small>
-            <h3>180 days</h3>
+            <h3>your chosen window</h3>
           </div>
 
           <div className="preview-box">
             <small>Then distribute</small>
-            <h3>70% to Adam</h3>
-            <h3>30% to Eve</h3>
+            <h3>to your recipients</h3>
           </div>
 
           <div className="preview-box violet">
