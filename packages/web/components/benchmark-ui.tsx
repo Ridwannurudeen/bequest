@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthButton } from "./auth-button";
 import { explorerObjectUrl, explorerTxUrl } from "../lib/claim-receipt";
 import { getPublicConfig } from "../lib/config";
 import { currentPackage, featureProofs, proofCards } from "../lib/live-proof";
@@ -97,6 +98,7 @@ export function TopNav() {
       </nav>
       <div className="top-actions">
         <span className="network-chip">Sui testnet</span>
+        <AuthButton />
         <Link className="button dark" href="/create">
           Open app
         </Link>
@@ -155,6 +157,10 @@ export function ConsoleShell({
             );
           })}
         </nav>
+
+        <div className="rail-auth">
+          <AuthButton />
+        </div>
 
         <div className="rail-status">
           <small>Live estate</small>
