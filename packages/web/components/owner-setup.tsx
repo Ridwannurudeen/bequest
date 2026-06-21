@@ -53,6 +53,30 @@ function OwnerSetupInner() {
     setHeirs((prev) => prev.map((h, j) => (j === i ? { ...h, ...patch } : h)));
   }
 
+  function splitEvenly() {
+    const n = heirs.length;
+    const each = Math.floor(100 / n);
+    const remainder = 100 - each * n;
+    setHeirs((prev) =>
+      prev.map((h, i) => ({
+        ...h,
+        percent: String(each + (i === 0 ? remainder : 0)),
+      })),
+    );
+  }
+
+  const totalPercent = heirs.reduce((sum, h) => sum + (Number(h.percent) || 0), 0);
+  const splitOk = Math.abs(totalPercent - 100) < 0.001;
+  const namedCount = heirs.filter((h) => h.addr.trim()).length;
+  const triggerSummary =
+    mode === "deadman"
+      ? `If I'm inactive for ${inactivityDays || "—"} days (then a ${
+          graceDays || "0"
+        }-day grace period), the estate triggers.`
+      : releaseAt
+        ? `Heirs can claim from ${new Date(releaseAt).toLocaleString()}.`
+        : "Pick a release date and time.";
+
   async function createEstate() {
     setState("working");
     setMessage("");
@@ -141,7 +165,15 @@ function OwnerSetupInner() {
   }
 
   return (
-    <div className="owner-form">
+    <div className="workspace-grid">
+      <section className="form-card" aria-labelledby="recipients-title">
+        <h2 id="recipients-title">Name the people you trust</h2>
+        <p>
+          Recipients can claim with Google sign-in after the estate becomes
+          Triggered — set the inactivity timers and the split below, and
+          Bequest creates the estate gaslessly.
+        </p>
+        <div className="owner-form">
       {heirs.map((h, i) => (
         <div className="nav-links" key={i}>
           <input
@@ -161,6 +193,14 @@ function OwnerSetupInner() {
           <span>%</span>
         </div>
       ))}
+      <div className="nav-links" aria-live="polite">
+        <span style={{ fontWeight: 700, color: splitOk ? undefined : "#b4690e" }}>
+          Split total: {totalPercent}%{splitOk ? " ✓" : " — must equal 100%"}
+        </span>
+        <button type="button" className="button" onClick={splitEvenly}>
+          Split evenly
+        </button>
+      </div>
       <div className="nav-links" role="group" aria-label="Trigger type">
         <button
           type="button"
@@ -225,11 +265,50 @@ function OwnerSetupInner() {
         type="button"
         className="button primary"
         onClick={createEstate}
-        disabled={state === "working"}
+        disabled={state === "working" || !splitOk}
       >
         {state === "working" ? "Creating…" : "Create estate (sponsored)"}
       </button>
       {state === "error" && <p className="lede">Create failed: {message}</p>}
+        </div>
+      </section>
+
+      <aside className="soft-card preview-stack" aria-label="Estate preview">
+        <div>
+          <h2>Estate preview</h2>
+          <p>Your plan, in plain language.</p>
+        </div>
+
+        <div className={`preview-box${splitOk ? "" : " warning"}`}>
+          <small>Trigger</small>
+          <h3>{triggerSummary}</h3>
+        </div>
+
+        <div className="preview-box">
+          <small>Then distribute to</small>
+          <h3>
+            {namedCount > 0
+              ? `${namedCount} recipient${namedCount === 1 ? "" : "s"}`
+              : "your recipients"}
+          </h3>
+          <p>
+            {heirs
+              .map((h) => `${h.percent || 0}%${h.addr.trim() ? "" : " (unset)"}`)
+              .join(" · ")}
+          </p>
+        </div>
+
+        <div className="preview-box violet">
+          <small>Private letter</small>
+          <h3>Encrypted on Walrus.</h3>
+          <p>Seal unlocks only after trigger.</p>
+        </div>
+
+        <div className="preview-box green">
+          <small>You retain full control</small>
+          <p>Withdraw or update anytime until the estate is triggered.</p>
+        </div>
+      </aside>
     </div>
   );
 }
