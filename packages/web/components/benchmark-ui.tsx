@@ -197,8 +197,19 @@ export function WorkspaceHeader({
   );
 }
 
-export function Stepper({ active = 3 }: { active?: number }) {
-  const steps = ["Assets", "Recipients", "Trigger", "Private letter", "Review"];
+const ESTATE_JOURNEY = [
+  "Set up estate",
+  "Add a private letter",
+  "Live & claimable",
+];
+
+export function Stepper({
+  active = 1,
+  steps = ESTATE_JOURNEY,
+}: {
+  active?: number;
+  steps?: string[];
+}) {
   return (
     <ol className="stepper" aria-label="Estate creation progress">
       {steps.map((step, index) => {
