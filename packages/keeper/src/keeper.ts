@@ -22,6 +22,7 @@ import {
 } from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
+import { checkReminder, loadStore, saveStore } from "./reminders";
 
 const NETWORK = (process.env.NETWORK ?? "testnet") as "testnet" | "mainnet";
 const PACKAGE_ID = process.env.PACKAGE_ID;
@@ -36,6 +37,7 @@ const STATUS_TRIGGERED = 2;
 const KIND_SCHEDULED = 1;
 
 interface EstateFields {
+  owner: string;
   status: number | string;
   trigger_kind: number | string;
   last_active_ms: string;
@@ -222,6 +224,8 @@ async function tick(
   await checkGas(client, keypair.toSuiAddress());
   const ids = await discoverEstates(client, pkg);
   console.log(`[${new Date().toISOString()}] ${ids.length} estate(s)`);
+  // Reload each tick so newly registered reminder contacts are picked up live.
+  const reminders = loadStore();
   for (const id of ids) {
     const f = await readEstate(client, id);
     if (!f) continue;
@@ -273,10 +277,20 @@ async function tick(
       console.log(
         digest ? `    distributed (${digest})` : "    nothing to distribute",
       );
+    } else if (status === STATUS_ACTIVE) {
+      // Not yet due: nudge the owner to check in before the switch arms.
+      const note = await checkReminder(
+        reminders,
+        { estateId: id, owner: String(f.owner), lastActive, inactivity },
+        now,
+      );
+      console.log(note ? `  ${tag} ${note}` : `  ${tag} status=${status} — no action`);
     } else {
       console.log(`  ${tag} status=${status} — no action`);
     }
   }
+
+  if (reminders.contacts.length > 0) saveStore(reminders);
 }
 
 async function main(): Promise<void> {

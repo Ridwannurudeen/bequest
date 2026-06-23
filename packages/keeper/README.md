@@ -20,6 +20,13 @@ PACKAGE_ID=0x<bequest package id>
 SUI_SECRET_KEY=suiprivkey1<keeper account key>   # any funded account; arm/finalize are permissionless
 KEEPER_INTERVAL_MS=30000                          # only used by --watch
 KEEPER_MIN_GAS_MIST=100000000                     # low-gas alert threshold (default 0.1 SUI)
+
+# Owner reminders (optional — see "Owner reminders" below)
+RESEND_API_KEY=re_...                             # omit to dry-run (log instead of send)
+REMINDER_FROM=Bequest <reminders@yourdomain.com>  # verified Resend sender
+REMINDER_LEADS_PCT=50,15                           # nudge at ≤50% and ≤15% of the window left
+REMINDERS_STORE=reminders.json                     # contact store path (default)
+APP_URL=https://bequest.app                         # check-in link base (optional)
 ```
 
 ```
@@ -46,6 +53,31 @@ NETWORK=testnet PACKAGE_ID=0x... npm run verify:proof
 npm run keeper          # single pass — for cron / systemd timer
 npm run keeper:watch    # loop every KEEPER_INTERVAL_MS
 ```
+
+## Owner reminders
+A real owner who is merely busy — not dead — would still lose their estate just for forgetting to
+press **Still Alive**. So on every tick, for each `ACTIVE` inactivity estate, the keeper checks how
+close it is to `last_active + inactivity` and emails the owner *before* it arms, giving them time to
+check in. Thresholds are a percent of the window **remaining** (`REMINDER_LEADS_PCT`, default
+`50,15`), so they scale to any switch — a 30-day line and a 1-hour demo get the same cadence. Each
+threshold fires at most once per cycle; a fresh heartbeat resets the cycle. Set `RESEND_API_KEY` to
+actually send (otherwise reminders are logged as a dry-run).
+
+Emails aren't on-chain (privacy), so owners register a contact off-chain. The keeper matches an
+estate to a contact by `estateId` first, then by `owner` address:
+
+```
+npm run reminder:add -- --estate 0xESTATE --email owner@example.com
+npm run reminder:add -- --owner  0xOWNER  --email owner@example.com --leads 50,15
+npm run reminder:add -- --list
+```
+
+Contacts live in `REMINDERS_STORE` (default `reminders.json`, git-ignored — it holds emails). See
+`reminders.example.json`. The store is reloaded each tick, so adds take effect immediately. Run the
+decision-logic tests with `npm test`.
+
+> Production note: the JSON store is shared by host. To capture emails from the web app on Vercel,
+> swap `loadStore`/`saveStore` in `reminders.ts` for a shared backend (Vercel KV / Postgres).
 
 ## V2 full-portfolio validation
 `npm run full-portfolio` is the no-redeploy gate for the V2 story. With a funded testnet key, it:
