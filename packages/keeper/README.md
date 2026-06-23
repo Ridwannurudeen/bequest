@@ -76,8 +76,14 @@ Contacts live in `REMINDERS_STORE` (default `reminders.json`, git-ignored — it
 `reminders.example.json`. The store is reloaded each tick, so adds take effect immediately. Run the
 decision-logic tests with `npm test`.
 
-> Production note: the JSON store is shared by host. To capture emails from the web app on Vercel,
-> swap `loadStore`/`saveStore` in `reminders.ts` for a shared backend (Vercel KV / Postgres).
+Owners can also self-register from the web app: the owner controls expose a "Reminders" email
+field that POSTs to `/api/reminders`, which writes to this same store. Point the web app and the
+keeper at one file with an absolute `REMINDERS_STORE` path.
+
+> Production note: the JSON store is shared by host (great for a local keeper + web demo). To
+> capture emails from the web app on Vercel, swap `loadStore`/`saveStore` (in both
+> `keeper/src/reminders.ts` and `web/lib/reminders-store.ts`) for a shared backend (Vercel KV /
+> Postgres). The rest of the feature is storage-agnostic.
 
 ## V2 full-portfolio validation
 `npm run full-portfolio` is the no-redeploy gate for the V2 story. With a funded testnet key, it:
