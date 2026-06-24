@@ -30,6 +30,24 @@ const SUI_SECRET_KEY = process.env.SUI_SECRET_KEY;
 // Alert (not abort) when the keeper's own gas drops below this — it pays for arm/finalize/distribute.
 const MIN_GAS_MIST = Number(process.env.KEEPER_MIN_GAS_MIST ?? 100_000_000); // 0.1 SUI
 
+// Resend's shared test sender (`onboarding@resend.dev`) only delivers to the Resend account's own
+// email. A live key paired with it silently drops every other owner's reminder. Warn at startup so
+// the operator verifies a domain and sets REMINDER_FROM before relying on delivery.
+const TEST_SENDER = "onboarding@resend.dev";
+function checkReminderConfig(): void {
+  const hasKey = !!process.env.RESEND_API_KEY;
+  const from = process.env.REMINDER_FROM ?? `Bequest <${TEST_SENDER}>`;
+  if (hasKey && from.includes(TEST_SENDER)) {
+    console.error(
+      `[ALERT] RESEND_API_KEY is set but REMINDER_FROM still uses ${TEST_SENDER}: ` +
+        "reminders will ONLY reach your own Resend account email. Verify a domain in Resend and " +
+        "set REMINDER_FROM=Bequest <reminders@yourdomain> to email all owners.",
+    );
+  } else if (!hasKey) {
+    console.log("[reminder] RESEND_API_KEY unset — reminders run dry (logged, not sent).");
+  }
+}
+
 const STATUS_ACTIVE = 0;
 const STATUS_PENDING = 1;
 const STATUS_TRIGGERED = 2;
@@ -303,6 +321,7 @@ async function main(): Promise<void> {
   console.log(
     `keeper ${keypair.toSuiAddress()} · ${NETWORK} · package ${pkg.slice(0, 10)}…`,
   );
+  checkReminderConfig();
 
   const watch = process.argv.includes("--watch");
   const intervalMs = Number(process.env.KEEPER_INTERVAL_MS ?? 30000);

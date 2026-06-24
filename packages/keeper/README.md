@@ -63,6 +63,18 @@ check in. Thresholds are a percent of the window **remaining** (`REMINDER_LEADS_
 threshold fires at most once per cycle; a fresh heartbeat resets the cycle. Set `RESEND_API_KEY` to
 actually send (otherwise reminders are logged as a dry-run).
 
+### Delivering to every owner (production)
+Resend's shared test sender (`onboarding@resend.dev`) only delivers to **your own Resend account
+email** — handy for a demo, useless for real owners. To email *any* owner who registers a contact:
+
+1. Add your domain in the Resend dashboard and publish the SPF + DKIM DNS records it gives you
+   (needs DNS access to the domain).
+2. Set `REMINDER_FROM=Bequest <reminders@yourdomain>` (a sender on the verified domain) alongside
+   `RESEND_API_KEY` in the keeper's `.env`.
+
+Until both are set, the keeper logs `[ALERT] RESEND_API_KEY is set but REMINDER_FROM still uses
+onboarding@resend.dev …` at startup so you don't ship a switch that silently reaches only one inbox.
+
 Emails aren't on-chain (privacy), so owners register a contact off-chain. The keeper matches an
 estate to a contact by `estateId` first, then by `owner` address:
 
@@ -149,5 +161,6 @@ escrowed assets; further ticks are no-ops. Override the seed timers with `SEED_I
 - On `TRIGGERED` the keeper pushes the inheritance automatically — it enumerates every escrowed
   `CoinKey<T>` balance and ObjectBag object and distributes each in one PTB. A heir's own (sponsored)
   claim can still push distribution sooner; the keeper is the safety net.
-- Warning emails/SMS during the grace window are not implemented here — that's a notification layer
-  to add on top (the on-chain grace period is what makes warnings safe).
+- Warning **emails** before the switch arms are implemented (see "Owner reminders" above). SMS and
+  grace-window warnings are not — that's a further notification layer to add on top (the on-chain
+  grace period is what makes warnings safe).
