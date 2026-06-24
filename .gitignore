@@ -12,6 +12,9 @@ coverage/
 # Move
 packages/move/build/
 
+# Reminder contact store (holds owner emails — never commit)
+packages/keeper/reminders.json
+
 # OS / editor
 .DS_Store
 Thumbs.db

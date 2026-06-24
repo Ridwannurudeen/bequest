@@ -22,12 +22,31 @@ import {
 } from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
+import { checkReminder, loadStore, saveStore } from "./reminders";
 
 const NETWORK = (process.env.NETWORK ?? "testnet") as "testnet" | "mainnet";
 const PACKAGE_ID = process.env.PACKAGE_ID;
 const SUI_SECRET_KEY = process.env.SUI_SECRET_KEY;
 // Alert (not abort) when the keeper's own gas drops below this — it pays for arm/finalize/distribute.
 const MIN_GAS_MIST = Number(process.env.KEEPER_MIN_GAS_MIST ?? 100_000_000); // 0.1 SUI
+
+// Resend's shared test sender (`onboarding@resend.dev`) only delivers to the Resend account's own
+// email. A live key paired with it silently drops every other owner's reminder. Warn at startup so
+// the operator verifies a domain and sets REMINDER_FROM before relying on delivery.
+const TEST_SENDER = "onboarding@resend.dev";
+function checkReminderConfig(): void {
+  const hasKey = !!process.env.RESEND_API_KEY;
+  const from = process.env.REMINDER_FROM ?? `Bequest <${TEST_SENDER}>`;
+  if (hasKey && from.includes(TEST_SENDER)) {
+    console.error(
+      `[ALERT] RESEND_API_KEY is set but REMINDER_FROM still uses ${TEST_SENDER}: ` +
+        "reminders will ONLY reach your own Resend account email. Verify a domain in Resend and " +
+        "set REMINDER_FROM=Bequest <reminders@yourdomain> to email all owners.",
+    );
+  } else if (!hasKey) {
+    console.log("[reminder] RESEND_API_KEY unset — reminders run dry (logged, not sent).");
+  }
+}
 
 const STATUS_ACTIVE = 0;
 const STATUS_PENDING = 1;
@@ -36,6 +55,7 @@ const STATUS_TRIGGERED = 2;
 const KIND_SCHEDULED = 1;
 
 interface EstateFields {
+  owner: string;
   status: number | string;
   trigger_kind: number | string;
   last_active_ms: string;
@@ -222,6 +242,8 @@ async function tick(
   await checkGas(client, keypair.toSuiAddress());
   const ids = await discoverEstates(client, pkg);
   console.log(`[${new Date().toISOString()}] ${ids.length} estate(s)`);
+  // Reload each tick so newly registered reminder contacts are picked up live.
+  const reminders = loadStore();
   for (const id of ids) {
     const f = await readEstate(client, id);
     if (!f) continue;
@@ -273,10 +295,20 @@ async function tick(
       console.log(
         digest ? `    distributed (${digest})` : "    nothing to distribute",
       );
+    } else if (status === STATUS_ACTIVE) {
+      // Not yet due: nudge the owner to check in before the switch arms.
+      const note = await checkReminder(
+        reminders,
+        { estateId: id, owner: String(f.owner), lastActive, inactivity },
+        now,
+      );
+      console.log(note ? `  ${tag} ${note}` : `  ${tag} status=${status} — no action`);
     } else {
       console.log(`  ${tag} status=${status} — no action`);
     }
   }
+
+  if (reminders.contacts.length > 0) saveStore(reminders);
 }
 
 async function main(): Promise<void> {
@@ -289,6 +321,7 @@ async function main(): Promise<void> {
   console.log(
     `keeper ${keypair.toSuiAddress()} · ${NETWORK} · package ${pkg.slice(0, 10)}…`,
   );
+  checkReminderConfig();
 
   const watch = process.argv.includes("--watch");
   const intervalMs = Number(process.env.KEEPER_INTERVAL_MS ?? 30000);

@@ -6,7 +6,7 @@ import {
   useZkLoginSession,
 } from "@mysten/enoki/react";
 import { fromBase64 } from "@mysten/sui/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SuiNetwork } from "../lib/config";
 import type { EstateView } from "../lib/bequest-sdk";
 
@@ -57,6 +57,55 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(
     null,
   );
+
+  // Off-chain reminder contact: an email the keeper uses to nudge the owner before the
+  // inactivity switch arms. Stored off-chain (not on the estate) for privacy.
+  const [reminderEmail, setReminderEmail] = useState("");
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const [reminderMsg, setReminderMsg] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+
+  // Prefill any saved reminder email for this estate.
+  useEffect(() => {
+    let active = true;
+    fetch(
+      `/api/reminders?estateId=${encodeURIComponent(estate.estateId)}` +
+        (address ? `&owner=${encodeURIComponent(address)}` : ""),
+    )
+      .then((r) => r.json())
+      .then((res: { data?: { email?: string } | null }) => {
+        if (active && res.data?.email) setReminderEmail(res.data.email);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [estate.estateId, address]);
+
+  async function saveReminder() {
+    setReminderBusy(true);
+    setReminderMsg(null);
+    try {
+      const res = await postJson("/api/reminders", {
+        estateId: estate.estateId,
+        owner: address,
+        email: reminderEmail.trim(),
+      });
+      if (typeof res.error === "string") throw new Error(res.error);
+      setReminderMsg({
+        ok: true,
+        text: "Saved — we'll email you before your timer runs out.",
+      });
+    } catch (error) {
+      setReminderMsg({
+        ok: false,
+        text: error instanceof Error ? error.message : "Could not save reminder.",
+      });
+    } finally {
+      setReminderBusy(false);
+    }
+  }
 
   // Build the owner transaction kind, sponsor it, sign with the zkLogin keypair, execute.
   async function run(label: string, body: Record<string, unknown>) {
@@ -137,6 +186,37 @@ function OwnerManageInner({ estate }: { estate: EstateView }) {
         >
           {working("heartbeat") ? "Confirming…" : "I'm alive (reset the timer)"}
         </button>
+      )}
+
+      {!scheduled && (
+        <div>
+          <p className="kicker">Reminders</p>
+          <p className="lede">
+            Get an email before your timer runs out, so you never miss a check-in.
+          </p>
+          <div className="nav-links">
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={reminderEmail}
+              onChange={(e) => setReminderEmail(e.target.value)}
+              style={{ flex: "1 1 18rem", minWidth: 0 }}
+            />
+            <button
+              type="button"
+              className="button secondary"
+              disabled={reminderBusy || reminderEmail.trim().length === 0}
+              onClick={saveReminder}
+            >
+              {reminderBusy ? "Saving…" : "Save reminder"}
+            </button>
+          </div>
+          {reminderMsg && (
+            <p className="lede">
+              {reminderMsg.ok ? `✓ ${reminderMsg.text}` : reminderMsg.text}
+            </p>
+          )}
+        </div>
       )}
 
       <div>

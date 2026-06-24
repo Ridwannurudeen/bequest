@@ -20,6 +20,13 @@ PACKAGE_ID=0x<bequest package id>
 SUI_SECRET_KEY=suiprivkey1<keeper account key>   # any funded account; arm/finalize are permissionless
 KEEPER_INTERVAL_MS=30000                          # only used by --watch
 KEEPER_MIN_GAS_MIST=100000000                     # low-gas alert threshold (default 0.1 SUI)
+
+# Owner reminders (optional — see "Owner reminders" below)
+RESEND_API_KEY=re_...                             # omit to dry-run (log instead of send)
+REMINDER_FROM=Bequest <reminders@yourdomain.com>  # verified Resend sender
+REMINDER_LEADS_PCT=50,15                           # nudge at ≤50% and ≤15% of the window left
+REMINDERS_STORE=reminders.json                     # contact store path (default)
+APP_URL=https://bequest.app                         # check-in link base (optional)
 ```
 
 ```
@@ -46,6 +53,49 @@ NETWORK=testnet PACKAGE_ID=0x... npm run verify:proof
 npm run keeper          # single pass — for cron / systemd timer
 npm run keeper:watch    # loop every KEEPER_INTERVAL_MS
 ```
+
+## Owner reminders
+A real owner who is merely busy — not dead — would still lose their estate just for forgetting to
+press **Still Alive**. So on every tick, for each `ACTIVE` inactivity estate, the keeper checks how
+close it is to `last_active + inactivity` and emails the owner *before* it arms, giving them time to
+check in. Thresholds are a percent of the window **remaining** (`REMINDER_LEADS_PCT`, default
+`50,15`), so they scale to any switch — a 30-day line and a 1-hour demo get the same cadence. Each
+threshold fires at most once per cycle; a fresh heartbeat resets the cycle. Set `RESEND_API_KEY` to
+actually send (otherwise reminders are logged as a dry-run).
+
+### Delivering to every owner (production)
+Resend's shared test sender (`onboarding@resend.dev`) only delivers to **your own Resend account
+email** — handy for a demo, useless for real owners. To email *any* owner who registers a contact:
+
+1. Add your domain in the Resend dashboard and publish the SPF + DKIM DNS records it gives you
+   (needs DNS access to the domain).
+2. Set `REMINDER_FROM=Bequest <reminders@yourdomain>` (a sender on the verified domain) alongside
+   `RESEND_API_KEY` in the keeper's `.env`.
+
+Until both are set, the keeper logs `[ALERT] RESEND_API_KEY is set but REMINDER_FROM still uses
+onboarding@resend.dev …` at startup so you don't ship a switch that silently reaches only one inbox.
+
+Emails aren't on-chain (privacy), so owners register a contact off-chain. The keeper matches an
+estate to a contact by `estateId` first, then by `owner` address:
+
+```
+npm run reminder:add -- --estate 0xESTATE --email owner@example.com
+npm run reminder:add -- --owner  0xOWNER  --email owner@example.com --leads 50,15
+npm run reminder:add -- --list
+```
+
+Contacts live in `REMINDERS_STORE` (default `reminders.json`, git-ignored — it holds emails). See
+`reminders.example.json`. The store is reloaded each tick, so adds take effect immediately. Run the
+decision-logic tests with `npm test`.
+
+Owners can also self-register from the web app: the owner controls expose a "Reminders" email
+field that POSTs to `/api/reminders`, which writes to this same store. Point the web app and the
+keeper at one file with an absolute `REMINDERS_STORE` path.
+
+> Production note: the JSON store is shared by host (great for a local keeper + web demo). To
+> capture emails from the web app on Vercel, swap `loadStore`/`saveStore` (in both
+> `keeper/src/reminders.ts` and `web/lib/reminders-store.ts`) for a shared backend (Vercel KV /
+> Postgres). The rest of the feature is storage-agnostic.
 
 ## V2 full-portfolio validation
 `npm run full-portfolio` is the no-redeploy gate for the V2 story. With a funded testnet key, it:
@@ -111,5 +161,6 @@ escrowed assets; further ticks are no-ops. Override the seed timers with `SEED_I
 - On `TRIGGERED` the keeper pushes the inheritance automatically — it enumerates every escrowed
   `CoinKey<T>` balance and ObjectBag object and distributes each in one PTB. A heir's own (sponsored)
   claim can still push distribution sooner; the keeper is the safety net.
-- Warning emails/SMS during the grace window are not implemented here — that's a notification layer
-  to add on top (the on-chain grace period is what makes warnings safe).
+- Warning **emails** before the switch arms are implemented (see "Owner reminders" above). SMS and
+  grace-window warnings are not — that's a further notification layer to add on top (the on-chain
+  grace period is what makes warnings safe).

@@ -1,0 +1,14 @@
+{
+  "contacts": [
+    {
+      "estateId": "0xYOUR_ESTATE_OBJECT_ID",
+      "email": "owner@example.com"
+    },
+    {
+      "owner": "0xOWNER_SUI_ADDRESS",
+      "email": "owner@example.com",
+      "leadsPct": [50, 15]
+    }
+  ],
+  "sent": {}
+}
